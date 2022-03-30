@@ -4,13 +4,21 @@ const mysql = require('mysql')
 const configOfDatabase = require('../config/configDatabase')
 
 
-router.get('/', (req, res, next) => {
+router.get('/list', (req, res, next) => {
     getDiaryFromDB(res)
 })
 router.put('/edit', (req, res, next) => {
     getDiaryFromDB(res)
 })
 router.post('/add', (req, res, next) => {
+    getDiaryFromDB(res)
+})
+
+router.get('/detail', (req, res, next) => {
+    getDiaryFromDB(res)
+})
+
+router.delete('/detail', (req, res, next) => {
     getDiaryFromDB(res)
 })
 
