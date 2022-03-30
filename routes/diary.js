@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const mysql = require('mysql')
-const configOfDatabase = require('../config/configDB')
+const configOfDatabase = require('../config/configDatabase')
 
 
 router.get('/', (req, res, next) => {
@@ -22,7 +22,7 @@ function getDiaryFromDB(res) {
     let sql = 'select * from diaries limit 200'
     connection.query(sql, [], function (err, result) {
         if (err) {
-            console.log('[INSERT ERROR] - ', err.message)
+            console.log('数据库请求错误', err.message)
             return err
         }
         res.send(result)
