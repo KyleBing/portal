@@ -38,8 +38,8 @@ router.post('/add', (req, res, next) => {
     // TODO: 处理 title content 进行转义
     let parsedTitle = req.body.title
     let parsedContent = req.body.content
-
     let timeNow = utility.dateFormatter(new Date())
+
     sqlArray.push(`
         INSERT into diaries(title,content,category,weather,temperature,temperature_outside,date_create,date_modify,date,uid, is_public )
         VALUES('${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature}','${req.body.temperature_outside}','${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.is_public}')`
@@ -53,8 +53,28 @@ router.post('/add', (req, res, next) => {
             res.send(new ResponseError(err))
         })
 })
-router.put('/edit', (req, res, next) => {
-    utility.getDataFromDB(res)
+router.put('/modify', (req, res, next) => {
+    let parsedTitle = req.body.title
+    let parsedContent = req.body.content
+    let timeNow = utility.dateFormatter(new Date())
+
+    let sqlArray = []
+    sqlArray.push(`
+        update diaries 
+            set 
+                diaries.date_modify='${timeNow}', 
+                diaries.date='${req.body.date}', 
+                diaries.category='${req.body.category}',
+                diaries.title='${parsedTitle}',
+                diaries.content='${parsedContent}',
+                diaries.weather='${req.body.weather}',
+                diaries.temperature='${req.body.temperature}',
+                diaries.temperature_outside='${req.body.temperature_outside}',
+                diaries.is_public='${req.body.is_public}'
+            WHERE id='${req.body.id}' and uid='${req.body.uid}'
+    `)
+
+    utility.getDataFromDB(sqlArray, true)
         .then(data => {
             res.send(new ResponseSuccess(data))
         })
