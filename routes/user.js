@@ -1,5 +1,4 @@
 const express = require('express')
-const mysql = require("mysql");
 const configOfDatabase = require('../config/configDatabase')
 const utility = require("../config/utility");
 const ResponseSuccess = require("../response/ResponseSuccess");
@@ -40,7 +39,6 @@ router.post('/register', (req, res, next) => {
 
 })
 
-
 function checkEmailExist(email){
     let sqlArray = []
     sqlArray.push(`select email from users where email='${email}'`)
@@ -65,7 +63,7 @@ router.post('/login', (req, res, next) => {
         })
 })
 
-router.post('/changePassword', (req, res, next) => {
+router.post('/change-password', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from users where email = '${req.body.email}'`)
 

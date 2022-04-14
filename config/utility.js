@@ -1,6 +1,5 @@
 const mysql = require("mysql");
 const configOfDatabase = require('./configDatabase')
-const e = require("express");
 
 // 运行 SQL 并返回 DB 结果
 function getDataFromDB(sqlArray, isSingleValue) {

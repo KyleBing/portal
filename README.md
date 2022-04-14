@@ -20,9 +20,9 @@
   - [x] 详情 `/diary/detail`
 
 - [ ] 用户操作
-  - [ ] 注册 `/user/register`
-  - [ ] 登录 `/user/login`
-  - [ ] 验证 
+  - [x] 注册 `/user/register`
+  - [x] 登录 `/user/login`
+  - [ ] 修改密码 `/user/change-password` 
 
 
 ## 其它
