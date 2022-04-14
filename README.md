@@ -13,11 +13,11 @@
 > 线上接口文档： Postman 文档 []()
 
 - [ ] 日记操作
-  - [ ] 列表 `/diary/list`
-  - [ ] 新增 `/diary/add`
-  - [ ] 删除 `/diary/delete`
-  - [ ] 修改 `/diary/modify`
-  - [ ] 详情 `/diary/detail`
+  - [x] 列表 `/diary/list`
+  - [x] 新增 `/diary/add`
+  - [x] 删除 `/diary/delete`
+  - [x] 修改 `/diary/modify`
+  - [x] 详情 `/diary/detail`
 
 - [ ] 用户操作
   - [ ] 注册 `/user/register`
