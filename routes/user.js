@@ -8,21 +8,45 @@ const router = express.Router()
 
 /* GET users listing. */
 router.post('/register', (req, res, next) => {
-    let sqlArray = []
-    sqlArray.push(`select * from diaries where uid = ${req.query.uid}`)
-    if (req.query.timeStart) sqlArray.push(`and date_modify BETWEEN '${req.query.timeStart}' and '${req.query.timeEnd}'`)
-    sqlArray.push(`limit 200`)
+    // 判断邀请码是否正确
+    if (req.body.invitation && req.body.invitation === configOfDatabase.invitation){
+        checkEmailExist(req.body.email)
+            .then(dataEmailExistArray => {
+                if (dataEmailExistArray.length > 0){
+                    return res.send(new ResponseError('', '该 Email 已被注册'))
+                } else {
+                    let sqlArray = []
+                    let timeNow = utility.dateFormatter(new Date())
+                    sqlArray.push(`insert into users(email, password, register_time, username) VALUES ('${req.body.email}','${req.body.password}','${timeNow}','${req.body.username}')`)
 
-    utility.getDataFromDB(sqlArray)
-        .then(data => {
-            res.send(new ResponseSuccess(data))
-        })
-        .catch(err => {
-            res.send(new ResponseError(err))
-        })
+                    utility.getDataFromDB(sqlArray)
+                        .then(data => {
+                            res.send(new ResponseSuccess('', '注册成功'))
+                        })
+                        .catch(err => {
+                            res.send(new ResponseError(err, '注册失败'))
+                        })
+                }
+            })
+            .catch(errEmailExist => {
+                console.log(errEmailExist)
+                res.send(new ResponseError(errEmailExist, '查询出错'))
+            })
 
-    res.send(req.params.username)
+    } else {
+        res.send(new ResponseError('', '邀请码错误'))
+    }
+
+
 })
+
+
+function checkEmailExist(email){
+    let sqlArray = []
+    sqlArray.push(`select email from users where email='${email}'`)
+    return utility.getDataFromDB(sqlArray)
+}
+
 
 router.post('/login', (req, res, next) => {
     let sqlArray = []
