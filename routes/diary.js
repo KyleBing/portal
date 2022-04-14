@@ -20,9 +20,56 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-router.get('/detail/:diaryId', (req, res, next) => {
+router.get('/search', (req, res, next) => {
+    let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
+
     let sqlArray = []
-    sqlArray.push(`select * from diaries where id = ${req.params.diaryId}`)
+    sqlArray.push(`SELECT *
+                  from diaries 
+                  where uid='${req.query.uid}'`)
+
+    // keywords
+    let keywords = JSON.parse(req.query.keywords)
+    if (keywords.length > 0){
+        let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' or content like '%${keyword}%')` )
+        sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+    }
+
+    // categories
+    let categories = JSON.parse(req.query.categories)
+    if (categories.length > 0) {
+        let categoryStrArray = categories.map(category => `category='${category}'`)
+        let tempString = categoryStrArray.join(' or ')
+        sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
+    }
+
+    // share
+    if (req.query.filterShared === '1'){
+        sqlArray.push(' and is_public = 1')
+    }
+
+    // date range
+    if (req.query.dateRange){
+        let year = req.query.dateRange.substring(0,4)
+        let month = req.query.dateRange.substring(4,6)
+        sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+    }
+
+    sqlArray.push(` order by date desc
+                  limit ${startPoint}, ${req.query.pageCount}`)
+
+    utility.getDataFromDB(sqlArray)
+        .then(data => {
+            res.send(new ResponseSuccess(data))
+        })
+        .catch(err => {
+            res.send(new ResponseError(err))
+        })
+})
+
+router.get('/detail', (req, res, next) => {
+    let sqlArray = []
+    sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             res.send(new ResponseSuccess(data))
@@ -60,10 +107,10 @@ router.put('/modify', (req, res, next) => {
 
     let sqlArray = []
     sqlArray.push(`
-        update diaries 
-            set 
-                diaries.date_modify='${timeNow}', 
-                diaries.date='${req.body.date}', 
+        update diaries
+            set
+                diaries.date_modify='${timeNow}',
+                diaries.date='${req.body.date}',
                 diaries.category='${req.body.category}',
                 diaries.title='${parsedTitle}',
                 diaries.content='${parsedContent}',

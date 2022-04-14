@@ -7,6 +7,7 @@ function getDataFromDB(sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection(configOfDatabase)
         connection.connect()
+        console.log(sqlArray.join(''))
 
         connection.query(sqlArray.join(' '), [], function (err, result) {
             if (err) {
