@@ -11,6 +11,7 @@ router.post('/register', (req, res, next) => {
     if (req.body.invitation && req.body.invitation === configOfDatabase.invitation){
         checkEmailExist(req.body.email)
             .then(dataEmailExistArray => {
+                // email 记录是否已经存在
                 if (dataEmailExistArray.length > 0){
                     return res.send(new ResponseError('', '该 Email 已被注册'))
                 } else {
@@ -53,9 +54,9 @@ router.post('/login', (req, res, next) => {
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             if (req.body.password === data.password){
-                res.send(new ResponseSuccess('','登录成功'))
+                res.send(new ResponseSuccess(data,'登录成功'))
             } else {
-                res.send(new ResponseSuccess('','用户名或密码错误'))
+                res.send(new ResponseError('','用户名或密码错误'))
             }
         })
         .catch(err => {
