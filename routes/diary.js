@@ -84,17 +84,9 @@ router.post('/add', (req, res, next) => {
             '${req.body.temperatureOutside}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic}')`
     )
 
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB(sqlArray)
         .then(data => {
-            this.getDataFromDB([`select * from diaries where id=LAST_INSERT_ID()`], true) // 获取最后更新的记录 id
-                .then(diaryLastInsert => {
-
-                    res.send(new ResponseSuccess({id: diaryLastInsert.id}, '添加成功')) // 添加成功之后，返回添加后的日记 id
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err.message, '添加失败: 获取添加后的 id 失败'))
-                })
-
+            res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
         })
         .catch(err => {
             res.send(new ResponseError(err.message, '添加失败'))
