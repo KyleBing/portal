@@ -26,7 +26,7 @@ router.get('/search', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`SELECT *
                   from diaries 
-                  where uid='${req.query.uid}'`)
+                  where uid='${req.query.authorization.uid}'`)
 
     // keywords
     let keywords = JSON.parse(req.query.keywords)
@@ -89,7 +89,7 @@ router.post('/add', (req, res, next) => {
 
     sqlArray.push(`
         INSERT into diaries(title,content,category,weather,temperature,temperature_outside,date_create,date_modify,date,uid, is_public )
-        VALUES('${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature}','${req.body.temperature_outside}','${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.is_public}')`
+        VALUES('${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature}','${req.body.temperature_outside}','${timeNow}','${timeNow}','${req.body.date}','${req.body.authorization.uid}','${req.body.is_public}')`
     )
 
     utility.getDataFromDB(sqlArray, true)
@@ -118,7 +118,7 @@ router.put('/modify', (req, res, next) => {
                 diaries.temperature='${req.body.temperature}',
                 diaries.temperature_outside='${req.body.temperature_outside}',
                 diaries.is_public='${req.body.is_public}'
-            WHERE id='${req.body.id}' and uid='${req.body.uid}'
+            WHERE id='${req.body.id}' and uid='${req.body.authorization.uid}'
     `)
 
     utility.getDataFromDB(sqlArray, true)
@@ -135,7 +135,7 @@ router.delete('/delete', (req, res, next) => {
     sqlArray.push(`
         DELETE from diaries
         WHERE id='${req.query.diaryId}'
-        and uid='${req.query.uid}'
+        and uid='${req.query.authorization.uid}'
     `)
     utility.getDataFromDB(sqlArray)
         .then(data => {
