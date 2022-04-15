@@ -47,6 +47,33 @@ function dateFormatter(date, formatString) {
     return formatString
 }
 
+// TODO: js 处理 unicode 表情编码
+/*
+ * unicode -> text
+ */
+function unicodeEncode(str){
+    if(!str)return '';
+    if(typeof str !== 'string') return str
+
+    let text = JSON.stringify(str);
+    text.replaceAll("/(\\\u[ed][0-9a-f]{3})/i", () => {
+        // return addslashes($str[0])
+    })
+    return JSON.parse(text);
+}
+
+/**
+ * text -> unicode
+ */
+function  unicodeDecode(str)
+{
+    let text = JSON.stringify(str);
+    text.replaceAll('/\\\\\\\\/i', ()=>{
+        return '\\'
+    })
+    return JSON.parse(text);
+}
+
 
 module.exports = {
     getDataFromDB, dateFormatter

@@ -64,13 +64,13 @@ router.post('/login', (req, res, next) => {
         })
 })
 
-router.post('/change-password', (req, res, next) => {
+router.put('/change-password', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from users where email = '${req.body.email}'`)
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            if (req.body.password === data.password){
+            if (req.body.passwordOld === data.password){
                 // 执行修改密码的操作
                 let changePasswordSqlArray = [`update users set password = '${req.body.passwordNew}' where email='${req.body.email}'`]
                 utility.getDataFromDB(changePasswordSqlArray)
