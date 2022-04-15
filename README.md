@@ -1,7 +1,6 @@
 # 标题日记后台 [ 开发中，未上线使用... ]
 
 
-
 ## 说明
 服务对象： [标题日记](https://github.com/KyleBing/diary-vue) 
 
@@ -12,17 +11,18 @@
 ## 接口记录
 > 线上接口文档： Postman 文档 []()
 
-- [ ] 日记操作
-  - [x] 列表 `/diary/list`
+- [x] 日记操作
+  - [x] 列表 / 搜索 `/diary/list`
   - [x] 新增 `/diary/add`
-  - [x] 删除 `/diary/delete`
   - [x] 修改 `/diary/modify`
+  - [x] 删除 `/diary/delete`
   - [x] 详情 `/diary/detail`
 
-- [ ] 用户操作
+- [x] 用户操作
   - [x] 注册 `/user/register`
   - [x] 登录 `/user/login`
-  - [ ] 修改密码 `/user/change-password` 
+  - [x] 修改密码 `/user/change-password` 
+  - [ ] 记录最近一次登录时间
 
 
 ## 返回数据格式
