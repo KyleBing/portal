@@ -24,7 +24,7 @@ router.post('/register', (req, res, next) => {
                             res.send(new ResponseSuccess('', '注册成功'))
                         })
                         .catch(err => {
-                            res.send(new ResponseError(err, '注册失败'))
+                            res.send(new ResponseError(err.message, '注册失败'))
                         })
                 }
             })

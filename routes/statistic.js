@@ -36,9 +36,7 @@ router.get('/category', (req, res, next) => {
 router.get('/year', (req, res, next) => {
     let yearNow = new Date().getFullYear()
     let sqlRequests = []
-
-    // TODO: 这里需要查询该用户的所有年份记录，而不是定死的起始年份
-    for (let year = 2010; year <= yearNow; year ++){
+    for (let year = 1991; year <= yearNow; year ++){
         let sqlArray = []
         sqlArray.push(`
                 select 
@@ -57,11 +55,13 @@ router.get('/year', (req, res, next) => {
     Promise.all(sqlRequests).then(values => {
         let response = []
         values.forEach(data => {
-            response.push({
-                year: data[0].id.substring(0,4),
-                count: data.map(item => item.count).reduce((a,b) => a + b),
-                months: data
-            })
+            if (data.length > 0){ // 只统计有数据的年份
+                response.push({
+                    year: data[0].id.substring(0,4),
+                    count: data.map(item => item.count).reduce((a,b) => a + b),
+                    months: data
+                })
+            }
         })
 
         response.sort((a,b) => a.year < b.year ? 1: -1)

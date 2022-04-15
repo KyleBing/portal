@@ -13,7 +13,6 @@ function getDataFromDB(sqlArray, isSingleValue) {
                 console.log('数据库请求错误', err.message)
                 return reject(err)
             }
-            console.log('result count：',result.length)
             if (isSingleValue){
                 resolve(result[0])
             } else {

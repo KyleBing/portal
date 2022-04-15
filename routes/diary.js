@@ -73,26 +73,37 @@ router.post('/add', (req, res, next) => {
     let sqlArray = []
     // TODO: 添加到 CSDN 关于不同请求中的数据，在 req 中的位置
     // TODO: 处理 title content 进行转义
-    let parsedTitle = req.body.title
-    let parsedContent = req.body.content
+    let parsedTitle = req.body.title // !
+    let parsedContent = req.body.content || ''
     let timeNow = utility.dateFormatter(new Date())
 
     sqlArray.push(`
-        INSERT into diaries(title,content,category,weather,temperature,temperature_outside,date_create,date_modify,date,uid, is_public )
-        VALUES('${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature}','${req.body.temperature_outside}','${timeNow}','${timeNow}','${req.body.date}','${req.body.authorization.uid}','${req.body.is_public}')`
+        INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
+        VALUES(
+            '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature}',
+            '${req.body.temperatureOutside}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic}')`
     )
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            res.send(new ResponseSuccess(data))
+            this.getDataFromDB([`select * from diaries where id=LAST_INSERT_ID()`], true) // 获取最后更新的记录 id
+                .then(diaryLastInsert => {
+
+                    res.send(new ResponseSuccess({id: diaryLastInsert.id}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err.message, '添加失败: 获取添加后的 id 失败'))
+                })
+
         })
         .catch(err => {
-            res.send(new ResponseError(err))
+            res.send(new ResponseError(err.message, '添加失败'))
         })
 })
+
 router.put('/modify', (req, res, next) => {
     let parsedTitle = req.body.title
-    let parsedContent = req.body.content
+    let parsedContent = req.body.content || ''
     let timeNow = utility.dateFormatter(new Date())
 
     let sqlArray = []
@@ -106,17 +117,17 @@ router.put('/modify', (req, res, next) => {
                 diaries.content='${parsedContent}',
                 diaries.weather='${req.body.weather}',
                 diaries.temperature='${req.body.temperature}',
-                diaries.temperature_outside='${req.body.temperature_outside}',
-                diaries.is_public='${req.body.is_public}'
-            WHERE id='${req.body.id}' and uid='${req.body.authorization.uid}'
+                diaries.temperature_outside='${req.body.temperatureOutside}',
+                diaries.is_public='${req.body.isPublic}'
+            WHERE id='${req.body.id}' and uid='${req.body.uid}'
     `)
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            res.send(new ResponseSuccess(data))
+            res.send(new ResponseSuccess(data, '修改成功'))
         })
         .catch(err => {
-            res.send(new ResponseError(err))
+            res.send(new ResponseError(err.message, '修改失败'))
         })
 })
 
@@ -125,7 +136,7 @@ router.delete('/delete', (req, res, next) => {
     sqlArray.push(`
         DELETE from diaries
         WHERE id='${req.query.diaryId}'
-        and uid='${req.query.authorization.uid}'
+        and uid='${req.query.uid}'
     `)
     utility.getDataFromDB(sqlArray)
         .then(data => {
@@ -139,8 +150,6 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError(err))
         })
 })
-
-
 
 
 module.exports = router
