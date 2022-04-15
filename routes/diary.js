@@ -6,41 +6,31 @@ const ResponseError = require('../response/ResponseError')
 
 
 router.get('/list', (req, res, next) => {
-    let sqlArray = []
-    sqlArray.push(`select * from diaries where uid = ${req.query.uid}`)
-    if (req.query.timeStart) sqlArray.push(`and date_modify BETWEEN '${req.query.timeStart}' and '${req.query.timeEnd}'`)
-    sqlArray.push(`limit 200`)
-
-    utility.getDataFromDB(sqlArray)
-        .then(data => {
-            res.send(new ResponseSuccess(data))
-        })
-        .catch(err => {
-            res.send(new ResponseError(err))
-        })
-})
-
-router.get('/search', (req, res, next) => {
     let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
 
     let sqlArray = []
     sqlArray.push(`SELECT *
                   from diaries 
-                  where uid='${req.query.authorization.uid}'`)
+                  where uid='${req.query.uid}'`)
 
     // keywords
-    let keywords = JSON.parse(req.query.keywords)
-    if (keywords.length > 0){
-        let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' or content like '%${keyword}%')` )
-        sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+    if (req.query.keywords){
+        let keywords = JSON.parse(req.query.keywords)
+        if (keywords.length > 0){
+            let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' or content like '%${keyword}%')` )
+            sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+        }
     }
 
+
     // categories
-    let categories = JSON.parse(req.query.categories)
-    if (categories.length > 0) {
-        let categoryStrArray = categories.map(category => `category='${category}'`)
-        let tempString = categoryStrArray.join(' or ')
-        sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
+    if (req.query.categories){
+        let categories = JSON.parse(req.query.categories)
+        if (categories.length > 0) {
+            let categoryStrArray = categories.map(category => `category='${category}'`)
+            let tempString = categoryStrArray.join(' or ')
+            sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
+        }
     }
 
     // share
