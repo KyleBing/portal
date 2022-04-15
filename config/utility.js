@@ -6,7 +6,7 @@ function getDataFromDB(sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection(configOfDatabase)
         connection.connect()
-        console.log('---- SQL', sqlArray.join(' '))
+        // console.log('---- SQL', sqlArray.join(' '))
 
         connection.query(sqlArray.join(' '), [], function (err, result) {
             if (err) {
@@ -48,23 +48,19 @@ function dateFormatter(date, formatString) {
 }
 
 // TODO: js 处理 unicode 表情编码
-/*
- * unicode -> text
- */
+// unicode -> text
 function unicodeEncode(str){
     if(!str)return '';
     if(typeof str !== 'string') return str
 
     let text = JSON.stringify(str);
-    text.replaceAll("/(\\\u[ed][0-9a-f]{3})/i", () => {
+/*    text.replaceAll("/(\\\u[ed][0-9a-f]{3})/i", () => {
         // return addslashes($str[0])
-    })
+    })*/
     return JSON.parse(text);
 }
 
-/**
- * text -> unicode
- */
+// text -> unicode
 function  unicodeDecode(str)
 {
     let text = JSON.stringify(str);

@@ -69,6 +69,22 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
+router.get('/share', (req, res, next) => {
+    let sqlArray = []
+    sqlArray.push(`select * from diaries where id = '${req.query.diaryId}'`)
+    utility.getDataFromDB(sqlArray, true)
+        .then(data => {
+            if(data.is_public === 1){
+                res.send(new ResponseSuccess(data))
+            } else {
+                res.send(new ResponseError('', '该日记未共享'))
+            }
+        })
+        .catch(err => {
+            res.send(new ResponseError(err))
+        })
+})
+
 router.post('/add', (req, res, next) => {
     let sqlArray = []
     // TODO: 添加到 CSDN 关于不同请求中的数据，在 req 中的位置
