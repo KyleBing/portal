@@ -25,5 +25,16 @@
   - [ ] 修改密码 `/user/change-password` 
 
 
+## 返回数据格式
+
+```json
+{
+  "success": true,
+  "message": "提示信息",
+  "data": {}
+}
+```
+
+
 ## 其它
 > 始于： 2022-04-14

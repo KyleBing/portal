@@ -33,11 +33,12 @@ router.get('/category', (req, res, next) => {
         })
 })
 
-
 router.get('/year', (req, res, next) => {
     let yearNow = new Date().getFullYear()
     let sqlRequests = []
-    for (let year = 2010; year < yearNow; year ++){
+
+    // TODO: 这里需要查询该用户的所有年份记录，而不是定死的起始年份
+    for (let year = 2010; year <= yearNow; year ++){
         let sqlArray = []
         sqlArray.push(`
                 select 
