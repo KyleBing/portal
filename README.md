@@ -1,4 +1,4 @@
-# 标题日记后台 [ 开发中，未上线使用... ]
+# 《标题日记》 后台 - nodejs [ 开发中... ]
 
 
 ## 说明
@@ -22,7 +22,10 @@
   - [x] 注册 `/user/register`
   - [x] 登录 `/user/login`
   - [x] 修改密码 `/user/change-password` 
-  - [ ] 记录最近一次登录时间
+  - [x] 记录最近一次操作时间
+
+## 密码说明
+密码使用 [bcrypt](https://github.com/kelektiv/node.bcrypt.js) 加密，登录后的所有传输都会用加密后的密码作为请求 token
 
 
 ## 返回数据格式

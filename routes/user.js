@@ -4,6 +4,7 @@ const utility = require("../config/utility");
 const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
 const router = express.Router()
+const bcrypt = require('bcrypt')
 
 /* GET users listing. */
 router.post('/register', (req, res, next) => {
@@ -17,15 +18,19 @@ router.post('/register', (req, res, next) => {
                 } else {
                     let sqlArray = []
                     let timeNow = utility.dateFormatter(new Date())
-                    sqlArray.push(`insert into users(email, password, register_time, username) VALUES ('${req.body.email}','${req.body.password}','${timeNow}','${req.body.username}')`)
+                    // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
+                    bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
+                        sqlArray.push(`insert into users(email, password, register_time, username) VALUES ('${req.body.email}','${encryptPassword}','${timeNow}','${req.body.username}')`)
 
-                    utility.getDataFromDB(sqlArray)
-                        .then(data => {
-                            res.send(new ResponseSuccess('', '注册成功'))
-                        })
-                        .catch(err => {
-                            res.send(new ResponseError(err.message, '注册失败'))
-                        })
+                        utility.getDataFromDB(sqlArray)
+                            .then(data => {
+                                res.send(new ResponseSuccess('', '注册成功'))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err.message, '注册失败'))
+                            })
+                    })
+
                 }
             })
             .catch(errEmailExist => {
@@ -53,12 +58,14 @@ router.post('/login', (req, res, next) => {
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            if (req.body.password === data.password){
-                utility.updateUserLastLoginTime(req.body.email)
-                res.send(new ResponseSuccess(data,'登录成功'))
-            } else {
-                res.send(new ResponseError('','用户名或密码错误'))
-            }
+            bcrypt.compare(req.body.password, data.password, function(err, isPasswordMatch) {
+                if (isPasswordMatch){
+                    utility.updateUserLastLoginTime(req.body.email)
+                    res.send(new ResponseSuccess(data,'登录成功'))
+                } else {
+                    res.send(new ResponseError('','用户名或密码错误'))
+                }
+            })
         })
         .catch(err => {
             res.send(new ResponseError(err))
