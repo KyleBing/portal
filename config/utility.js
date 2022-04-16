@@ -70,7 +70,18 @@ function  unicodeDecode(str)
     return JSON.parse(text);
 }
 
+function updateUserLastLoginTime(email){
+    let timeNow = dateFormatter(new Date())
+    getDataFromDB([`update users set last_visit_time='${timeNow}' where email='${email}'`])
+        .then(data => {
+            console.log('--- 成功：记录用户最后操作时间')
+        })
+        .catch(err => {
+            console.log('--- 失败：记录用户最后操作时间')
+        })
+}
+
 
 module.exports = {
-    getDataFromDB, dateFormatter
+    getDataFromDB, dateFormatter, updateUserLastLoginTime
 }

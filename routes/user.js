@@ -54,6 +54,7 @@ router.post('/login', (req, res, next) => {
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             if (req.body.password === data.password){
+                utility.updateUserLastLoginTime(req.body.email)
                 res.send(new ResponseSuccess(data,'登录成功'))
             } else {
                 res.send(new ResponseError('','用户名或密码错误'))
@@ -75,6 +76,7 @@ router.put('/change-password', (req, res, next) => {
                 let changePasswordSqlArray = [`update users set password = '${req.body.passwordNew}' where email='${req.body.email}'`]
                 utility.getDataFromDB(changePasswordSqlArray)
                     .then(dataChangePassword => {
+                        utility.updateUserLastLoginTime(req.body.email)
                         res.send(new ResponseSuccess('', '修改密码成功'))
                     })
                     .catch(errChangePassword => {

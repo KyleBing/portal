@@ -22,7 +22,6 @@ router.get('/list', (req, res, next) => {
         }
     }
 
-
     // categories
     if (req.query.categories){
         let categories = JSON.parse(req.query.categories)
@@ -50,6 +49,7 @@ router.get('/list', (req, res, next) => {
 
     utility.getDataFromDB(sqlArray)
         .then(data => {
+            utility.updateUserLastLoginTime(req.query.email)
             res.send(new ResponseSuccess(data))
         })
         .catch(err => {
@@ -62,6 +62,7 @@ router.get('/detail', (req, res, next) => {
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
+            utility.updateUserLastLoginTime(req.query.email)
             res.send(new ResponseSuccess(data))
         })
         .catch(err => {
@@ -102,6 +103,7 @@ router.post('/add', (req, res, next) => {
 
     utility.getDataFromDB(sqlArray)
         .then(data => {
+            utility.updateUserLastLoginTime(req.body.email)
             res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
         })
         .catch(err => {
@@ -132,6 +134,7 @@ router.put('/modify', (req, res, next) => {
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
+            utility.updateUserLastLoginTime(req.body.email)
             res.send(new ResponseSuccess(data, '修改成功'))
         })
         .catch(err => {
@@ -149,6 +152,7 @@ router.delete('/delete', (req, res, next) => {
     utility.getDataFromDB(sqlArray)
         .then(data => {
             if (data.affectedRows > 0) {
+                utility.updateUserLastLoginTime(req.body.email)
                 res.send(new ResponseSuccess('', '删除成功'))
             } else {
                 res.send(new ResponseError('', '删除失败'))
