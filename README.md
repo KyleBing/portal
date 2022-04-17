@@ -1,4 +1,4 @@
-# 《标题日记》 后台 - nodejs [ 开发中... ]
+# 《标题日记》 后台 - nodejs
 
 
 ## 说明
@@ -24,6 +24,8 @@
   - [x] 修改密码 `/user/change-password` 
   - [x] 记录最近一次操作时间
 
+- [x] 数据库相关操作
+  - [x] 转义 emoji
 ## 密码说明
 密码使用 [bcrypt](https://github.com/kelektiv/node.bcrypt.js) 加密，登录后的所有传输都会用加密后的密码作为请求 token
 
