@@ -50,10 +50,15 @@ router.get('/list', (req, res, next) => {
     utility.getDataFromDB(sqlArray)
         .then(data => {
             utility.updateUserLastLoginTime(req.query.email)
+            data.forEach(diary => {
+                // decode unicode
+                diary.title = utility.unicodeDecode(diary.title)
+                diary.content = utility.unicodeDecode(diary.content)
+            })
             res.send(new ResponseSuccess(data))
         })
         .catch(err => {
-            res.send(new ResponseError(err))
+            res.send(new ResponseError(err.message))
         })
 })
 
@@ -63,10 +68,14 @@ router.get('/detail', (req, res, next) => {
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             utility.updateUserLastLoginTime(req.query.email)
+            // decode unicode
+            data.title = utility.unicodeDecode(data.title)
+            data.content = utility.unicodeDecode(data.content)
+            console.log(data.title)
             res.send(new ResponseSuccess(data))
         })
         .catch(err => {
-            res.send(new ResponseError(err))
+            res.send(new ResponseError(err.message))
         })
 })
 
@@ -76,22 +85,23 @@ router.get('/share', (req, res, next) => {
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             if(data.is_public === 1){
+                // decode unicode
+                data.title = utility.unicodeDecode(data.title)
+                data.content = utility.unicodeDecode(data.content)
                 res.send(new ResponseSuccess(data))
             } else {
                 res.send(new ResponseError('', '该日记未共享'))
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err))
+            res.send(new ResponseError(err.message))
         })
 })
 
 router.post('/add', (req, res, next) => {
     let sqlArray = []
-    // TODO: 添加到 CSDN 关于不同请求中的数据，在 req 中的位置
-    // TODO: 处理 title content 进行转义
-    let parsedTitle = req.body.title // !
-    let parsedContent = req.body.content || ''
+    let parsedTitle = utility.unicodeEncode(req.body.title) // !
+    let parsedContent = utility.unicodeEncode(req.body.content) || ''
     let timeNow = utility.dateFormatter(new Date())
 
     sqlArray.push(`
@@ -112,8 +122,8 @@ router.post('/add', (req, res, next) => {
 })
 
 router.put('/modify', (req, res, next) => {
-    let parsedTitle = req.body.title
-    let parsedContent = req.body.content || ''
+    let parsedTitle = utility.unicodeEncode(req.body.title) // !
+    let parsedContent = utility.unicodeEncode(req.body.content) || ''
     let timeNow = utility.dateFormatter(new Date())
 
     let sqlArray = []
@@ -159,7 +169,7 @@ router.delete('/delete', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err))
+            res.send(new ResponseError(err.message))
         })
 })
 

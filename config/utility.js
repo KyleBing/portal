@@ -47,27 +47,29 @@ function dateFormatter(date, formatString) {
     return formatString
 }
 
-// TODO: js 处理 unicode 表情编码
 // unicode -> text
 function unicodeEncode(str){
     if(!str)return '';
     if(typeof str !== 'string') return str
-
-    let text = JSON.stringify(str);
-/*    text.replaceAll("/(\\\u[ed][0-9a-f]{3})/i", () => {
-        // return addslashes($str[0])
-    })*/
-    return JSON.parse(text);
+    let text = escape(str);
+    console.log(text)
+    text = text.replaceAll(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
+        console.log('source: ',source)
+        return source.replace('%', '\\\\')
+    })
+    console.log(unescape(text))
+    return unescape(text);
 }
 
 // text -> unicode
 function  unicodeDecode(str)
 {
-    let text = JSON.stringify(str);
-    text.replaceAll('/\\\\\\\\/i', ()=>{
-        return '\\'
+    let text = escape(str);
+    console.log(text)
+    text = text.replaceAll(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
+        return source.replace('%5C', '%')
     })
-    return JSON.parse(text);
+    return unescape(text);
 }
 
 function updateUserLastLoginTime(email){
@@ -83,5 +85,6 @@ function updateUserLastLoginTime(email){
 
 
 module.exports = {
-    getDataFromDB, dateFormatter, updateUserLastLoginTime
+    getDataFromDB, dateFormatter, updateUserLastLoginTime,
+    unicodeEncode, unicodeDecode
 }
