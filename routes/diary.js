@@ -15,9 +15,10 @@ router.get('/list', (req, res, next) => {
 
     // keywords
     if (req.query.keywords){
-        let keywords = JSON.parse(req.query.keywords)
+        let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
+        console.log(keywords)
         if (keywords.length > 0){
-            let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' or content like '%${keyword}%')` )
+            let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
             sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
         }
     }

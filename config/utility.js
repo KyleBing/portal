@@ -6,7 +6,7 @@ function getDataFromDB(sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection(configOfDatabase)
         connection.connect()
-        // console.log('---- SQL', sqlArray.join(' '))
+        console.log('---- SQL', sqlArray.join(' '))
 
         connection.query(sqlArray.join(' '), [], function (err, result) {
             if (err) {
@@ -52,12 +52,10 @@ function unicodeEncode(str){
     if(!str)return '';
     if(typeof str !== 'string') return str
     let text = escape(str);
-    console.log(text)
     text = text.replaceAll(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
         console.log('source: ',source)
         return source.replace('%', '\\\\')
     })
-    console.log(unescape(text))
     return unescape(text);
 }
 
@@ -65,7 +63,6 @@ function unicodeEncode(str){
 function  unicodeDecode(str)
 {
     let text = escape(str);
-    console.log(text)
     text = text.replaceAll(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
         return source.replace('%5C', '%')
     })
