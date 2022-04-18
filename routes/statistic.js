@@ -29,7 +29,7 @@ router.get('/category', (req, res, next) => {
             res.send(new ResponseSuccess(data))
         })
         .catch(err => {
-            res.send(new ResponseError(err.message))
+            res.send(new ResponseError(JSON.stringify(err)))
         })
 })
 

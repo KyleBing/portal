@@ -11,7 +11,7 @@ function getDataFromDB(sqlArray, isSingleValue) {
         connection.query(sqlArray.join(' '), [], function (err, result) {
             // console.log('result: ', result)
             if (err) {
-                console.log('数据库请求错误', err.message)
+                console.log('数据库请求错误', JSON.stringify(err))
                 reject(err)
             }
             if (result.length < 1){
@@ -23,8 +23,6 @@ function getDataFromDB(sqlArray, isSingleValue) {
             } else {
                 resolve(result)
             }
-
-
         })
         connection.end()
     })
