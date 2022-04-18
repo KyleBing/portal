@@ -9,18 +9,43 @@ function getDataFromDB(sqlArray, isSingleValue) {
         console.log('---- SQL', sqlArray.join(' '))
 
         connection.query(sqlArray.join(' '), [], function (err, result) {
+            // console.log('result: ', result)
             if (err) {
                 console.log('数据库请求错误', err.message)
-                return reject(err)
+                reject(err)
+            }
+            if (result.length < 1){
+                reject('无此内容')
+
             }
             if (isSingleValue){
                 resolve(result[0])
             } else {
                 resolve(result)
             }
+
+
         })
         connection.end()
     })
+}
+
+// 验证用户是否有权限
+function verifyAuthorization(uid, email, token){
+    let sqlArray = []
+    sqlArray.push(`select * from users where uid = ${uid}`)
+    return new Promise((resolve, reject) => {
+        getDataFromDB(sqlArray, true)
+            .then(data => {
+                if (data.password === token){
+                    resolve(true)
+                } else {
+                    reject (false)
+                }
+            })
+            .catch(err => { reject(false) })
+    })
+
 }
 
 
@@ -83,5 +108,6 @@ function updateUserLastLoginTime(email){
 
 module.exports = {
     getDataFromDB, dateFormatter, updateUserLastLoginTime,
-    unicodeEncode, unicodeDecode
+    unicodeEncode, unicodeDecode,
+    verifyAuthorization
 }

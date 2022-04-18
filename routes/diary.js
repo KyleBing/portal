@@ -6,74 +6,101 @@ const ResponseError = require('../response/ResponseError')
 
 
 router.get('/list', (req, res, next) => {
-    let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
+    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+        .then(verified => {
+            let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
 
-    let sqlArray = []
-    sqlArray.push(`SELECT *
+            let sqlArray = []
+            sqlArray.push(`SELECT *
                   from diaries 
                   where uid='${req.query.uid}'`)
 
-    // keywords
-    if (req.query.keywords){
-        let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
-        console.log(keywords)
-        if (keywords.length > 0){
-            let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
-            sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
-        }
-    }
+            // keywords
+            if (req.query.keywords){
+                let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
+                console.log(keywords)
+                if (keywords.length > 0){
+                    let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
+                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+                }
+            }
 
-    // categories
-    if (req.query.categories){
-        let categories = JSON.parse(req.query.categories)
-        if (categories.length > 0) {
-            let categoryStrArray = categories.map(category => `category='${category}'`)
-            let tempString = categoryStrArray.join(' or ')
-            sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
-        }
-    }
+            // categories
+            if (req.query.categories){
+                let categories = JSON.parse(req.query.categories)
+                if (categories.length > 0) {
+                    let categoryStrArray = categories.map(category => `category='${category}'`)
+                    let tempString = categoryStrArray.join(' or ')
+                    sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
+                }
+            }
 
-    // share
-    if (req.query.filterShared === '1'){
-        sqlArray.push(' and is_public = 1')
-    }
+            // share
+            if (req.query.filterShared === '1'){
+                sqlArray.push(' and is_public = 1')
+            }
 
-    // date range
-    if (req.query.dateRange){
-        let year = req.query.dateRange.substring(0,4)
-        let month = req.query.dateRange.substring(4,6)
-        sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
-    }
+            // date range
+            if (req.query.dateRange){
+                let year = req.query.dateRange.substring(0,4)
+                let month = req.query.dateRange.substring(4,6)
+                sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+            }
 
-    sqlArray.push(` order by date desc
+            sqlArray.push(` order by date desc
                   limit ${startPoint}, ${req.query.pageCount}`)
 
-    utility.getDataFromDB(sqlArray)
-        .then(data => {
-            utility.updateUserLastLoginTime(req.query.email)
-            data.forEach(diary => {
-                // decode unicode
-                diary.title = utility.unicodeDecode(diary.title)
-                diary.content = utility.unicodeDecode(diary.content)
-            })
-            res.send(new ResponseSuccess(data))
+            utility.getDataFromDB(sqlArray)
+                .then(data => {
+                    utility.updateUserLastLoginTime(req.query.email)
+                    data.forEach(diary => {
+                        // decode unicode
+                        diary.title = utility.unicodeDecode(diary.title)
+                        diary.content = utility.unicodeDecode(diary.content)
+                    })
+                    res.send(new ResponseSuccess(data, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err.message))
+                })
         })
-        .catch(err => {
-            res.send(new ResponseError(err.message))
+        .catch(verified => {
+            res.send(new ResponseError('当前用户无权查看该日记：用户信息错误'))
         })
+
 })
 
 router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
+    // 1. 先查询出日记结果
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            utility.updateUserLastLoginTime(req.query.email)
             // decode unicode
             data.title = utility.unicodeDecode(data.title)
             data.content = utility.unicodeDecode(data.content)
-            console.log(data.title)
-            res.send(new ResponseSuccess(data))
+
+            // 2. 判断是否为共享日记
+            if (data.is_public === 1){
+                // 2.1 如果是，直接返回结果，不需要判断任何东西
+                res.send(new ResponseSuccess(data))
+            } else {
+                // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
+                utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+                    .then(verified => {
+                        // 3. 判断日记是否属于当前请求用户
+                        if (Number(req.query.uid) === data.uid){
+                            // 记录最后访问时间
+                            utility.updateUserLastLoginTime(req.query.email)
+                            res.send(new ResponseSuccess(data))
+                        } else {
+                            res.send(new ResponseError('当前用户无权查看该日记：请求用户 ID 与日记归属不匹配'))
+                        }
+                    })
+                    .catch(unverified => {
+                        res.send(new ResponseError('当前用户无权查看该日记：用户信息错误'))
+                    })
+            }
         })
         .catch(err => {
             res.send(new ResponseError(err.message))
