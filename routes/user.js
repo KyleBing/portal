@@ -27,7 +27,7 @@ router.post('/register', (req, res, next) => {
                                 res.send(new ResponseSuccess('', '注册成功'))
                             })
                             .catch(err => {
-                                res.send(new ResponseError(JSON.stringify(err), '注册失败'))
+                                res.send(new ResponseError(err.message, '注册失败'))
                             })
                     })
 
@@ -68,7 +68,7 @@ router.post('/login', (req, res, next) => {
             })
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err)))
+            res.send(new ResponseError(err.message))
         })
 })
 
@@ -94,7 +94,7 @@ router.put('/change-password', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err)))
+            res.send(new ResponseError(err.message))
         })
 })
 

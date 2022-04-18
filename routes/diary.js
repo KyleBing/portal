@@ -61,7 +61,7 @@ router.get('/list', (req, res, next) => {
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
-                    res.send(new ResponseError(JSON.stringify(err)))
+                    res.send(new ResponseError(err.message))
                 })
         })
         .catch(verified => {
@@ -103,7 +103,7 @@ router.get('/detail', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err)))
+            res.send(new ResponseError(err.message))
         })
 })
 
@@ -122,7 +122,7 @@ router.get('/share', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err)))
+            res.send(new ResponseError(err.message))
         })
 })
 
@@ -145,7 +145,7 @@ router.post('/add', (req, res, next) => {
             res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err), '添加失败'))
+            res.send(new ResponseError(err.message, '添加失败'))
         })
 })
 
@@ -176,7 +176,7 @@ router.put('/modify', (req, res, next) => {
             res.send(new ResponseSuccess(data, '修改成功'))
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err), '修改失败'))
+            res.send(new ResponseError(err.message, '修改失败'))
         })
 })
 
@@ -197,7 +197,7 @@ router.delete('/delete', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(JSON.stringify(err)))
+            res.send(new ResponseError(err.message))
         })
 })
 
