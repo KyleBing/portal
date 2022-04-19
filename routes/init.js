@@ -5,31 +5,57 @@ const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
 const mysql = require("mysql");
 const configOfDatabase = require("../config/configDatabase");
+const { stat, writeFile } = require("fs");
 
+const LOCK_FILE_NAME = 'DATABASE_LOCK'
 
 router.get('/', (req, res, next) => {
-    let tempConfigDatabase = {}
-    Object.assign(tempConfigDatabase, configOfDatabase)
-    delete tempConfigDatabase.database
-    let connection = mysql.createConnection(tempConfigDatabase)
-    connection.connect()
-    const sqlCreation = 'CREATE DATABASE IF NOT EXISTS diary'
-    connection.query(sqlCreation, [], function (err, result) {
+
+    stat(LOCK_FILE_NAME, ((err, stats) => {
         if (err){
-            console.log('- 1. fail : create db fails, \nwith err info: \n' + err.message)
-            res.send(new ResponseError(err.message))
+            // 如果没有该文件，说明数据库没有初始化过
+            let tempConfigDatabase = {}
+            Object.assign(tempConfigDatabase, configOfDatabase)
+            delete tempConfigDatabase.database
+            let connection = mysql.createConnection(tempConfigDatabase)
+            connection.connect()
+            const sqlCreation = 'CREATE DATABASE IF NOT EXISTS diary'
+            connection.query(sqlCreation, [], function (err, result) {
+                if (err){
+                    console.log('- 1. fail : create db fails, \nwith err info: \n' + err.message)
+                    res.send(new ResponseError(err.message))
+                } else {
+                    console.log('- 1. success: create db diary')
+                    createTables()
+                        .then(msg => {
+
+                            writeFile(LOCK_FILE_NAME, 'Database has been locked, file add in ' + utility.dateFormatter(new Date()),err => {
+                                if (err){
+                                    res.send('初始化失败')
+                                } else {
+                                    res.send(
+                                        '数据库初始化成功：<br>' +
+                                        '数据库名： diary<br>' +
+                                        '创建两张表：users、diaries <br>' +
+                                        '已创建数据库锁定文件： ' + LOCK_FILE_NAME
+                                    )
+                                }
+                            })
+
+                        })
+                        .catch(msg => {
+                            res.send(msg)
+                        })
+                }
+            })
+            connection.end()
         } else {
-            console.log('- 1. success: create db diary')
-            createTables()
-                .then(msg => {
-                    res.send(msg)
-                })
-                .catch(msg => {
-                    res.send(msg)
-                })
+            // 如果已经初始化过了
+            res.send('该数据库已被初始化过，如果想重新初始化，请先删除项目中 <b>DATABASE_LOCK</b> 文件')
         }
-    })
-    connection.end()
+    }))
+
+
 })
 
 function createTables(){
