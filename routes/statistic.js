@@ -6,7 +6,10 @@ const ResponseError = require("../response/ResponseError");
 
 
 router.get('/category', (req, res, next) => {
-    console.log(req.query)
+    if(!req.query.uid || !req.query.token){
+        res.send(new ResponseError('参数错误：uid 未定义'))
+        return
+    }
     let sqlArray = []
     sqlArray.push(`
                 select  
@@ -34,6 +37,10 @@ router.get('/category', (req, res, next) => {
 })
 
 router.get('/year', (req, res, next) => {
+    if(!req.query.uid || !req.query.token){
+        res.send(new ResponseError('参数错误：uid 未定义'))
+        return
+    }
     let yearNow = new Date().getFullYear()
     let sqlRequests = []
     for (let year = 1991; year <= yearNow; year ++){
@@ -52,21 +59,24 @@ router.get('/year', (req, res, next) => {
         sqlRequests.push(utility.getDataFromDB(sqlArray))
     }
     // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
-    Promise.all(sqlRequests).then(values => {
-        let response = []
-        values.forEach(data => {
-            if (data.length > 0){ // 只统计有数据的年份
-                response.push({
-                    year: data[0].id.substring(0,4),
-                    count: data.map(item => item.count).reduce((a,b) => a + b),
-                    months: data
-                })
-            }
+    Promise.all(sqlRequests)
+        .then(values => {
+            let response = []
+            values.forEach(data => {
+                if (data.length > 0) { // 只统计有数据的年份
+                    response.push({
+                        year: data[0].id.substring(0, 4),
+                        count: data.map(item => item.count).reduce((a, b) => a + b),
+                        months: data
+                    })
+                }
+            })
+            response.sort((a, b) => a.year < b.year ? 1 : -1)
+            res.send(new ResponseSuccess(response))
         })
-
-        response.sort((a,b) => a.year < b.year ? 1: -1)
-        res.send(new ResponseSuccess(response))
-    })
+        .catch(err => {
+            res.send(new ResponseError(err, err.message))
+        })
 })
 
 

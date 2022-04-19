@@ -65,9 +65,8 @@ router.get('/list', (req, res, next) => {
                 })
         })
         .catch(verified => {
-            res.send(new ResponseError('当前用户无权查看该日记：用户信息错误'))
+            res.send(new ResponseError('无权查看日记列表：用户信息错误'))
         })
-
 })
 
 router.get('/detail', (req, res, next) => {
