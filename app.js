@@ -8,7 +8,8 @@ let init = require('./routes/init')
 let indexRouter = require('./routes/index')
 let usersRouter = require('./routes/user')
 let diaryRouter = require('./routes/diary')
-let diaryStatistic = require('./routes/statistic')
+let diaryStatisticRouter = require('./routes/statistic')
+let dictRouter = require('./routes/dict')
 
 const app = express()
 
@@ -22,11 +23,15 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
 
+
 app.use('/',          indexRouter)
 app.use('/init',      init)
 app.use('/user',      usersRouter)
 app.use('/diary',     diaryRouter)
-app.use('/statistic', diaryStatistic)
+app.use('/statistic', diaryStatisticRouter)
+
+app.use('/dict',     dictRouter) // 词库保存
+
 
 
 // catch 404 and forward to error handler
