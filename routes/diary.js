@@ -134,8 +134,8 @@ router.post('/add', (req, res, next) => {
     sqlArray.push(`
         INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
         VALUES(
-            '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature}',
-            '${req.body.temperatureOutside}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic}')`
+            '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
+            '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic || 0}')`
     )
 
     utility.getDataFromDB(sqlArray)
