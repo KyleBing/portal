@@ -4,9 +4,11 @@ const utility = require('../config/utility')
 const ResponseSuccess = require('../response/ResponseSuccess')
 const ResponseError = require('../response/ResponseError')
 
-router.get('/detail-with-title', (req, res, next) => {
+const DatabaseTableName = 'wubi_dict'
+
+router.get('/pull', (req, res, next) => {
     let sqlArray = []
-    sqlArray.push(`select * from diaries where title = '${req.query.title}'`)
+    sqlArray.push(`select * from ${DatabaseTableName} where title = '${req.query.title}' & uid='${req.query.uid}'`)
     // 1. 先查询出日记结果
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
@@ -28,11 +30,11 @@ router.get('/detail-with-title', (req, res, next) => {
                             utility.updateUserLastLoginTime(req.query.email)
                             res.send(new ResponseSuccess(data))
                         } else {
-                            res.send(new ResponseError('当前用户无权查看该日记：请求用户 ID 与日记归属不匹配'))
+                            res.send(new ResponseError('','当前用户无权查看该日记：请求用户 ID 与日记归属不匹配'))
                         }
                     })
                     .catch(unverified => {
-                        res.send(new ResponseError('当前用户无权查看该日记：用户信息错误'))
+                        res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
                     })
             }
         })
@@ -42,80 +44,73 @@ router.get('/detail-with-title', (req, res, next) => {
 })
 
 
-router.post('/add', (req, res, next) => {
+router.put('/push', (req, res, next) => {
     let sqlArray = []
     let parsedTitle = utility.unicodeEncode(req.body.title) // !
     let parsedContent = utility.unicodeEncode(req.body.content) || ''
     let timeNow = utility.dateFormatter(new Date())
 
-    sqlArray.push(`
-        INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
-        VALUES(
-            '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-            '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic || 0}')`
-    )
 
-    utility.getDataFromDB(sqlArray)
-        .then(data => {
-            utility.updateUserLastLoginTime(req.body.email)
-            res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+    // 1. 是否属于系统中的程序
+    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+        .then(verified => {
+
+            // 2. 检测是否存在内容
+            let sqlArray = [`select * from ${DatabaseTableName} where title='${parsedTitle}' and uid='${req.body.uid}'`]
+            return utility.getDataFromDB(sqlArray)
+                .then(existData => {
+                    console.log(existData)
+                    if (existData.length > 0) {
+                        // update content
+                        let sqlArray = []
+                        sqlArray.push(`
+                                update ${DatabaseTableName}
+                                    set
+                                        diaries.title='${parsedTitle}',
+                                        diaries.content='${parsedContent}',
+                                        diaries.date_update='${timeNow}',
+                                    WHERE title='${req.body.title}' and uid='${req.body.uid}'
+                            `)
+
+                        utility.getDataFromDB(sqlArray, true)
+                            .then(data => {
+                                utility.updateUserLastLoginTime(req.body.email)
+                                res.send(new ResponseSuccess(data, '修改成功'))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err.message, '修改失败'))
+                            })
+
+                    } else {
+                        // insert content
+                        let sqlArray = []
+                        sqlArray.push(`
+                            INSERT into ${DatabaseTableName}(title, content, date_init, date_update, comment, uid)
+                            VALUES( '${parsedTitle}','${parsedContent}','${timeNow}','${timeNow}','','${req.body.uid}')`
+                        )
+
+                        utility.getDataFromDB(sqlArray)
+                            .then(data => {
+                                utility.updateUserLastLoginTime(req.body.email)
+                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err.message, '添加失败'))
+                            })
+                    }
+                })
+                .catch(err => {
+
+                })
+
         })
-        .catch(err => {
-            res.send(new ResponseError(err.message, '添加失败'))
+        .catch(unverified => {
+            res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
         })
+
+
 })
 
-router.put('/modify', (req, res, next) => {
-    let parsedTitle = utility.unicodeEncode(req.body.title) // !
-    let parsedContent = utility.unicodeEncode(req.body.content) || ''
-    let timeNow = utility.dateFormatter(new Date())
-
-    let sqlArray = []
-    sqlArray.push(`
-        update diaries
-            set
-                diaries.date_modify='${timeNow}',
-                diaries.date='${req.body.date}',
-                diaries.category='${req.body.category}',
-                diaries.title='${parsedTitle}',
-                diaries.content='${parsedContent}',
-                diaries.weather='${req.body.weather}',
-                diaries.temperature='${req.body.temperature}',
-                diaries.temperature_outside='${req.body.temperatureOutside}',
-                diaries.is_public='${req.body.isPublic}'
-            WHERE id='${req.body.id}' and uid='${req.body.uid}'
-    `)
-
-    utility.getDataFromDB(sqlArray, true)
-        .then(data => {
-            utility.updateUserLastLoginTime(req.body.email)
-            res.send(new ResponseSuccess(data, '修改成功'))
-        })
-        .catch(err => {
-            res.send(new ResponseError(err.message, '修改失败'))
-        })
-})
-
-router.delete('/delete', (req, res, next) => {
-    let sqlArray = []
-    sqlArray.push(`
-        DELETE from diaries
-        WHERE id='${req.query.diaryId}'
-        and uid='${req.query.uid}'
-    `)
-    utility.getDataFromDB(sqlArray)
-        .then(data => {
-            if (data.affectedRows > 0) {
-                utility.updateUserLastLoginTime(req.body.email)
-                res.send(new ResponseSuccess('', '删除成功'))
-            } else {
-                res.send(new ResponseError('', '删除失败'))
-            }
-        })
-        .catch(err => {
-            res.send(new ResponseError(err.message))
-        })
-})
 
 
 module.exports = router
