@@ -11,7 +11,7 @@ router.get('/pull', (req, res, next) => {
     utility.verifyAuthorization(req.query.uid, req.query.email, req.query.password)
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
-            // 1. 先查询出日记结果
+            // 1. 先查询出码表结果
             utility.getDataFromDB(sqlArray)
                 .then(result => {
                     if (result.length > 0){
@@ -31,7 +31,7 @@ router.get('/pull', (req, res, next) => {
                 })
         })
         .catch(unverified => {
-            res.send(new ResponseError('', '当前用户无权查看该日记：用户信息错误'))
+            res.send(new ResponseError('', '当前用户无权查看该码表：用户信息错误'))
         })
 })
 
@@ -66,10 +66,10 @@ router.put('/push', (req, res, next) => {
                         utility.getDataFromDB(sqlArray, true)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.body.email)
-                                res.send(new ResponseSuccess(data, '修改成功'))
+                                res.send(new ResponseSuccess(data, '同步成功'))
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message, '修改失败'))
+                                res.send(new ResponseError(err.message, '同步失败'))
                             })
 
                     } else {
@@ -83,10 +83,10 @@ router.put('/push', (req, res, next) => {
                         utility.getDataFromDB(sqlArray)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.body.email)
-                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+                                res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message, '添加失败'))
+                                res.send(new ResponseError(err.message, '上传失败'))
                             })
                     }
                 })
@@ -95,7 +95,7 @@ router.put('/push', (req, res, next) => {
                 })
         })
         .catch(unverified => {
-            res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
+            res.send(new ResponseError('','当前用户无权查看该码表：用户信息错误'))
         })
 })
 
