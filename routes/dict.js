@@ -12,14 +12,19 @@ router.get('/pull', (req, res, next) => {
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
             // 1. 先查询出日记结果
-            utility.getDataFromDB(sqlArray, true)
-                .then(data => {
-                    // decode unicode
-                    data.title = utility.unicodeDecode(data.title)
-                    data.content = utility.unicodeDecode(data.content)
-                    // 记录最后访问时间
-                    utility.updateUserLastLoginTime(req.query.email)
-                    res.send(new ResponseSuccess(data))
+            utility.getDataFromDB(sqlArray)
+                .then(result => {
+                    if (result.length > 0){
+                        let data = result[0]
+                        // decode unicode
+                        data.title = utility.unicodeDecode(data.title)
+                        data.content = utility.unicodeDecode(data.content)
+                        // 记录最后访问时间
+                        utility.updateUserLastLoginTime(req.query.email)
+                        res.send(new ResponseSuccess(data))
+                    } else {
+                        res.send(new ResponseSuccess('','不存在词库'))
+                    }
                 })
                 .catch(err => {
                     res.send(new ResponseError(err.message))
