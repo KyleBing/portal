@@ -7,9 +7,8 @@ const ResponseError = require('../response/ResponseError')
 const DatabaseTableName = 'wubi_dict'
 
 router.get('/pull', (req, res, next) => {
-
     // 1. 是否属于系统中的用户
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.password)
+    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.password)
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
             // 1. 先查询出日记结果
@@ -27,10 +26,8 @@ router.get('/pull', (req, res, next) => {
                 })
         })
         .catch(unverified => {
-            res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
+            res.send(new ResponseError('', '当前用户无权查看该日记：用户信息错误'))
         })
-
-
 })
 
 
