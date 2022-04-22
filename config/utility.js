@@ -26,13 +26,15 @@ function getDataFromDB(sqlArray, isSingleValue) {
 }
 
 // 验证用户是否有权限
-function verifyAuthorization(uid, email, token){
+function verifyAuthorization(uid, email, password){
     let sqlArray = []
     sqlArray.push(`select * from users where uid = ${uid}`)
+    console.log('sqlArray: ',sqlArray)
     return new Promise((resolve, reject) => {
         getDataFromDB(sqlArray, true)
             .then(data => {
-                if (data.password === token){
+                console.log('sqlResult: ', data.password, password)
+                if (data.password === password){
                     resolve(true)
                 } else {
                     reject (false)
