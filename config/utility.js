@@ -35,7 +35,7 @@ function verifyAuthorization(uid, email, password){
             .then(data => {
                 console.log('sqlResult: ', data.password, password)
                 if (data.password === password){
-                    resolve(true)
+                    resolve(data) // 如果查询成功，返回查询结果
                 } else {
                     reject (false)
                 }
