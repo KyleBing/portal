@@ -66,10 +66,10 @@ router.put('/push', (req, res, next) => {
                         utility.getDataFromDB(sqlArray, true)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.body.email)
-                                res.send(new ResponseSuccess(data, '同步成功'))
+                                res.send(new ResponseSuccess(data, '上传成功'))
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message, '同步失败'))
+                                res.send(new ResponseError(err.message, '上传失败'))
                             })
 
                     } else {
