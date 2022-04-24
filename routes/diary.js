@@ -176,7 +176,7 @@ router.put('/modify', (req, res, next) => {
 
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
