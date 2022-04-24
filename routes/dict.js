@@ -16,9 +16,6 @@ router.get('/pull', (req, res, next) => {
                 .then(result => {
                     if (result.length > 0){
                         let data = result[0]
-                        // decode unicode
-                        data.title = utility.unicodeDecode(data.title)
-                        data.content = utility.unicodeDecode(data.content)
                         // 记录最后访问时间
                         utility.updateUserLastLoginTime(req.query.email)
                         res.send(new ResponseSuccess(data))
@@ -38,8 +35,6 @@ router.get('/pull', (req, res, next) => {
 
 router.put('/push', (req, res, next) => {
     let sqlArray = []
-    let parsedTitle = utility.unicodeEncode(req.body.title) // !
-    let parsedContent = utility.unicodeEncode(req.body.content) || ''
     let timeNow = utility.dateFormatter(new Date())
 
     // 1. 是否属于系统中的用户
@@ -47,7 +42,7 @@ router.put('/push', (req, res, next) => {
         .then(verified => {
 
             // 2. 检测是否存在内容
-            let sqlArray = [`select * from ${DatabaseTableName} where title='${parsedTitle}' and uid='${req.body.uid}'`]
+            let sqlArray = [`select * from ${DatabaseTableName} where title='${req.body.title}' and uid='${req.body.uid}'`]
             return utility.getDataFromDB(sqlArray)
                 .then(existData => {
                     console.log(existData)
@@ -57,10 +52,10 @@ router.put('/push', (req, res, next) => {
                         sqlArray.push(`
                                 update ${DatabaseTableName}
                                     set
-                                       title='${parsedTitle}',
-                                       content='${parsedContent}',
+                                       title='${req.body.title}',
+                                       content='${req.body.content}',
                                        date_update='${timeNow}'
-                                    WHERE title='${parsedTitle}' and uid='${req.body.uid}'
+                                    WHERE title='${req.body.title}' and uid='${req.body.uid}'
                             `)
 
                         utility.getDataFromDB(sqlArray, true)
