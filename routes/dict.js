@@ -16,6 +16,7 @@ router.get('/pull', (req, res, next) => {
                 .then(result => {
                     if (result.length > 0){
                         let data = result[0]
+                        data.title = utility.unicodeDecode(data.title)
                         // 记录最后访问时间
                         utility.updateUserLastLoginTime(req.query.email)
                         res.send(new ResponseSuccess(data))
@@ -40,9 +41,10 @@ router.put('/push', (req, res, next) => {
     // 1. 是否属于系统中的用户
     utility.verifyAuthorization(req.body.uid, req.body.email, req.body.password)
         .then(verified => {
+            let encodedTitle = utility.unicodeEncode(req.body.title) // encode 是因为，文件名中可能包含 emoji
 
             // 2. 检测是否存在内容
-            let sqlArray = [`select * from ${DatabaseTableName} where title='${req.body.title}' and uid='${req.body.uid}'`]
+            let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${req.body.uid}'`]
             return utility.getDataFromDB(sqlArray)
                 .then(existData => {
                     console.log(existData)
@@ -52,10 +54,10 @@ router.put('/push', (req, res, next) => {
                         sqlArray.push(`
                                 update ${DatabaseTableName}
                                     set
-                                       title='${req.body.title}',
+                                       title='${encodedTitle}',
                                        content='${req.body.content}',
                                        date_update='${timeNow}'
-                                    WHERE title='${req.body.title}' and uid='${req.body.uid}'
+                                    WHERE title='${encodedTitle}' and uid='${req.body.uid}'
                             `)
 
                         utility.getDataFromDB(sqlArray, true)
@@ -72,7 +74,7 @@ router.put('/push', (req, res, next) => {
                         let sqlArray = []
                         sqlArray.push(`
                             INSERT into ${DatabaseTableName}(title, content, date_init, date_update, comment, uid)
-                            VALUES( '${parsedTitle}','${parsedContent}','${timeNow}','${timeNow}','','${req.body.uid}')`
+                            VALUES( '${encodedTitle}','${req.body.content}','${timeNow}','${timeNow}','','${req.body.uid}')`
                         )
 
                         utility.getDataFromDB(sqlArray)
