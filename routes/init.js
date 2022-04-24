@@ -108,15 +108,17 @@ CREATE TABLE \`users\`  (
 DROP TABLE IF EXISTS \`wubi_dict\`;
 CREATE TABLE \`wubi_dict\`  (
   \`id\` int(11) NOT NULL AUTO_INCREMENT,
-  \`title\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '码表名',
-  \`content\` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '码表内容',
+  \`title\` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '码表名',
+  \`content\` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '码表内容',
+  \`content_size\` int(6) NULL DEFAULT NULL COMMENT '码表内容字数',
+  \`word_count\` int(6) NULL DEFAULT NULL COMMENT '码表内容的词条数',
   \`date_init\` datetime(0) NOT NULL COMMENT '首次上传时间',
   \`date_update\` datetime(0) NULL DEFAULT NULL COMMENT '最后同步时间',
-  \`comment\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '注释',
+  \`comment\` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '注释',
   \`uid\` int(11) NULL DEFAULT NULL COMMENT '所属用户',
   PRIMARY KEY (\`id\`, \`title\`) USING BTREE,
   INDEX \`uid\`(\`uid\`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 24 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 37 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
 
 SET FOREIGN_KEY_CHECKS = 1;

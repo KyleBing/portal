@@ -35,7 +35,6 @@ router.get('/pull', (req, res, next) => {
 
 
 router.put('/push', (req, res, next) => {
-    let sqlArray = []
     let timeNow = utility.dateFormatter(new Date())
 
     // 1. 是否属于系统中的用户
@@ -56,6 +55,8 @@ router.put('/push', (req, res, next) => {
                                     set
                                        title='${encodedTitle}',
                                        content='${req.body.content}',
+                                       content_size='${req.body.contentSize}',
+                                       word_count='${req.body.wordCount}',
                                        date_update='${timeNow}'
                                     WHERE title='${encodedTitle}' and uid='${req.body.uid}'
                             `)
@@ -73,8 +74,8 @@ router.put('/push', (req, res, next) => {
                         // insert content
                         let sqlArray = []
                         sqlArray.push(`
-                            INSERT into ${DatabaseTableName}(title, content, date_init, date_update, comment, uid)
-                            VALUES( '${encodedTitle}','${req.body.content}','${timeNow}','${timeNow}','','${req.body.uid}')`
+                            INSERT into ${DatabaseTableName}(title, content, content_size, word_count, date_init, date_update, comment, uid)
+                            VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${req.body.uid}')`
                         )
 
                         utility.getDataFromDB(sqlArray)
