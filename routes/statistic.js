@@ -30,7 +30,6 @@ router.get('/category', (req, res, next) => {
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             res.send(new ResponseSuccess(data))
-            updateUsersDataCount()
         })
         .catch(err => {
             res.send(new ResponseError(err.message))
