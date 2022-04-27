@@ -91,16 +91,18 @@ CREATE TABLE \`diaries\`  (
 -- Table structure for users
 -- ----------------------------
 DROP TABLE IF EXISTS \`users\`;
-CREATE TABLE \`users\`  (
+CREATE TABLE \`users\` (
   \`uid\` int(11) NOT NULL AUTO_INCREMENT,
-  \`email\` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  \`password\` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  \`last_visit_time\` datetime(0) NULL DEFAULT NULL,
-  \`username\` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  \`register_time\` datetime(0) NULL DEFAULT NULL,
-  \`comment\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  PRIMARY KEY (\`uid\`, \`email\`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
+  \`email\` varchar(50) NOT NULL,
+  \`password\` varchar(100) NOT NULL,
+  \`last_visit_time\` datetime DEFAULT NULL,
+  \`username\` varchar(50) DEFAULT NULL,
+  \`register_time\` datetime DEFAULT NULL,
+  \`comment\` varchar(255) DEFAULT NULL,
+  \`count_diary\` int(6) DEFAULT NULL,
+  \`count_dict\` int(6) DEFAULT NULL,
+  PRIMARY KEY (\`uid\`,\`email\`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
 
 -- ----------------------------
 -- Table structure for wubi_dict
