@@ -110,7 +110,7 @@ location /diary-portal/ {
 
 ### 1. 接口记录
 
-- [ ] 数据库初始化
+- [x] 数据库初始化 `/diary/init`
 
 - [x] 日记操作
   - [x] 列表 / 搜索 `/diary/list`
@@ -124,6 +124,12 @@ location /diary-portal/ {
   - [x] 登录 `/user/login`
   - [x] 修改密码 `/user/change-password` 
   - [x] 记录最近一次操作时间
+
+- [x] 统计信息
+  - [x] 根据日记类别统计 `/statistic/category`
+  - [x] 根据年月统计 `/statistic/year`
+
+- [x] 更新用户日记和码表数量统计 `/update/count`
 
 - [x] 数据库相关操作
   - [x] 转义 emoji

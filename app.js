@@ -4,12 +4,13 @@ const path = require('path')
 const cookieParser = require('cookie-parser')
 const logger = require('morgan')
 
-let init = require('./routes/init')
-let indexRouter = require('./routes/index')
-let usersRouter = require('./routes/user')
-let diaryRouter = require('./routes/diary')
+let init                 = require('./routes/init')
+let indexRouter          = require('./routes/index')
+let usersRouter          = require('./routes/user')
+let diaryRouter          = require('./routes/diary')
 let diaryStatisticRouter = require('./routes/statistic')
-let dictRouter = require('./routes/dict')
+let dictRouter           = require('./routes/dict')
+let updateRouter         = require('./routes/update')
 
 const app = express()
 
@@ -29,6 +30,7 @@ app.use('/init',      init)
 app.use('/user',      usersRouter)
 app.use('/diary',     diaryRouter)
 app.use('/statistic', diaryStatisticRouter)
+app.use('/update',    updateRouter)
 
 app.use('/dict',     dictRouter) // 词库保存
 
