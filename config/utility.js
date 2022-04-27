@@ -9,7 +9,7 @@ function getDataFromDB(sqlArray, isSingleValue) {
         console.log('---- SQL', sqlArray.join(' '))
 
         connection.query(sqlArray.join(' '), [], function (err, result) {
-            console.log('result: ', result)
+            // console.log('result: ', result)
             if (err) {
                 console.log('数据库请求错误', err.message)
                 reject(err)
