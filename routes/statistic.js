@@ -3,8 +3,9 @@ const router = express.Router()
 const utility = require('../config/utility')
 const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
+const configDatabase = require("../config/configDatabase")
 
-
+// 类别数据
 router.get('/category', (req, res, next) => {
     if(!req.query.uid || !req.query.token){
         res.send(new ResponseError('参数错误：uid 未定义'))
@@ -36,6 +37,7 @@ router.get('/category', (req, res, next) => {
         })
 })
 
+// 年份月份数据
 router.get('/year', (req, res, next) => {
     if(!req.query.uid || !req.query.token){
         res.send(new ResponseError('参数错误：uid 未定义'))
@@ -73,6 +75,39 @@ router.get('/year', (req, res, next) => {
             })
             response.sort((a, b) => a.year < b.year ? 1 : -1)
             res.send(new ResponseSuccess(response))
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, err.message))
+        })
+})
+
+// 用户统计信息
+router.get('/users', (req, res, next) => {
+    if(!req.query.uid || !req.query.token){
+        res.send(new ResponseError('参数错误：uid 未定义'))
+        return
+    }
+
+    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+        .then(verified => {
+            if (req.query.email === configDatabase.adminCount) {
+                let sqlArray = []
+                sqlArray.push(`
+                select uid, email, last_visit_time, username, register_time, count_diary, count_dict
+                from users
+            `)
+
+                utility.getDataFromDB(sqlArray)
+                    .then(data => {
+                        res.send(new ResponseSuccess(data))
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err.message))
+                    })
+            } else {
+                res.send(new ResponseError('', '没有权限查看此信息'))
+            }
+
         })
         .catch(err => {
             res.send(new ResponseError(err, err.message))

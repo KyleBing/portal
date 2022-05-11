@@ -40,9 +40,11 @@ function verifyAuthorization(uid, email, password){
                     reject (false)
                 }
             })
-            .catch(err => { reject(false) })
+            .catch(err => {
+                console.log('验证权限失败', err, err.message)
+                reject(false)
+            })
     })
-
 }
 
 
