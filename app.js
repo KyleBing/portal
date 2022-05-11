@@ -10,7 +10,6 @@ let usersRouter          = require('./routes/user')
 let diaryRouter          = require('./routes/diary')
 let diaryStatisticRouter = require('./routes/statistic')
 let dictRouter           = require('./routes/dict')
-let updateRouter         = require('./routes/update')
 
 const app = express()
 
@@ -30,7 +29,6 @@ app.use('/init',      init)
 app.use('/user',      usersRouter)
 app.use('/diary',     diaryRouter)
 app.use('/statistic', diaryStatisticRouter)
-app.use('/update',    updateRouter)
 
 app.use('/dict',     dictRouter) // 词库保存
 

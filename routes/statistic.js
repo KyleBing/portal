@@ -88,31 +88,61 @@ router.get('/users', (req, res, next) => {
         return
     }
 
-    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
-        .then(verified => {
-            if (req.query.email === configDatabase.adminCount) {
-                let sqlArray = []
-                sqlArray.push(`
+    updateUsersInfo()
+        .then(()=> {
+            utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+                .then(verified => {
+                    if (req.query.email === configDatabase.adminCount) {
+                        let sqlArray = []
+                        sqlArray.push(`
                 select uid, email, last_visit_time, username, register_time, count_diary, count_dict
                 from users
             `)
 
-                utility.getDataFromDB(sqlArray)
-                    .then(data => {
-                        res.send(new ResponseSuccess(data))
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err.message))
-                    })
-            } else {
-                res.send(new ResponseError('', '没有权限查看此信息'))
-            }
+                        utility.getDataFromDB(sqlArray)
+                            .then(data => {
+                                res.send(new ResponseSuccess(data))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err.message))
+                            })
+                    } else {
+                        res.send(new ResponseError('', '没有权限查看此信息'))
+                    }
 
-        })
-        .catch(err => {
-            res.send(new ResponseError(err, err.message))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
         })
 })
 
+// 更新所有用户统计数据
+function updateUsersInfo(){
+    return new Promise((resolve, reject) => {
+        utility.getDataFromDB([`select * from users`])
+            .then(data => {
+                let sqlArray = []
+                data.forEach(user => {
+                    sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
+                    sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
+
+                })
+                utility.getDataFromDB(sqlArray, true)
+                    .then(data => {
+                        console.log(`success: user's count diary|dict has updated`)
+                        resolve()
+                    })
+                    .catch(err => {
+                        console.log(`error:  user count diary|dict update`)
+                        reject()
+                    })
+            })
+            .catch(err => {
+                console.log('error: get users info')
+                reject()
+            })
+    })
+}
 
 module.exports = router
