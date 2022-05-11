@@ -130,7 +130,7 @@ location /diary-portal/ {
   - [x] 根据日记类别统计 `/statistic/category`
   - [x] 根据年月统计 `/statistic/year`
 
-- [x] 更新用户日记和码表数量统计 `/update/count`
+- [x] 银行卡信息 `/bank-card`
 
 - [x] 数据库相关操作
   - [x] 转义 emoji
