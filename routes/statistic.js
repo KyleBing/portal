@@ -73,7 +73,7 @@ router.get('/year', (req, res, next) => {
                     })
                 }
             })
-            response.sort((a, b) => a.year < b.year ? 1 : -1)
+            response.sort((a, b) => a.year > b.year ? 1 : -1)
             res.send(new ResponseSuccess(response))
         })
         .catch(err => {
