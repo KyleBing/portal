@@ -11,6 +11,7 @@ let diaryRouter          = require('./routes/diary')
 let diaryStatisticRouter = require('./routes/statistic')
 let dictRouter           = require('./routes/dict')
 let bankCardRouter       = require('./routes/bankCard')
+let billRouter           = require('./routes/bill')
 
 const app = express()
 
@@ -33,6 +34,7 @@ app.use('/statistic', diaryStatisticRouter)
 
 app.use('/dict',          dictRouter) // 词库保存
 app.use('/bank-card',     bankCardRouter) // 银行卡列表
+app.use('/bill',          billRouter) // 账单
 
 
 
