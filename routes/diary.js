@@ -41,9 +41,9 @@ router.get('/list', (req, res, next) => {
             }
 
             // date range
-            if (req.query.dateRange){
-                let year = req.query.dateRange.substring(0,4)
-                let month = req.query.dateRange.substring(4,6)
+            if (req.query.dateFilter){
+                let year = req.query.dateFilter.substring(0,4)
+                let month = req.query.dateFilter.substring(4,6)
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
 
