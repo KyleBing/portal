@@ -113,6 +113,7 @@ router.post('/add', (req, res, next) => {
             // 2. 检查 Hash 是否存在
             checkHashExist(req.body.hash)
                 .then(existLogs => {
+                    console.log(existLogs)
                     if (existLogs.length > 0) {
                         // 2.1 已存在名为 hash 的记录
                         res.send(new ResponseError('', `已存在名为 ${req.body.hash} 的记录`))
@@ -167,7 +168,7 @@ router.post('/add', (req, res, next) => {
 // 检查用户名或邮箱是否存在
 function checkHashExist(hash){
     let sqlArray = []
-    sqlArray.push(`select * from qrs where hash='${hash}'`)
+    sqlArray.push(`select * from qrs where hash='${hash.toLowerCase()}'`)
     return utility.getDataFromDB(sqlArray)
 }
 
