@@ -8,27 +8,37 @@ const bcrypt = require('bcrypt')
 
 /* GET users listing. */
 router.post('/register', (req, res, next) => {
+    // TODO: 验证传过来的数据库必填项
     // 判断邀请码是否正确
     if (req.body.invitation && req.body.invitation === configOfDatabase.invitation){
-        checkEmailExist(req.body.email)
+        checkEmailOrUserNameExist(req.body.email, req.body.username)
             .then(dataEmailExistArray => {
                 // email 记录是否已经存在
                 if (dataEmailExistArray.length > 0){
-                    return res.send(new ResponseError('', '该 Email 已被注册'))
+                    return res.send(new ResponseError('', '邮箱或用户名已被注册'))
                 } else {
                     let sqlArray = []
                     let timeNow = utility.dateFormatter(new Date())
                     // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
                     bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
-                        sqlArray.push(`insert into users(email, password, register_time, username) 
-                        VALUES 
-                        (
-                        '${req.body.email}',
-                        '${encryptPassword}',
-                        '${timeNow}',
-                        '${req.body.username}')`
+                        sqlArray.push(
+                            `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
+                                                wx, phone, homepage, gaode, group_id)
+                                    VALUES (
+                                    '${req.body.email}', 
+                                    '${req.body.nickname}', 
+                                    '${req.body.username}', 
+                                    '${encryptPassword}', 
+                                    '${timeNow}',
+                                    '${timeNow}',
+                                    '${req.body.comment}', 
+                                    '${req.body.wx}', 
+                                    '${req.body.phone}', 
+                                    '${req.body.homepage}', 
+                                    '${req.body.gaode}', 
+                                    '${req.body.group_id}'
+                                    )`
                         )
-
                         utility.getDataFromDB(sqlArray)
                             .then(data => {
                                 res.send(new ResponseSuccess('', '注册成功'))
@@ -52,9 +62,10 @@ router.post('/register', (req, res, next) => {
 
 })
 
-function checkEmailExist(email){
+// 检查用户名或邮箱是否存在
+function checkEmailOrUserNameExist(email, username){
     let sqlArray = []
-    sqlArray.push(`select email from users where email='${email}'`)
+    sqlArray.push(`select * from users where email='${email}' or username ='${username}'`)
     return utility.getDataFromDB(sqlArray)
 }
 

@@ -76,6 +76,7 @@ CREATE TABLE \`users\` (
   \`uid\` int(11) NOT NULL AUTO_INCREMENT,
   \`email\` varchar(50) NOT NULL,
   \`nickname\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '昵称',
+  \`username\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '用户名',
   \`password\` varchar(100) NOT NULL COMMENT '密码',
   \`register_time\` datetime DEFAULT NULL COMMENT '注册时间',
   \`last_visit_time\` datetime DEFAULT NULL COMMENT '最后访问时间',
