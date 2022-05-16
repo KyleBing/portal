@@ -20,7 +20,14 @@ router.post('/register', (req, res, next) => {
                     let timeNow = utility.dateFormatter(new Date())
                     // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
                     bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
-                        sqlArray.push(`insert into users(email, password, register_time, username) VALUES ('${req.body.email}','${encryptPassword}','${timeNow}','${req.body.username}')`)
+                        sqlArray.push(`insert into users(email, password, register_time, username) 
+                        VALUES 
+                        (
+                        '${req.body.email}',
+                        '${encryptPassword}',
+                        '${timeNow}',
+                        '${req.body.username}')`
+                        )
 
                         utility.getDataFromDB(sqlArray)
                             .then(data => {

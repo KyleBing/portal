@@ -11,6 +11,23 @@
 > http [http://kylebing.cn:3000/diary/detail?diaryId=5312](http://kylebing.cn:3000/diary/detail?diaryId=5312)
 > https [https://kylebing.cn/diary-portal/diary/detail?diaryId=5312](https://kylebing.cn/diary-portal/diary/detail?diaryId=5312)
 
+### 1. 日记项目
+### 2. 码表项目
+### 3. 二维码项目
+- [x] 数据库初始化 `2022-05-16`
+- [ ] 码表操作
+  - [ ] add
+  - [ ] delete
+  - [ ] modify
+  - [ ] list
+- [ ] 用户操作
+  - [ ] add
+  - [ ] delete
+  - [ ] modify
+  - [ ] list
+
+
+
 ## 二、安装说明
 
 **服务器需要的条件：**
