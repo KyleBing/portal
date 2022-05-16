@@ -36,7 +36,7 @@ router.get('/', (req, res, next) => {
                                     res.send(
                                         '数据库初始化成功：<br>' +
                                         '数据库名： diary<br>' +
-                                        '创建两张表：users、diaries <br>' +
+                                        '创建四张表：users、user_group、diaries、qrs、 <br>' +
                                         '已创建数据库锁定文件： ' + LOCK_FILE_NAME
                                     )
                                 }
@@ -97,12 +97,65 @@ CREATE TABLE \`users\` (
   \`password\` varchar(100) NOT NULL,
   \`last_visit_time\` datetime DEFAULT NULL,
   \`username\` varchar(50) DEFAULT NULL,
+  \`nickname\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '昵称',
   \`register_time\` datetime DEFAULT NULL,
   \`comment\` varchar(255) DEFAULT NULL,
+  \`wx\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '' COMMENT '微信二维码',
+  \`phone\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '手机号',
+  \`homepage\` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '个人主页',
+  \`gaode\` varchar(250) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '高德组队邀请码',
+  \`group_id\` int(11) NOT NULL DEFAULT 2 COMMENT '用户组别ID',
   \`count_diary\` int(6) DEFAULT NULL,
   \`count_dict\` int(6) DEFAULT NULL,
-  PRIMARY KEY (\`uid\`,\`email\`) USING BTREE
+  PRIMARY KEY (\`uid\`,\`email\`) USING BTREE,
+  CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+
 ) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+
+-- ----------------------------
+-- Table structure for user_group
+-- ----------------------------
+DROP TABLE IF EXISTS \`user_group\`;
+CREATE TABLE \`user_group\`  (
+  \`id\` int(11) NOT NULL AUTO_INCREMENT COMMENT '组别ID',
+  \`name\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '组别名称',
+  \`description\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL,
+  PRIMARY KEY (\`id\`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of user_group
+-- ----------------------------
+INSERT INTO \`user_group\` VALUES (1, 'admin', '管理员');
+INSERT INTO \`user_group\` VALUES (2, 'user', '普通成员');
+
+
+-- ----------------------------
+-- Table structure for qrs
+-- ----------------------------
+DROP TABLE IF EXISTS \`qrs\`;
+CREATE TABLE \`qrs\`  (
+  \`hash\` varchar(200) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT 'hash',
+  \`is_public\` int(11) NOT NULL DEFAULT 0 COMMENT '是否启用',
+  \`message\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '挪车说明',
+  \`switch_phone\` int(11) NOT NULL DEFAULT 0 COMMENT '手机号 - 显示开关',
+  \`car\` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '车辆标题',
+  \`car_plate\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '车牌号',
+  \`switch_car\` int(11) NOT NULL DEFAULT 0 COMMENT '车辆 - 显示开关',
+  \`car_desc\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '车辆描述',
+  \`switch_wx\` int(11) NOT NULL DEFAULT 0 COMMENT '微信二维码 - 显示开关',
+  \`description\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '简介',
+  \`switch_homepage\` int(11) NOT NULL DEFAULT 0 COMMENT '个人主页 - 显示开关',
+  \`switch_gaode\` int(11) NOT NULL DEFAULT 0 COMMENT '高德组队邀请码 - 显示开关',
+  \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '最后编辑日期',
+  \`date_init\` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
+  \`visit_count\` int(11) NOT NULL DEFAULT 0 COMMENT '被访问次数',
+  \`owner\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '所属用户 username',
+  PRIMARY KEY (\`hash\`) USING BTREE,
+  INDEX \`username\`(\`owner\`) USING BTREE,
+  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`owner\`) REFERENCES \`user\` (\`email\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = Compact;
+
 
 -- ----------------------------
 -- Table structure for wubi_dict
