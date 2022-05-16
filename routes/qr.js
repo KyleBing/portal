@@ -8,7 +8,7 @@ const ResponseError = require('../response/ResponseError')
 router.get('/list', (req, res, next) => {
     utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
         .then(verified => {
-            let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
+            let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
 
             let sqlArray = []
             sqlArray.push(`SELECT *
@@ -23,21 +23,6 @@ router.get('/list', (req, res, next) => {
                     let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
-            }
-
-            // categories
-            if (req.query.categories){
-                let categories = JSON.parse(req.query.categories)
-                if (categories.length > 0) {
-                    let categoryStrArray = categories.map(category => `category='${category}'`)
-                    let tempString = categoryStrArray.join(' or ')
-                    sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
-                }
-            }
-
-            // share
-            if (req.query.filterShared === '1'){
-                sqlArray.push(' and is_public = 1')
             }
 
             // date range
@@ -65,21 +50,21 @@ router.get('/list', (req, res, next) => {
                 })
         })
         .catch(verified => {
-            res.send(new ResponseError('无权查看日记列表：用户信息错误'))
+            res.send(new ResponseError('无权查看 QR 列表：用户信息错误'))
         })
 })
 
 router.get('/detail', (req, res, next) => {
     let sqlArray = []
-    sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
-    // 1. 先查询出日记结果
+    sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
+    // 1. 先查询出 QR 结果
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
             // decode unicode
-            data.title = utility.unicodeDecode(data.title)
-            data.content = utility.unicodeDecode(data.content)
+            data.message = utility.unicodeDecode(data.message)
+            data.description = utility.unicodeDecode(data.description)
 
-            // 2. 判断是否为共享日记
+            // 2. 判断是否为共享 QR
             if (data.is_public === 1){
                 // 2.1 如果是，直接返回结果，不需要判断任何东西
                 res.send(new ResponseSuccess(data))
@@ -87,22 +72,37 @@ router.get('/detail', (req, res, next) => {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
                 utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
                     .then(verified => {
-                        // 3. 判断日记是否属于当前请求用户
+                        // 3. 判断 QR 是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
                             // 记录最后访问时间
                             utility.updateUserLastLoginTime(req.query.email)
+/*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
+                            if (data.switch_wx){
+                                data.wx = ''
+                            }
+                            if (data.switch_car){
+                                data.car = ''
+                                data.car_desc = ''
+                                data.car_plate = ''
+                            }
+                            if (data.switch_gaode){
+                                data.gaode = ''
+                            }
+                            if (data.switch_homepage){
+                                data.homepage = ''
+                            }*/
                             res.send(new ResponseSuccess(data))
                         } else {
-                            res.send(new ResponseError('','当前用户无权查看该日记：请求用户 ID 与日记归属不匹配'))
+                            res.send(new ResponseError('','当前用户无权查看该 QR ：请求用户 ID 与 QR 归属不匹配'))
                         }
                     })
                     .catch(unverified => {
-                        res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
+                        res.send(new ResponseError('','当前用户无权查看该 QR ：用户信息错误'))
                     })
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err.message))
+            res.send(new ResponseError(err, err.message))
         })
 })
 
@@ -111,29 +111,67 @@ router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
         .then(userInfo => {
-            let sqlArray = []
-            let parsedTitle = utility.unicodeEncode(req.body.title) // !
-            let parsedContent = utility.unicodeEncode(req.body.content) || ''
-            let timeNow = utility.dateFormatter(new Date())
-            sqlArray.push(`
-                    INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
-                    VALUES(
-                        '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic || 0}')`
-            )
-            utility.getDataFromDB(sqlArray)
-                .then(data => {
-                    utility.updateUserLastLoginTime(req.body.email)
-                    res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+            // 2. 检查 Hash 是否存在
+            checkHashExist(req.body.hash)
+                .then(existLogs => {
+                    if (existLogs.length > 0) {
+                        // 2.1 已存在名为 hash 的记录
+                        res.send(new ResponseError('', `已存在名为 ${req.body.hash} 的记录`))
+                    } else {
+                        // 2.2 不存在名为 hash 的记录
+                        let sqlArray = []
+                        let parsedMessage = utility.unicodeEncode(req.body.message) // !
+                        let parsedDescription = utility.unicodeEncode(req.body.description) || ''
+                        let timeNow = utility.dateFormatter(new Date())
+                        sqlArray.push(`
+                           insert into qrs(hash, is_public, switch_phone, message, description, car, car_plate, car_desc, switch_car, switch_wx,
+                           switch_homepage, switch_gaode, date_modify, date_init, visit_count, owner)
+                            values(
+                                '${req.body.hash}',
+                                '${req.body.is_public}',
+                                '${req.body.switch_phone}',
+                                '${parsedMessage}',
+                                '${parsedDescription}',
+                                '${req.body.car}',
+                                '${req.body.car_plate}',
+                                '${req.body.car_desc}',
+                                '${req.body.switch_car}',
+                                '${req.body.switch_wx}',
+                                '${req.body.switch_homepage}',
+                                '${req.body.switch_gaode}',
+                                '${timeNow}',
+                                '${timeNow}',
+                                '${req.body.visit_count}',
+                                '${req.body.uid}')
+                        `)
+                        utility.getDataFromDB(sqlArray)
+                            .then(data => {
+                                utility.updateUserLastLoginTime(req.body.email)
+                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
+                            })
+                            .catch(err => {
+                                console.log(err)
+                                res.send(new ResponseError(err.message, '添加失败'))
+                            })
+                    }
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message, '添加失败'))
-                })
+                    res.send(new ResponseError(err, '查询 hash 记录出错'))
+            })
+
         })
         .catch(err => {
             res.send(new ResponseError(err.message, '无权操作'))
         })
 })
+
+// 检查用户名或邮箱是否存在
+function checkHashExist(hash){
+    let sqlArray = []
+    sqlArray.push(`select * from qrs where hash='${hash}'`)
+    return utility.getDataFromDB(sqlArray)
+}
+
 
 router.put('/modify', (req, res, next) => {
 
@@ -146,17 +184,17 @@ router.put('/modify', (req, res, next) => {
 
             let sqlArray = []
             sqlArray.push(`
-                        update diaries
+                        update qrs
                             set
-                                diaries.date_modify='${timeNow}',
-                                diaries.date='${req.body.date}',
-                                diaries.category='${req.body.category}',
-                                diaries.title='${parsedTitle}',
-                                diaries.content='${parsedContent}',
-                                diaries.weather='${req.body.weather}',
-                                diaries.temperature='${req.body.temperature}',
-                                diaries.temperature_outside='${req.body.temperatureOutside}',
-                                diaries.is_public='${req.body.isPublic}'
+                                qrs.date_modify='${timeNow}',
+                                qrs.date='${req.body.date}',
+                                qrs.category='${req.body.category}',
+                                qrs.title='${parsedTitle}',
+                                qrs.content='${parsedContent}',
+                                qrs.weather='${req.body.weather}',
+                                qrs.temperature='${req.body.temperature}',
+                                qrs.temperature_outside='${req.body.temperatureOutside}',
+                                qrs.is_public='${req.body.isPublic}'
                             WHERE id='${req.body.id}' and uid='${req.body.uid}'
                     `)
 
@@ -180,8 +218,8 @@ router.delete('/delete', (req, res, next) => {
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
-                        DELETE from diaries
-                        WHERE id='${req.query.diaryId}'
+                        DELETE from qrs
+                        WHERE hash='${req.query.hash}'
                         and uid='${req.query.uid}'
                     `)
             utility.getDataFromDB(sqlArray)
