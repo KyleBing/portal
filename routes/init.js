@@ -140,13 +140,13 @@ CREATE TABLE \`qrs\`  (
   \`hash\` varchar(200) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT 'hash',
   \`is_public\` int(11) NOT NULL DEFAULT 0 COMMENT '是否启用',
   \`message\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '挪车说明',
+  \`description\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '简介',
   \`switch_phone\` int(11) NOT NULL DEFAULT 0 COMMENT '手机号 - 显示开关',
   \`car\` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '车辆标题',
   \`car_plate\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '车牌号',
   \`switch_car\` int(11) NOT NULL DEFAULT 0 COMMENT '车辆 - 显示开关',
   \`car_desc\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '车辆描述',
   \`switch_wx\` int(11) NOT NULL DEFAULT 0 COMMENT '微信二维码 - 显示开关',
-  \`description\` varchar(1000) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '简介',
   \`switch_homepage\` int(11) NOT NULL DEFAULT 0 COMMENT '个人主页 - 显示开关',
   \`switch_gaode\` int(11) NOT NULL DEFAULT 0 COMMENT '高德组队邀请码 - 显示开关',
   \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '最后编辑日期',
@@ -155,7 +155,7 @@ CREATE TABLE \`qrs\`  (
   \`owner\` int(6)  NOT NULL COMMENT '所属用户 uid',
   PRIMARY KEY (\`hash\`) USING BTREE,
   INDEX \`username\`(\`owner\`) USING BTREE,
-  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`owner\`) REFERENCES \`user\` (\`email\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`owner\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = Compact;
 
 
