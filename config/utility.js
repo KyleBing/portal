@@ -47,27 +47,6 @@ function verifyAuthorization(uid, email, password){
     })
 }
 
-// 验证用户是否有权限
-function verifyAuthorization(uid, email, password){
-    let sqlArray = []
-    sqlArray.push(`select * from users where uid = ${uid}`)
-    console.log('sqlArray: ',sqlArray)
-    return new Promise((resolve, reject) => {
-        getDataFromDB(sqlArray, true)
-            .then(data => {
-                console.log('sqlResult: ', data.password, password)
-                if (data.password === password){
-                    resolve(data) // 如果查询成功，返回查询结果
-                } else {
-                    reject (false)
-                }
-            })
-            .catch(err => {
-                console.log('验证权限失败', err, err.message)
-                reject(false)
-            })
-    })
-}
 
 
 // 格式化时间，输出字符串

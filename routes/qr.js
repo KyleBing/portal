@@ -126,7 +126,7 @@ router.post('/add', (req, res, next) => {
                            insert into qrs(hash, is_public, switch_phone, message, description, car, car_plate, car_desc, switch_car, switch_wx,
                            switch_homepage, switch_gaode, date_modify, date_init, visit_count, uid)
                             values(
-                                '${req.body.hash}',
+                                '${req.body.hash.toLowerCase()}',
                                 '${req.body.is_public}',
                                 '${req.body.switch_phone}',
                                 '${parsedMessage}',
@@ -185,7 +185,6 @@ router.put('/modify', (req, res, next) => {
             sqlArray.push(`
                         update qrs
                             set
-                                qrs.hash = '${req.body.hash}',
                                 qrs.is_public = '${req.body.is_public}',
                                 qrs.switch_phone = '${req.body.switch_phone}',
                                 qrs.message = '${parsedMessage}',
@@ -198,8 +197,8 @@ router.put('/modify', (req, res, next) => {
                                 qrs.switch_homepage = '${req.body.switch_homepage}',
                                 qrs.switch_gaode = '${req.body.switch_gaode}',
                                 qrs.date_modify = '${timeNow}',
-                                qrs.visit_count = '${req.body.visit_count}',
-                            WHERE id='${req.body.id}' and uid='${req.body.uid}'
+                                qrs.visit_count = '${req.body.visit_count}'
+                            WHERE hash='${req.body.hash}' and uid='${req.body.uid}'
                     `)
 
             utility.getDataFromDB(sqlArray, true)
@@ -220,12 +219,15 @@ router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
         .then(userInfo => {
+
             let sqlArray = []
             sqlArray.push(`
                         DELETE from qrs
                         WHERE hash='${req.query.hash}'
-                        and uid='${req.query.uid}'
                     `)
+            if (userInfo.group_id !== 1){
+                sqlArray.push(` and uid='${req.query.uid}'`) // 当为1管理员时，可以随意操作任意对象
+            }
             utility.getDataFromDB(sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
@@ -238,6 +240,7 @@ router.delete('/delete', (req, res, next) => {
                 .catch(err => {
                     res.send(new ResponseError(err.message))
                 })
+
         })
         .catch(err => {
             res.send(new ResponseError(err.message, '无权操作'))
