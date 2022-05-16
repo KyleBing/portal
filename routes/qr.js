@@ -7,32 +7,31 @@ const ResponseError = require('../response/ResponseError')
 
 router.get('/list', (req, res, next) => {
     utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
-        .then(verified => {
-            let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
-
+        .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`SELECT *
-                  from diaries 
-                  where uid='${req.query.uid}'`)
+                  from qrs 
+                  where owner='${req.query.uid}'`)
+
+            if (userInfo.groupId === 1){
+
+            } else {
+                sqlArray.push([`and owner = ${req.query.uid}`])
+            }
+
 
             // keywords
             if (req.query.keywords){
                 let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray = keywords.map(keyword => `( message like '%${keyword}%' ESCAPE '/'  or description like '%${keyword}%' ESCAPE '/')` )
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
 
-            // date range
-            if (req.query.dateFilter){
-                let year = req.query.dateFilter.substring(0,4)
-                let month = req.query.dateFilter.substring(4,6)
-                sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
-            }
-
-            sqlArray.push(` order by date desc
+            let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
+            sqlArray.push(` order by date_init desc
                   limit ${startPoint}, ${req.query.pageCount}`)
 
             utility.getDataFromDB(sqlArray)
@@ -46,7 +45,7 @@ router.get('/list', (req, res, next) => {
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message))
+                    res.send(new ResponseError(err, err.message))
                 })
         })
         .catch(verified => {
