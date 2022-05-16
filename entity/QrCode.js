@@ -1,5 +1,5 @@
 class QrCode{
-    constructor(hash, is_public, switch_phone, message, car, car_plate, car_desc, switch_car, switch_wx, description, switch_homepage, switch_gaode, date_modify, date_init, visit_count, owner) {
+    constructor(hash, is_public, switch_phone, message, car, car_plate, car_desc, switch_car, switch_wx, description, switch_homepage, switch_gaode, date_modify, date_init, visit_count, uid) {
         this.hash            = hash                         // key: hash*
         this.is_public       = Number(is_public) || 0       // 是否启用*
         this.switch_phone    = Number(switch_phone) || 0    // 手机号 - 显示开关*
@@ -15,7 +15,7 @@ class QrCode{
         this.date_modify     = date_modify                  // 编辑时间*
         this.date_init       = date_init                    // 初始时间*
         this.visit_count     = Number(visit_count) || 0     // 被访问次数*
-        this.owner           = owner                        // 所属用户的 uid*
+        this.uid           = uid                        // 所属用户的 uid*
     }
 }
 

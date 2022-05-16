@@ -152,10 +152,10 @@ CREATE TABLE \`qrs\`  (
   \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '最后编辑日期',
   \`date_init\` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
   \`visit_count\` int(11) NOT NULL DEFAULT 0 COMMENT '被访问次数',
-  \`owner\` int(6)  NOT NULL COMMENT '所属用户 uid',
+  \`uid\` int(6)  NOT NULL COMMENT '所属用户 uid',
   PRIMARY KEY (\`hash\`) USING BTREE,
-  INDEX \`username\`(\`owner\`) USING BTREE,
-  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`owner\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  INDEX \`username\`(\`uid\`) USING BTREE,
+  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_bin ROW_FORMAT = Compact;
 
 

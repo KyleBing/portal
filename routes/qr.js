@@ -11,12 +11,12 @@ router.get('/list', (req, res, next) => {
             let sqlArray = []
             sqlArray.push(`SELECT *
                   from qrs 
-                  where owner='${req.query.uid}'`)
+                  where uid='${req.query.uid}'`)
 
             if (userInfo.groupId === 1){
 
             } else {
-                sqlArray.push([`and owner = ${req.query.uid}`])
+                sqlArray.push([`and uid = ${req.query.uid}`])
             }
 
 
@@ -124,7 +124,7 @@ router.post('/add', (req, res, next) => {
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
                            insert into qrs(hash, is_public, switch_phone, message, description, car, car_plate, car_desc, switch_car, switch_wx,
-                           switch_homepage, switch_gaode, date_modify, date_init, visit_count, owner)
+                           switch_homepage, switch_gaode, date_modify, date_init, visit_count, uid)
                             values(
                                 '${req.body.hash}',
                                 '${req.body.is_public}',
@@ -177,23 +177,28 @@ router.put('/modify', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
         .then(userInfo => {
-            let parsedTitle = utility.unicodeEncode(req.body.title) // !
-            let parsedContent = utility.unicodeEncode(req.body.content) || ''
+            let parsedMessage = utility.unicodeEncode(req.body.message) // !
+            let parsedDescription = utility.unicodeEncode(req.body.description) || ''
             let timeNow = utility.dateFormatter(new Date())
 
             let sqlArray = []
             sqlArray.push(`
                         update qrs
                             set
-                                qrs.date_modify='${timeNow}',
-                                qrs.date='${req.body.date}',
-                                qrs.category='${req.body.category}',
-                                qrs.title='${parsedTitle}',
-                                qrs.content='${parsedContent}',
-                                qrs.weather='${req.body.weather}',
-                                qrs.temperature='${req.body.temperature}',
-                                qrs.temperature_outside='${req.body.temperatureOutside}',
-                                qrs.is_public='${req.body.isPublic}'
+                                qrs.hash = '${req.body.hash}',
+                                qrs.is_public = '${req.body.is_public}',
+                                qrs.switch_phone = '${req.body.switch_phone}',
+                                qrs.message = '${parsedMessage}',
+                                qrs.description = '${parsedDescription}',
+                                qrs.car = '${req.body.car}',
+                                qrs.car_plate = '${req.body.car_plate}',
+                                qrs.car_desc = '${req.body.car_desc}',
+                                qrs.switch_car = '${req.body.switch_car}',
+                                qrs.switch_wx = '${req.body.switch_wx}',
+                                qrs.switch_homepage = '${req.body.switch_homepage}',
+                                qrs.switch_gaode = '${req.body.switch_gaode}',
+                                qrs.date_modify = '${timeNow}',
+                                qrs.visit_count = '${req.body.visit_count}',
                             WHERE id='${req.body.id}' and uid='${req.body.uid}'
                     `)
 
