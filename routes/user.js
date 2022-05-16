@@ -31,7 +31,7 @@ router.post('/register', (req, res, next) => {
                                     '${encryptPassword}', 
                                     '${timeNow}',
                                     '${timeNow}',
-                                    '${req.body.comment}', 
+                                    '${req.body.comment || ''}', 
                                     '${req.body.wx}', 
                                     '${req.body.phone}', 
                                     '${req.body.homepage}', 
@@ -90,26 +90,39 @@ router.post('/login', (req, res, next) => {
         })
 })
 
+// 修改密码
 router.put('/change-password', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from users where email = '${req.body.email}'`)
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            if (req.body.passwordOld === data.password){
-                // 执行修改密码的操作
-                let changePasswordSqlArray = [`update users set password = '${req.body.passwordNew}' where email='${req.body.email}'`]
-                utility.getDataFromDB(changePasswordSqlArray)
-                    .then(dataChangePassword => {
-                        utility.updateUserLastLoginTime(req.body.email)
-                        res.send(new ResponseSuccess('', '修改密码成功'))
-                    })
-                    .catch(errChangePassword => {
-                        res.send(new ResponseError('', '修改密码失败'))
-                    })
+            // 1. 如果存在该用户
+            if (data){
+                // 2. 判断加密后的密码是否跟数据库中的 token 一致
+                bcrypt.compare(req.body.passwordOld, data.password, function(err, isPasswordMatch) {
+                    if (isPasswordMatch){
+                        // 3. 加密新密码，执行数据库密码更新操作
+                        bcrypt.hash(req.body.passwordNew, 10, (err, encryptPasswordNew) => {
+                            let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${req.body.email}'`]
+                            utility.getDataFromDB(changePasswordSqlArray)
+                                .then(dataChangePassword => {
+                                    utility.updateUserLastLoginTime(req.body.email)
+                                    res.send(new ResponseSuccess('', '修改密码成功'))
+                                })
+                                .catch(errChangePassword => {
+                                    res.send(new ResponseError('', '修改密码失败'))
+                                })
+                        })
+                    } else {
+                        res.send(new ResponseError('', '原密码错误'))
+                    }
+                })
+
             } else {
-                res.send(new ResponseError('', '用户名或密码错误'))
+                res.send(new ResponseError('', '无此用户'))
             }
+
         })
         .catch(err => {
             res.send(new ResponseError(err.message))
