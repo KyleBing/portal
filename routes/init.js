@@ -23,7 +23,7 @@ router.get('/', (req, res, next) => {
             connection.query(sqlCreation, [], function (err, result) {
                 if (err){
                     console.log('- 1. fail : create db fails, \nwith err info: \n' + err.message)
-                    res.send(new ResponseError(err.message))
+                    res.send(new ResponseError(err, err.message))
                 } else {
                     console.log('- 1. success: create db diary')
                     createTables()

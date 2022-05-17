@@ -8,7 +8,7 @@ const configDatabase = require("../config/configDatabase")
 // 类别数据
 router.get('/category', (req, res, next) => {
     if(!req.query.uid || !req.query.token){
-        res.send(new ResponseError('参数错误：uid 未定义'))
+        res.send(new ResponseError('', '参数错误：uid 未定义'))
         return
     }
     let sqlArray = []
@@ -40,7 +40,7 @@ router.get('/category', (req, res, next) => {
 // 年份月份数据
 router.get('/year', (req, res, next) => {
     if(!req.query.uid || !req.query.token){
-        res.send(new ResponseError('参数错误：uid 未定义'))
+        res.send(new ResponseError('','参数错误：uid 未定义'))
         return
     }
     let yearNow = new Date().getFullYear()
@@ -90,7 +90,7 @@ router.get('/users', (req, res, next) => {
 
     updateUsersInfo()
         .then(()=> {
-            utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+            utility.verifyAuthorization(req)
                 .then(verified => {
                     if (req.query.email === configDatabase.adminCount) {
                         let sqlArray = []
@@ -104,7 +104,7 @@ router.get('/users', (req, res, next) => {
                                 res.send(new ResponseSuccess(data))
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message))
+                                res.send(new ResponseError(err, err.message))
                             })
                     } else {
                         res.send(new ResponseError('', '没有权限查看此信息'))

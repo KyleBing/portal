@@ -6,7 +6,7 @@ const ResponseError = require('../response/ResponseError')
 
 
 router.get('/list', (req, res, next) => {
-    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`SELECT *
@@ -69,7 +69,7 @@ router.get('/detail', (req, res, next) => {
                 res.send(new ResponseSuccess(data))
             } else {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
-                utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+                utility.verifyAuthorization(req)
                     .then(verified => {
                         // 3. 判断 QR 是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
@@ -218,7 +218,7 @@ router.put('/modify', (req, res, next) => {
 
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
 
             let sqlArray = []

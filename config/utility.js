@@ -26,15 +26,15 @@ function getDataFromDB(sqlArray, isSingleValue) {
 }
 
 // 验证用户是否有权限
-function verifyAuthorization(uid, email, password){
+function verifyAuthorization(req){
     let sqlArray = []
-    sqlArray.push(`select * from users where uid = ${uid}`)
+    sqlArray.push(`select * from users where uid = ${req.query.uid}`)
     console.log('sqlArray: ',sqlArray)
     return new Promise((resolve, reject) => {
         getDataFromDB(sqlArray, true)
             .then(data => {
-                console.log('sqlResult: ', data.password, password)
-                if (data.password === password){
+                console.log('sqlResult: ', data.password, req.query.token)
+                if (data.password === req.query.token){
                     resolve(data) // 如果查询成功，返回查询结果
                 } else {
                     reject (false)

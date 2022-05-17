@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
                 data.title = utility.unicodeDecode(data.title || '')
                 data.content = utility.unicodeDecode(data.content || '')
 
-                utility.verifyAuthorization(req.query.uid, req.query.email, req.query.token)
+                utility.verifyAuthorization(req)
                     .then(verified => {
                         // 3. 判断日记是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
@@ -35,7 +35,7 @@ router.get('/', (req, res, next) => {
 
         })
         .catch(err => {
-            res.send(new ResponseError(err.message))
+            res.send(new ResponseError(err, err.message))
         })
 })
 
