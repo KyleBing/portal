@@ -80,7 +80,7 @@ router.get('/list', (req, res, next) => {
                   from users 
                  `)
 
-            if (userInfo.groupId === 1){
+            if (userInfo.group_id === 1){
 
             } else {
                 sqlArray.push([`where uid = ${req.query.uid}`])
@@ -174,7 +174,7 @@ router.get('/detail', (req, res, next) => {
 
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查 Hash 是否存在
             checkHashExist(req.body.hash)
@@ -242,7 +242,7 @@ function checkHashExist(hash){
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             let parsedMessage = utility.unicodeEncode(req.body.message) // !
             let parsedDescription = utility.unicodeEncode(req.body.description) || ''

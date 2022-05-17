@@ -8,7 +8,7 @@ const DatabaseTableName = 'wubi_dict'
 
 router.get('/pull', (req, res, next) => {
     // 1. 是否属于系统中的用户
-    utility.verifyAuthorization(req.query.uid, req.query.email, req.query.password)
+    utility.verifyAuthorization(req)
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
             // 1. 先查询出码表结果
@@ -38,7 +38,7 @@ router.put('/push', (req, res, next) => {
     let timeNow = utility.dateFormatter(new Date())
 
     // 1. 是否属于系统中的用户
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.password)
+    utility.verifyAuthorization(req)
         .then(verified => {
             let encodedTitle = utility.unicodeEncode(req.body.title) // encode 是因为，文件名中可能包含 emoji
 

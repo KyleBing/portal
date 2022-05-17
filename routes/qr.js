@@ -9,14 +9,12 @@ router.get('/list', (req, res, next) => {
     utility.verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            sqlArray.push(`SELECT *
-                  from qrs 
-                  where uid='${req.query.uid}'`)
+            sqlArray.push(`SELECT *  from qrs `)
 
-            if (userInfo.groupId === 1){
+            if (userInfo.group_id === 1){
 
             } else {
-                sqlArray.push([`and uid = ${req.query.uid}`])
+                sqlArray.push([`where uid = ${req.query.uid}`])
             }
 
 
@@ -39,8 +37,8 @@ router.get('/list', (req, res, next) => {
                     utility.updateUserLastLoginTime(req.query.email)
                     data.forEach(diary => {
                         // decode unicode
-                        diary.title = utility.unicodeDecode(diary.title)
-                        diary.content = utility.unicodeDecode(diary.content)
+                        diary.message = utility.unicodeDecode(diary.message)
+                        diary.description = utility.unicodeDecode(diary.description)
                     })
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
@@ -108,7 +106,8 @@ router.get('/detail', (req, res, next) => {
 
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    console.log(req.query)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查 Hash 是否存在
             checkHashExist(req.body.hash)
@@ -142,11 +141,11 @@ router.post('/add', (req, res, next) => {
                                 '${timeNow}',
                                 '${timeNow}',
                                 '${req.body.visit_count}',
-                                '${req.body.uid}')
+                                '${req.query.uid}')
                         `)
                         utility.getDataFromDB(sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(req.body.email)
+                                utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
                             })
                             .catch(err => {
@@ -176,7 +175,7 @@ function checkHashExist(hash){
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             let parsedMessage = utility.unicodeEncode(req.body.message) // !
             let parsedDescription = utility.unicodeEncode(req.body.description) || ''

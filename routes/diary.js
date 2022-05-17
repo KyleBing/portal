@@ -109,7 +109,7 @@ router.get('/detail', (req, res, next) => {
 
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
@@ -138,7 +138,7 @@ router.post('/add', (req, res, next) => {
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req.body.uid, req.body.email, req.body.token)
+    utility.verifyAuthorization(req)
         .then(userInfo => {
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
             let parsedContent = utility.unicodeEncode(req.body.content) || ''
