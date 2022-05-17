@@ -173,68 +173,55 @@ router.get('/detail', (req, res, next) => {
 
 
 router.post('/add', (req, res, next) => {
-    // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
-        .then(userInfo => {
-            // 2. 检查 Hash 是否存在
-            checkHashExist(req.body.hash)
-                .then(existLogs => {
-                    console.log(existLogs)
-                    if (existLogs.length > 0) {
-                        // 2.1 已存在名为 hash 的记录
-                        res.send(new ResponseError('', `已存在名为 ${req.body.hash} 的记录`))
-                    } else {
-                        // 2.2 不存在名为 hash 的记录
-                        let sqlArray = []
-                        let parsedMessage = utility.unicodeEncode(req.body.message) // !
-                        let parsedDescription = utility.unicodeEncode(req.body.description) || ''
-                        let timeNow = utility.dateFormatter(new Date())
-                        sqlArray.push(`
-                           insert into qrs(hash, is_public, switch_phone, message, description, car, car_plate, car_desc, switch_car, switch_wx,
-                           switch_homepage, switch_gaode, date_modify, date_init, visit_count, uid)
-                            values(
-                                '${req.body.hash.toLowerCase()}',
-                                '${req.body.is_public}',
-                                '${req.body.switch_phone}',
-                                '${parsedMessage}',
-                                '${parsedDescription}',
-                                '${req.body.car}',
-                                '${req.body.car_plate}',
-                                '${req.body.car_desc}',
-                                '${req.body.switch_car}',
-                                '${req.body.switch_wx}',
-                                '${req.body.switch_homepage}',
-                                '${req.body.switch_gaode}',
-                                '${timeNow}',
-                                '${timeNow}',
-                                '${req.body.visit_count}',
-                                '${req.body.uid}')
-                        `)
-                        utility.getDataFromDB(sqlArray)
-                            .then(data => {
-                                utility.updateUserLastLoginTime(req.body.email)
-                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
-                            })
-                            .catch(err => {
-                                console.log(err)
-                                res.send(new ResponseError(err.message, '添加失败'))
-                            })
-                    }
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, '查询 hash 记录出错'))
+    checkEmailOrUserNameExist(req.body.email, req.body.username)
+        .then(dataEmailExistArray => {
+            // email 记录是否已经存在
+            if (dataEmailExistArray.length > 0){
+                return res.send(new ResponseError('', '邮箱或用户名已被注册'))
+            } else {
+                let sqlArray = []
+                let timeNow = utility.dateFormatter(new Date())
+                // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
+                bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
+                    sqlArray.push(
+                        `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
+                                                wx, phone, homepage, gaode, group_id)
+                                    VALUES (
+                                    '${req.body.email}', 
+                                    '${req.body.nickname}', 
+                                    '${req.body.username}', 
+                                    '${encryptPassword}', 
+                                    '${timeNow}',
+                                    '${timeNow}',
+                                    '${req.body.comment || ''}', 
+                                    '${req.body.wx}', 
+                                    '${req.body.phone}', 
+                                    '${req.body.homepage}', 
+                                    '${req.body.gaode}', 
+                                    '${req.body.group_id}'
+                                    )`
+                    )
+                    utility.getDataFromDB(sqlArray)
+                        .then(data => {
+                            res.send(new ResponseSuccess('', '用户添加成功'))
+                        })
+                        .catch(err => {
+                            res.send(new ResponseError(err.message, '用户添加失败'))
+                        })
                 })
 
+            }
         })
-        .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+        .catch(errEmailExist => {
+            console.log(errEmailExist)
+            res.send(new ResponseError(errEmailExist, '查询出错'))
         })
 })
 
 // 检查用户名或邮箱是否存在
-function checkHashExist(hash){
+function checkHashExist(username, email){
     let sqlArray = []
-    sqlArray.push(`select * from qrs where hash='${hash.toLowerCase()}'`)
+    sqlArray.push(`select * from users where username ='${username.toLowerCase()}' or email = '${email}'`)
     return utility.getDataFromDB(sqlArray)
 }
 
@@ -244,70 +231,73 @@ router.put('/modify', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility.verifyAuthorization(req)
         .then(userInfo => {
-            let parsedMessage = utility.unicodeEncode(req.body.message) // !
-            let parsedDescription = utility.unicodeEncode(req.body.description) || ''
-            let timeNow = utility.dateFormatter(new Date())
-
-            let sqlArray = []
-            sqlArray.push(`
-                        update qrs
-                            set
-                                qrs.is_public = '${req.body.is_public}',
-                                qrs.switch_phone = '${req.body.switch_phone}',
-                                qrs.message = '${parsedMessage}',
-                                qrs.description = '${parsedDescription}',
-                                qrs.car = '${req.body.car}',
-                                qrs.car_plate = '${req.body.car_plate}',
-                                qrs.car_desc = '${req.body.car_desc}',
-                                qrs.switch_car = '${req.body.switch_car}',
-                                qrs.switch_wx = '${req.body.switch_wx}',
-                                qrs.switch_homepage = '${req.body.switch_homepage}',
-                                qrs.switch_gaode = '${req.body.switch_gaode}',
-                                qrs.date_modify = '${timeNow}',
-                                qrs.visit_count = '${req.body.visit_count}'
-                            WHERE hash='${req.body.hash}' and uid='${req.body.uid}'
-                    `)
-
-            utility.getDataFromDB(sqlArray, true)
-                .then(data => {
-                    utility.updateUserLastLoginTime(req.body.email)
-                    res.send(new ResponseSuccess(data, '修改成功'))
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err.message, '修改失败'))
-                })
+            if (userInfo.group_id === 1) {
+                operateUserInfo(req, res)
+            } else {
+                if (userInfo.uid !== req.body.uid){
+                    res.send(new ResponseError('', '你无权操作该用户信息'))
+                } else {
+                    operateUserInfo(req, res)
+                }
+            }
         })
         .catch(err => {
             res.send(new ResponseError(err.message, '无权操作'))
         })
 })
 
+function operateUserInfo(req, res){
+    let sqlArray = []
+    sqlArray.push(`
+                        update users
+                            set
+                                    users.email = '${req.body.email}', 
+                                    users.nickname = '${req.body.nickname}', 
+                                    users.username = '${req.body.username}', 
+                                    users.comment = '${req.body.comment || ''}', 
+                                    users.wx = '${req.body.wx}', 
+                                    users.phone = '${req.body.phone}', 
+                                    users.homepage = '${req.body.homepage}', 
+                                    users.gaode = '${req.body.gaode}', 
+                                    users.group_id = '${req.body.group_id}'
+                            WHERE uid='${req.body.uid}'
+                    `)
+
+    utility.getDataFromDB(sqlArray, true)
+        .then(data => {
+            utility.updateUserLastLoginTime(req.query.email)
+            res.send(new ResponseSuccess(data, '修改成功'))
+        })
+        .catch(err => {
+            res.send(new ResponseError(err.message, '修改失败'))
+        })
+}
+
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility.verifyAuthorization(req)
         .then(userInfo => {
-
-            let sqlArray = []
-            sqlArray.push(`
-                        DELETE from qrs
-                        WHERE hash='${req.query.hash}'
+            if (userInfo.group_id === 1){
+                let sqlArray = []
+                sqlArray.push(`
+                        DELETE from users
+                        WHERE uid='${req.body.uid}'
                     `)
-            if (userInfo.group_id !== 1){
-                sqlArray.push(` and uid='${req.query.uid}'`) // 当为1管理员时，可以随意操作任意对象
+                utility.getDataFromDB(sqlArray)
+                    .then(data => {
+                        if (data.affectedRows > 0) {
+                            utility.updateUserLastLoginTime(req.body.email)
+                            res.send(new ResponseSuccess('', '删除成功'))
+                        } else {
+                            res.send(new ResponseError('', '删除失败'))
+                        }
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err.message))
+                    })
+            } else {
+                res.send(new ResponseError('', '无权操作'))
             }
-            utility.getDataFromDB(sqlArray)
-                .then(data => {
-                    if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(req.body.email)
-                        res.send(new ResponseSuccess('', '删除成功'))
-                    } else {
-                        res.send(new ResponseError('', '删除失败'))
-                    }
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err.message))
-                })
-
         })
         .catch(err => {
             res.send(new ResponseError(err.message, '无权操作'))

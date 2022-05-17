@@ -19,12 +19,12 @@
   - [ ] add
   - [ ] delete
   - [ ] modify
-  - [ ] list
+  - [x] list `2022-05-17`
 - [ ] 用户操作
   - [ ] add
-  - [ ] delete
+  - [x] delete `2022-05-17`
   - [ ] modify
-  - [ ] list
+  - [x] list `2022-05-17`
 
 
 
