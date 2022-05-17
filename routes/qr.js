@@ -25,6 +25,7 @@ router.get('/list', (req, res, next) => {
                                    qrs.visit_count,
                                    users.phone,
                                    users.wx,
+                                   users.uid,
                                    users.nickname,
                                    users.username
                                         from qrs
@@ -162,7 +163,7 @@ router.post('/add', (req, res, next) => {
                                 '${req.body.switch_gaode}',
                                 '${timeNow}',
                                 '${timeNow}',
-                                '${req.body.visit_count}',
+                                '${req.body.visit_count || 0}',
                                 '${req.query.uid}')
                         `)
                         utility.getDataFromDB(sqlArray)
@@ -219,8 +220,9 @@ router.put('/modify', (req, res, next) => {
                                 qrs.switch_homepage = '${req.body.switch_homepage}',
                                 qrs.switch_gaode = '${req.body.switch_gaode}',
                                 qrs.date_modify = '${timeNow}',
-                                qrs.visit_count = '${req.body.visit_count}'
-                            WHERE hash='${req.body.hash}' and uid='${req.body.uid}'
+                                qrs.visit_count = '${req.body.visit_count}',
+                                qrs.uid = '${req.body.uid}'
+                            WHERE hash='${req.body.hash}'
                     `)
 
             utility.getDataFromDB(sqlArray, true)
@@ -268,6 +270,36 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError(err.message, '无权操作'))
         })
 })
+
+
+router.post('/clear-visit-count', (req, res, next) => {
+    // 1. 验证用户信息是否正确
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            // 2. 是否为管理员
+            if(userInfo.group_id === 1) {
+                let sqlArray = []
+                let timeNow = utility.dateFormatter(new Date())
+                sqlArray.push(` update qrs set visit_count = 0 where hash = '${req.body.hash}' `)
+                utility.getDataFromDB(sqlArray)
+                    .then(data => {
+                        utility.updateUserLastLoginTime(req.query.email)
+                        res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 QR  id
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        res.send(new ResponseError(err.message, '计数清零失败'))
+                    })
+            } else {
+                res.send(new ResponseError('', '无权操作'))
+            }
+
+        })
+        .catch(err => {
+            res.send(new ResponseError(err.message, '无权操作'))
+        })
+})
+
 
 
 module.exports = router

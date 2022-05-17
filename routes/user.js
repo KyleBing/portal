@@ -12,7 +12,7 @@ const bcrypt = require('bcrypt')
 router.post('/register', (req, res, next) => {
     // TODO: 验证传过来的数据库必填项
     // 判断邀请码是否正确
-    if (req.body.invitation && req.body.invitation === configOfDatabase.invitation){
+    if (req.body.invitationCode && req.body.invitationCode === configOfDatabase.invitation){
         checkEmailOrUserNameExist(req.body.email, req.body.username)
             .then(dataEmailExistArray => {
                 // email 记录是否已经存在
@@ -97,8 +97,10 @@ router.get('/list', (req, res, next) => {
                 }
             }
 
-            let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
-            sqlArray.push(`limit ${startPoint}, ${req.query.pageCount}`)
+            if (req.query.pageNo && req.query.pageCount){
+                let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
+                sqlArray.push(`limit ${startPoint}, ${req.query.pageCount}`)
+            }
 
             utility.getDataFromDB(sqlArray)
                 .then(data => {
