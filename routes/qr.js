@@ -247,7 +247,7 @@ router.delete('/delete', (req, res, next) => {
             let sqlArray = []
             sqlArray.push(`
                         DELETE from qrs
-                        WHERE hash='${req.query.hash}'
+                        WHERE hash='${req.body.hash}'
                     `)
             if (userInfo.group_id !== 1){
                 sqlArray.push(` and uid='${req.query.uid}'`) // 当为1管理员时，可以随意操作任意对象
@@ -255,7 +255,7 @@ router.delete('/delete', (req, res, next) => {
             utility.getDataFromDB(sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(req.body.email)
+                        utility.updateUserLastLoginTime(req.query.email)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))
