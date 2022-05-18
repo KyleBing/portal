@@ -102,7 +102,7 @@ router.get('/detail', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err.message))
+            res.send(new ResponseError(err,))
         })
 })
 
@@ -119,19 +119,19 @@ router.post('/add', (req, res, next) => {
                     INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
                     VALUES(
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.body.uid}','${req.body.isPublic || 0}')`
+                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.query.uid}','${req.body.isPublic || 0}')`
             )
             utility.getDataFromDB(sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.body.email)
+                    utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message, '添加失败'))
+                    res.send(new ResponseError(err, '添加失败'))
                 })
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -157,20 +157,20 @@ router.put('/modify', (req, res, next) => {
                                 diaries.temperature='${req.body.temperature}',
                                 diaries.temperature_outside='${req.body.temperatureOutside}',
                                 diaries.is_public='${req.body.isPublic}'
-                            WHERE id='${req.body.id}' and uid='${req.body.uid}'
+                            WHERE id='${req.body.id}' and uid='${req.query.uid}'
                     `)
 
             utility.getDataFromDB(sqlArray, true)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.body.email)
+                    utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess(data, '修改成功'))
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message, '修改失败'))
+                    res.send(new ResponseError(err, '修改失败'))
                 })
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -181,24 +181,24 @@ router.delete('/delete', (req, res, next) => {
             let sqlArray = []
             sqlArray.push(`
                         DELETE from diaries
-                        WHERE id='${req.query.diaryId}'
+                        WHERE id='${req.body.diaryId}'
                         and uid='${req.query.uid}'
                     `)
             utility.getDataFromDB(sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(req.body.email)
+                        utility.updateUserLastLoginTime(req.query.email)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))
                     }
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message))
+                    res.send(new ResponseError(err,))
                 })
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 

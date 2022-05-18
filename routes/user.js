@@ -207,7 +207,7 @@ router.post('/add', (req, res, next) => {
                             res.send(new ResponseSuccess('', '用户添加成功'))
                         })
                         .catch(err => {
-                            res.send(new ResponseError(err.message, '用户添加失败'))
+                            res.send(new ResponseError(err, '用户添加失败'))
                         })
                 })
 
@@ -243,7 +243,7 @@ router.put('/modify', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -270,7 +270,7 @@ function operateUserInfo(req, res){
             res.send(new ResponseSuccess(data, '修改成功'))
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '修改失败'))
+            res.send(new ResponseError(err, '修改失败'))
         })
 }
 
@@ -294,14 +294,14 @@ router.delete('/delete', (req, res, next) => {
                         }
                     })
                     .catch(err => {
-                        res.send(new ResponseError(err.message))
+                        res.send(new ResponseError(err,))
                     })
             } else {
                 res.send(new ResponseError('', '无权操作'))
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -314,17 +314,22 @@ router.post('/login', (req, res, next) => {
 
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
-            bcrypt.compare(req.body.password, data.password, function(err, isPasswordMatch) {
-                if (isPasswordMatch){
-                    utility.updateUserLastLoginTime(req.body.email)
-                    res.send(new ResponseSuccess(data,'登录成功'))
-                } else {
-                    res.send(new ResponseError('','用户名或密码错误'))
-                }
-            })
+            if (data) {
+                bcrypt.compare(req.body.password, data.password, function(err, isPasswordMatch) {
+                    if (isPasswordMatch){
+                        utility.updateUserLastLoginTime(req.body.email)
+                        res.send(new ResponseSuccess(data,'登录成功'))
+                    } else {
+                        res.send(new ResponseError('','用户名或密码错误'))
+                    }
+                })
+            } else {
+                res.send(new ResponseError('', '无此用户'))
+            }
+
         })
         .catch(err => {
-            res.send(new ResponseError(err.message))
+            res.send(new ResponseError('', err.message))
         })
 })
 
@@ -333,7 +338,7 @@ router.put('/change-password', (req, res, next) => {
     utility.verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.password === req.query.token){
-                bcrypt.hash(req.body.passwordNew, 10, (err, encryptPasswordNew) => {
+                bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
                     let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${req.query.email}'`]
                     utility.getDataFromDB(changePasswordSqlArray)
                         .then(dataChangePassword => {

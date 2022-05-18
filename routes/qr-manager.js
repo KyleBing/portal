@@ -173,7 +173,7 @@ router.post('/add', (req, res, next) => {
                             })
                             .catch(err => {
                                 console.log(err)
-                                res.send(new ResponseError(err.message, '添加失败'))
+                                res.send(new ResponseError(err, '添加失败'))
                             })
                     }
                 })
@@ -183,7 +183,7 @@ router.post('/add', (req, res, next) => {
 
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -231,11 +231,11 @@ router.put('/modify', (req, res, next) => {
                     res.send(new ResponseSuccess(data, '修改成功'))
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message, '修改失败'))
+                    res.send(new ResponseError(err, '修改失败'))
                 })
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -262,12 +262,12 @@ router.delete('/delete', (req, res, next) => {
                     }
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message))
+                    res.send(new ResponseError(err,))
                 })
 
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -288,7 +288,7 @@ router.post('/clear-visit-count', (req, res, next) => {
                     })
                     .catch(err => {
                         console.log(err)
-                        res.send(new ResponseError(err.message, '计数清零失败'))
+                        res.send(new ResponseError(err, '计数清零失败'))
                     })
             } else {
                 res.send(new ResponseError('', '无权操作'))
@@ -296,7 +296,7 @@ router.post('/clear-visit-count', (req, res, next) => {
 
         })
         .catch(err => {
-            res.send(new ResponseError(err.message, '无权操作'))
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 

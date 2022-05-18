@@ -25,7 +25,7 @@ router.get('/pull', (req, res, next) => {
                     }
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err.message))
+                    res.send(new ResponseError(err,))
                 })
         })
         .catch(unverified => {
@@ -67,7 +67,7 @@ router.put('/push', (req, res, next) => {
                                 res.send(new ResponseSuccess(data, '上传成功'))
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message, '上传失败'))
+                                res.send(new ResponseError(err, '上传失败'))
                             })
 
                     } else {
@@ -84,7 +84,7 @@ router.put('/push', (req, res, next) => {
                                 res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message, '上传失败'))
+                                res.send(new ResponseError(err, '上传失败'))
                             })
                     }
                 })
