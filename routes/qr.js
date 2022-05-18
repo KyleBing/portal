@@ -37,7 +37,7 @@ router.get('/list', (req, res, next) => {
             if (userInfo.group_id === 1){
 
             } else {
-                sqlArray.push([`where uid = ${req.query.uid}`])
+                sqlArray.push([`where qrs.uid = ${req.query.uid}`])
             }
 
 

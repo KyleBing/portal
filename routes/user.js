@@ -24,6 +24,7 @@ router.post('/register', (req, res, next) => {
                     // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
                     bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
                         sqlArray.push(
+                            // 注册的用户默认为普通用户
                             `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
                                                 wx, phone, homepage, gaode, group_id)
                                     VALUES (
@@ -38,7 +39,7 @@ router.post('/register', (req, res, next) => {
                                     '${req.body.phone}', 
                                     '${req.body.homepage}', 
                                     '${req.body.gaode}', 
-                                    '${req.body.group_id}'
+                                    '2'
                                     )`
                         )
                         utility.getDataFromDB(sqlArray)
@@ -46,7 +47,7 @@ router.post('/register', (req, res, next) => {
                                 res.send(new ResponseSuccess('', '注册成功'))
                             })
                             .catch(err => {
-                                res.send(new ResponseError(err.message, '注册失败'))
+                                res.send(new ResponseError('', '注册失败'))
                             })
                     })
 
@@ -76,9 +77,7 @@ router.get('/list', (req, res, next) => {
     utility.verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            sqlArray.push(`SELECT *
-                  from users 
-                 `)
+            sqlArray.push(`SELECT * from users `)
 
             if (userInfo.group_id === 1){
 
@@ -331,41 +330,26 @@ router.post('/login', (req, res, next) => {
 
 // 修改密码
 router.put('/change-password', (req, res, next) => {
-    let sqlArray = []
-    sqlArray.push(`select * from users where email = '${req.body.email}'`)
-
-    utility.getDataFromDB(sqlArray, true)
-        .then(data => {
-            // 1. 如果存在该用户
-            if (data){
-                // 2. 判断加密后的密码是否跟数据库中的 token 一致
-                bcrypt.compare(req.body.passwordOld, data.password, function(err, isPasswordMatch) {
-                    if (isPasswordMatch){
-                        // 3. 加密新密码，执行数据库密码更新操作
-                        bcrypt.hash(req.body.passwordNew, 10, (err, encryptPasswordNew) => {
-                            let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${req.body.email}'`]
-                            utility.getDataFromDB(changePasswordSqlArray)
-                                .then(dataChangePassword => {
-                                    utility.updateUserLastLoginTime(req.body.email)
-                                    res.send(new ResponseSuccess('', '修改密码成功'))
-                                })
-                                .catch(errChangePassword => {
-                                    res.send(new ResponseError('', '修改密码失败'))
-                                })
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            if (userInfo.password === req.query.token){
+                bcrypt.hash(req.body.passwordNew, 10, (err, encryptPasswordNew) => {
+                    let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${req.query.email}'`]
+                    utility.getDataFromDB(changePasswordSqlArray)
+                        .then(dataChangePassword => {
+                            utility.updateUserLastLoginTime(req.query.email)
+                            res.send(new ResponseSuccess('', '修改密码成功'))
                         })
-                    } else {
-                        res.send(new ResponseError('', '原密码错误'))
-                    }
+                        .catch(errChangePassword => {
+                            res.send(new ResponseError('', '修改密码失败'))
+                        })
                 })
-
-            } else {
-                res.send(new ResponseError('', '无此用户'))
             }
-
         })
         .catch(err => {
-            res.send(new ResponseError(err, err.message))
+            res.send(new ResponseError(err, '无权操作'))
         })
+
 })
 
 
