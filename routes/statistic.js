@@ -7,7 +7,7 @@ const configDatabase = require("../config/configDatabase")
 
 // 统计数据
 router.get('/', (req, res, next) => {
-    if(!req.query.uid || !req.query.token){
+    if (!req.query.uid || !req.query.token) {
         res.send(new ResponseError('', '参数错误：uid 未定义'))
         return
     }
@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
     utility.verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            if (userInfo.group_id === 1){
+            if (userInfo.group_id === 1) {
                 sqlArray.push(`
                         SELECT
                           (SELECT COUNT(*) FROM diaries) as count_diary,
@@ -41,13 +41,13 @@ router.get('/', (req, res, next) => {
                 })
         })
         .catch(err => {
-            res.send(new ResponseError('','用户信息错误'))
+            res.send(new ResponseError('', '用户信息错误'))
         })
 })
 
 // 日记类别数据
 router.get('/category', (req, res, next) => {
-    if(!req.query.uid || !req.query.token){
+    if (!req.query.uid || !req.query.token) {
         res.send(new ResponseError('', '参数错误：uid 未定义'))
         return
     }
@@ -79,13 +79,13 @@ router.get('/category', (req, res, next) => {
 
 // 年份月份数据
 router.get('/year', (req, res, next) => {
-    if(!req.query.uid || !req.query.token){
-        res.send(new ResponseError('','参数错误：uid 未定义'))
+    if (!req.query.uid || !req.query.token) {
+        res.send(new ResponseError('', '参数错误：uid 未定义'))
         return
     }
     let yearNow = new Date().getFullYear()
     let sqlRequests = []
-    for (let year = 1991; year <= yearNow; year ++){
+    for (let year = 1991; year <= yearNow; year++) {
         let sqlArray = []
         sqlArray.push(`
                 select 
@@ -123,21 +123,21 @@ router.get('/year', (req, res, next) => {
 
 // 用户统计信息
 router.get('/users', (req, res, next) => {
-    if(!req.query.uid || !req.query.token){
+    if (!req.query.uid || !req.query.token) {
         res.send(new ResponseError('参数错误：uid 未定义'))
         return
     }
 
     updateUsersInfo()
-        .then(()=> {
+        .then(() => {
             utility.verifyAuthorization(req)
                 .then(verified => {
                     if (req.query.email === configDatabase.adminCount) {
                         let sqlArray = []
                         sqlArray.push(`
-                select uid, email, last_visit_time, username, register_time, count_diary, count_dict
-                from users
-            `)
+                                select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict
+                                from users
+                            `)
 
                         utility.getDataFromDB(sqlArray)
                             .then(data => {
@@ -158,7 +158,7 @@ router.get('/users', (req, res, next) => {
 })
 
 // 更新所有用户统计数据
-function updateUsersInfo(){
+function updateUsersInfo() {
     return new Promise((resolve, reject) => {
         utility.getDataFromDB([`select * from users`])
             .then(data => {
@@ -166,7 +166,6 @@ function updateUsersInfo(){
                 data.forEach(user => {
                     sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
-
                 })
                 utility.getDataFromDB(sqlArray, true)
                     .then(data => {
