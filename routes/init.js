@@ -92,7 +92,7 @@ CREATE TABLE \`users\` (
   PRIMARY KEY (\`uid\`,\`email\`) USING BTREE,
   CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`) ON DELETE RESTRICT ON UPDATE RESTRICT
 
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
 
 -- ----------------------------
 -- Table structure for user_group
@@ -103,7 +103,7 @@ CREATE TABLE \`user_group\`  (
   \`name\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '组别名称',
   \`description\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL,
   PRIMARY KEY (\`id\`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET utf8 COLLATE utf8_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET utf8 COLLATE utf8_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of user_group
@@ -130,7 +130,7 @@ CREATE TABLE \`diaries\`  (
   \`uid\` int(11) NOT NULL COMMENT '用户id',
   \`is_public\` int(1) NOT NULL DEFAULT 0 COMMENT '是否共享',
   PRIMARY KEY (\`id\`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET utf8 COLLATE utf8_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET utf8 COLLATE utf8_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for qrs
@@ -175,7 +175,7 @@ CREATE TABLE \`wubi_dict\`  (
   \`uid\` int(11) NULL DEFAULT NULL COMMENT '所属用户',
   PRIMARY KEY (\`id\`, \`title\`) USING BTREE,
   INDEX \`uid\`(\`uid\`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 37 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
 
 SET FOREIGN_KEY_CHECKS = 1;
