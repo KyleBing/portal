@@ -5,7 +5,47 @@ const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
 const configDatabase = require("../config/configDatabase")
 
-// 类别数据
+// 统计数据
+router.get('/', (req, res, next) => {
+    if(!req.query.uid || !req.query.token){
+        res.send(new ResponseError('', '参数错误：uid 未定义'))
+        return
+    }
+
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            if (userInfo.group_id === 1){
+                sqlArray.push(`
+                        SELECT
+                          (SELECT COUNT(*) FROM diaries) as count_diary,
+                          (SELECT COUNT(*) FROM qrs) as count_qr,
+                          (SELECT COUNT(*) FROM wubi_dict) as count_dict,
+                          (SELECT COUNT(*) FROM users) as count_user
+                    `)
+            } else {
+                sqlArray.push(`
+                            SELECT
+                              (SELECT COUNT(*) FROM diaries where uid = ${req.query.uid}) as count_diary,
+                              (SELECT COUNT(*) FROM qrs where uid = ${req.query.uid}) as count_qr,
+                              (SELECT COUNT(*) FROM wubi_dict where uid = ${req.query.uid}) as count_dict,
+                              (SELECT COUNT(*) FROM users where uid = ${req.query.uid}) as count_user
+                        `)
+            }
+            utility.getDataFromDB(sqlArray, true)
+                .then(data => {
+                    res.send(new ResponseSuccess(data))
+                })
+                .catch(err => {
+                    res.send(new ResponseError('', err.message))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError('','用户信息错误'))
+        })
+})
+
+// 日记类别数据
 router.get('/category', (req, res, next) => {
     if(!req.query.uid || !req.query.token){
         res.send(new ResponseError('', '参数错误：uid 未定义'))
