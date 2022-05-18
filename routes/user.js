@@ -29,16 +29,16 @@ router.post('/register', (req, res, next) => {
                                                 wx, phone, homepage, gaode, group_id)
                                     VALUES (
                                     '${req.body.email}', 
-                                    '${req.body.nickname}', 
-                                    '${req.body.username}', 
+                                    '${req.body.nickname || ''}', 
+                                    '${req.body.username || ''}', 
                                     '${encryptPassword}', 
                                     '${timeNow}',
                                     '${timeNow}',
                                     '${req.body.comment || ''}', 
-                                    '${req.body.wx}', 
-                                    '${req.body.phone}', 
-                                    '${req.body.homepage}', 
-                                    '${req.body.gaode}', 
+                                    '${req.body.wx || ''}', 
+                                    '${req.body.phone || ''}', 
+                                    '${req.body.homepage || ''}', 
+                                    '${req.body.gaode || ''}', 
                                     '2'
                                     )`
                         )
