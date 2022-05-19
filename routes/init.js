@@ -4,7 +4,7 @@ const utility = require('../config/utility')
 const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
 const mysql = require("mysql");
-const configOfDatabase = require("../config/configDatabase");
+const configDatabase = require("../config/configDatabase");
 const { stat, writeFile } = require("fs");
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
         if (err){
             // 如果没有该文件，说明数据库没有初始化过
             let tempConfigDatabase = {}
-            Object.assign(tempConfigDatabase, configOfDatabase)
+            Object.assign(tempConfigDatabase, configDatabase)
             delete tempConfigDatabase.database
             let connection = mysql.createConnection(tempConfigDatabase)
             connection.connect()
@@ -60,8 +60,8 @@ router.get('/', (req, res, next) => {
 
 function createTables(){
     return new Promise((resolve, reject) => {
-        let connection = mysql.createConnection(configOfDatabase)
-        console.log(configOfDatabase)
+        let connection = mysql.createConnection(configDatabase)
+        console.log(configDatabase)
         connection.connect()
         const sqlCreateTables = `
 SET NAMES utf8mb4;

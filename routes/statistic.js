@@ -3,7 +3,7 @@ const router = express.Router()
 const utility = require('../config/utility')
 const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
-const configDatabase = require("../config/configDatabase")
+const configProject = require("../config/configProject")
 
 // 统计数据
 router.get('/', (req, res, next) => {
@@ -132,7 +132,7 @@ router.get('/users', (req, res, next) => {
         .then(() => {
             utility.verifyAuthorization(req)
                 .then(verified => {
-                    if (req.query.email === configDatabase.adminCount) {
+                    if (req.query.email === configProject.adminCount) {
                         let sqlArray = []
                         sqlArray.push(`
                                 select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict

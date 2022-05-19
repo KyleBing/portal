@@ -1,10 +1,10 @@
 const mysql = require("mysql");
-const configOfDatabase = require('./configDatabase')
+const configDatabase = require('./configDatabase')
 
 // 运行 SQL 并返回 DB 结果
 function getDataFromDB(sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
-        let connection = mysql.createConnection(configOfDatabase)
+        let connection = mysql.createConnection(configDatabase)
         connection.connect()
         console.log('---- SQL', sqlArray.join(' '))
 

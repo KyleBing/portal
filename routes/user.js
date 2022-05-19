@@ -1,5 +1,5 @@
 const express = require('express')
-const configOfDatabase = require('../config/configDatabase')
+const configProject = require('../config/configProject')
 const utility = require("../config/utility");
 const ResponseSuccess = require("../response/ResponseSuccess");
 const ResponseError = require("../response/ResponseError");
@@ -12,7 +12,7 @@ const bcrypt = require('bcrypt')
 router.post('/register', (req, res, next) => {
     // TODO: 验证传过来的数据库必填项
     // 判断邀请码是否正确
-    if (req.body.invitationCode && req.body.invitationCode === configOfDatabase.invitation){
+    if (req.body.invitationCode && req.body.invitationCode === configProject.invitation){
         checkEmailOrUserNameExist(req.body.email, req.body.username)
             .then(dataEmailExistArray => {
                 // email 记录是否已经存在
