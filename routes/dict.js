@@ -8,6 +8,7 @@ const DatabaseTableName = 'wubi_dict'
 
 router.get('/pull', (req, res, next) => {
     // 1. 是否属于系统中的用户
+    console.log(req.query)
     utility.verifyAuthorization(req)
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
@@ -43,7 +44,7 @@ router.put('/push', (req, res, next) => {
             let encodedTitle = utility.unicodeEncode(req.body.title) // encode 是因为，文件名中可能包含 emoji
 
             // 2. 检测是否存在内容
-            let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${req.body.uid}'`]
+            let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${req.query.uid}'`]
             return utility.getDataFromDB(sqlArray)
                 .then(existData => {
                     console.log(existData)
@@ -58,13 +59,13 @@ router.put('/push', (req, res, next) => {
                                        content_size='${req.body.contentSize}',
                                        word_count='${req.body.wordCount}',
                                        date_update='${timeNow}'
-                                    WHERE title='${encodedTitle}' and uid='${req.body.uid}'
+                                    WHERE title='${encodedTitle}' and uid='${req.query.uid}'
                             `)
 
                         utility.getDataFromDB(sqlArray, true)
                             .then(data => {
-                                utility.updateUserLastLoginTime(req.body.email)
-                                res.send(new ResponseSuccess(data, '上传成功'))
+                                utility.updateUserLastLoginTime(req.query.email)
+                                res.send(new ResponseSuccess(data, ''))
                             })
                             .catch(err => {
                                 res.send(new ResponseError(err, '上传失败'))
@@ -75,12 +76,12 @@ router.put('/push', (req, res, next) => {
                         let sqlArray = []
                         sqlArray.push(`
                             INSERT into ${DatabaseTableName}(title, content, content_size, word_count, date_init, date_update, comment, uid)
-                            VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${req.body.uid}')`
+                            VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${req.query.uid}')`
                         )
 
                         utility.getDataFromDB(sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(req.body.email)
+                                utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id
                             })
                             .catch(err => {
