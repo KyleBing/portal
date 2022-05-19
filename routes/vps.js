@@ -25,51 +25,16 @@ const BandwagonHostCommand = {
     getRateLimitStatus   : "getRateLimitStatus"
 }
 
-
 router.get('/', (req, res, next) => {
-    const url = `https://api.64clouds.com/v1/${BandwagonHostCommand.getLiveServiceInfo}?veid=${configProject.vpsVEID}&api_key=${configProject.apiKey}`
+    const url = `https://api.64clouds.com/v1/${BandwagonHostCommand.getLiveServiceInfo}?veid=${configProject.vpsVEID}&api_key=${configProject.vpsApiKey}`
 
     axios.get(url)
-        .then(res => {
-
+        .then(resVps => {
+            res.send(new ResponseSuccess(resVps, '处理成功'))
         })
         .catch(err => {
-
+            res.send(new ResponseSuccess(err, err.message))
         })
-
-
-    let info =  json_decode(file_get_contents($request));
-
-// 存储单位转换
-    let convertG = 1024 * 1024 * 1024;
-    let convertM = 1024 * 1024;
-
-    let multi = info.monthly_data_multiplier;
-
-// 流量数据
-    let dataUsage = Math.round((info.data_counter * multi / convertG),1);
-    let dataFull = Math.round((info.plan_monthly_data * multi / convertG),1);
-    let dataRemain = dataFull - dataUsage;
-    let dataPercentage = dataRemain / dataFull;
-
-// 硬盘数据
-    let diskUsage = Math.round((info.ve_used_disk_space_b / convertG),1);
-    let diskFull = Math.round((info.plan_disk / convertG),1);
-    let diskRemain = diskFull - diskUsage;
-    let diskPercentage = diskRemain / diskFull;
-
-// 内存数据
-    let memLeft = Math.round((info.mem_available_kb / 1024),0);
-    let memFull = Math.round((info.plan_ram / convertM),0);
-    let memUsage = memFull - memLeft;
-    let memPercentage = memLeft / memFull;
-
-    let output = Math.round(dataUsage,1) + "G / " + Math.round(dataMonth,1) +"G";
-
-
-
-    res.send(new ResponseSuccess(response, '处理成功'))
-
 })
 
 module.exports = router
