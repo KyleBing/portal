@@ -65,7 +65,7 @@ router.put('/push', (req, res, next) => {
                         utility.getDataFromDB(sqlArray, true)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.query.email)
-                                res.send(new ResponseSuccess(data, ''))
+                                res.send(new ResponseSuccess(data, '上传成功'))
                             })
                             .catch(err => {
                                 res.send(new ResponseError(err, '上传失败'))
