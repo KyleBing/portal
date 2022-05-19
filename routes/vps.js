@@ -30,10 +30,10 @@ router.get('/', (req, res, next) => {
 
     axios.get(url)
         .then(resVps => {
-            res.send(new ResponseSuccess(resVps, '处理成功'))
+            res.send(new ResponseSuccess(resVps.data, '获取 VPS 信息成功'))
         })
         .catch(err => {
-            res.send(new ResponseSuccess(err, err.message))
+            res.send(new ResponseError(err, err.message))
         })
 })
 
