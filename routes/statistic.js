@@ -14,6 +14,7 @@ router.get('/', (req, res, next) => {
 
     utility.verifyAuthorization(req)
         .then(userInfo => {
+            updateUsersInfo()
             let sqlArray = []
             if (userInfo.group_id === 1) {
                 sqlArray.push(`
@@ -166,6 +167,7 @@ function updateUsersInfo() {
                 data.forEach(user => {
                     sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
+                    sqlArray.push(`update users set count_qr  = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
                 })
                 utility.getDataFromDB(sqlArray, true)
                     .then(data => {
