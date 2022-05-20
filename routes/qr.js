@@ -6,7 +6,7 @@ const ResponseError = require('../response/ResponseError')
 
 
 router.get('/', (req, res, next) => {
-    // query.code
+    // query.hash
     let sqlArray = []
     sqlArray.push(`
             select qrs.hash,
@@ -30,7 +30,7 @@ router.get('/', (req, res, next) => {
                    users.username
             from qrs
                      left join users on qrs.uid = users.uid
-                        where qrs.hash = '${req.query.code}'`)
+                        where qrs.hash = '${req.query.hash}'`)
     // 1. 先查询出 QR 结果
     utility.getDataFromDB(sqlArray, true)
         .then(data => {
@@ -43,6 +43,7 @@ router.get('/', (req, res, next) => {
                 if (data.is_public === 1){
                     // 2.1 如果是，直接返回结果，不需要判断任何东西
                     res.send(new ResponseSuccess(data))
+                    countPlusOne(req.query.hash)
                 } else{
                     res.send(new ResponseError('', '该码未启用'))
                 }
@@ -55,6 +56,10 @@ router.get('/', (req, res, next) => {
             res.send(new ResponseError(err, err.message))
         })
 })
+
+function countPlusOne(hash){
+    utility.getDataFromDB([`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
+}
 
 
 module.exports = router

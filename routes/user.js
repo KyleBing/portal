@@ -335,6 +335,10 @@ router.post('/login', (req, res, next) => {
 
 // 修改密码
 router.put('/change-password', (req, res, next) => {
+    if (!req.body.password){
+        res.send(new ResponseError('', '参数错误：password 未定义'))
+        return
+    }
     utility.verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.password === req.query.token){
