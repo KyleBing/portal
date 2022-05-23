@@ -6,8 +6,8 @@ const ResponseSuccess = require('../response/ResponseSuccess')
 const ResponseError = require('../response/ResponseError')
 
 
-router.get('/', (req, res, next) => {
-    // query.hash
+router.get('/list', (req, res, next) => {
+    // query.name_en
     let sqlArray = []
     sqlArray.push(` select * from diary_category`)
     // 1. 先查询出 QR 结果
@@ -33,9 +33,10 @@ router.post('/add', (req, res, next) => {
                 utility.verifyAuthorization(req)
                     .then(userInfo => {
                         if (userInfo.email === configProject.adminCount ){
-                            // query.hash
+                            let timeNow = utility.dateFormatter(new Date())
+                            // query.name_en
                             let sqlArray = []
-                            sqlArray.push(`insert into diary_category(name, name_en) values('${req.body.name}', '${req.body.name_en}')`)
+                            sqlArray.push(`insert into diary_category(name, name_en, date_init) values('${req.body.name}', '${req.body.name_en}', '${timeNow}')`)
                             // 1. 先查询出 QR 结果
                             utility.getDataFromDB(sqlArray)
                                 .then(data => {
