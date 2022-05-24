@@ -10,12 +10,13 @@ router.get('/', (req, res, next) => {
         .then(verified => {
             // let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
             let sqlArray = []
-            sqlArray.push(`SELECT *from diaries where uid='${req.query.uid}' and category = 'bill'`)
+            sqlArray.push(`SELECT *from diaries where uid='${req.query.uid}' and category = 'bill' order by  date asc`)
             utility.getDataFromDB(sqlArray)
                 .then(billDiaryList => {
                     utility.updateUserLastLoginTime(req.query.email)
                     let billResponse = []
-                    billDiaryList.reverse().forEach(diary => {
+
+                    billDiaryList.forEach(diary => {
                         // decode unicode
                         billResponse.push(processBillOfDay(diary.content, diary.date))
                     })
