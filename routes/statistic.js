@@ -34,7 +34,7 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM wubi_dict where uid = ${req.query.uid}) as count_dict,
                               (SELECT COUNT(*) FROM users where uid = ${req.query.uid}) as count_user,
                               (SELECT COUNT(*) FROM diary_category) as count_category,
-                              (SELECT COUNT(*) FROM diaries uid = ${req.query.uid} and category = 'bill') as count_bill
+                              (SELECT COUNT(*) FROM diaries where uid = ${req.query.uid} and category = 'bill') as count_bill
                         `)
             }
             utility.getDataFromDB(sqlArray, true)
