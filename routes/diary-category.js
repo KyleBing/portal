@@ -9,7 +9,7 @@ const ResponseError = require('../response/ResponseError')
 router.get('/list', (req, res, next) => {
     // query.name_en
     let sqlArray = []
-    sqlArray.push(` select * from diary_category`)
+    sqlArray.push(` select * from diary_category order by id asc`)
     // 1. 先查询出 QR 结果
     utility.getDataFromDB(sqlArray)
         .then(data => {
