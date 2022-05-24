@@ -22,7 +22,9 @@ router.get('/', (req, res, next) => {
                           (SELECT COUNT(*) FROM diaries) as count_diary,
                           (SELECT COUNT(*) FROM qrs) as count_qr,
                           (SELECT COUNT(*) FROM wubi_dict) as count_dict,
-                          (SELECT COUNT(*) FROM users) as count_user
+                          (SELECT COUNT(*) FROM users) as count_user,
+                          (SELECT COUNT(*) FROM diary_category) as count_category,
+                          (SELECT COUNT(*) FROM diaries where category = 'bill') as count_bill
                     `)
             } else {
                 sqlArray.push(`
@@ -30,7 +32,9 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM diaries where uid = ${req.query.uid}) as count_diary,
                               (SELECT COUNT(*) FROM qrs where uid = ${req.query.uid}) as count_qr,
                               (SELECT COUNT(*) FROM wubi_dict where uid = ${req.query.uid}) as count_dict,
-                              (SELECT COUNT(*) FROM users where uid = ${req.query.uid}) as count_user
+                              (SELECT COUNT(*) FROM users where uid = ${req.query.uid}) as count_user,
+                              (SELECT COUNT(*) FROM diary_category uid = ${req.query.uid}) as count_category,
+                              (SELECT COUNT(*) FROM diaries uid = ${req.query.uid} and category = 'bill') as count_bill
                         `)
             }
             utility.getDataFromDB(sqlArray, true)
