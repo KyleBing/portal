@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
                 .then(billDiaryList => {
                     utility.updateUserLastLoginTime(req.query.email)
                     let billResponse = []
-                    billDiaryList.forEach(diary => {
+                    billDiaryList.reverse().forEach(diary => {
                         // decode unicode
                         billResponse.push(processBillOfDay(diary.content, diary.date))
                     })
@@ -41,13 +41,13 @@ function processBillOfDay(billContent, date){
         items: [],
         sum: 0,
         sumIncome: 0,
-        sumOutcome: 0
+        sumOutput: 0
     }
     strArray.forEach(item => {
         let itemInfos = item.split(' ')
         let price = Number(itemInfos[1])
         if (price < 0) {
-            response.sumOutcome = response.sumOutcome + price
+            response.sumOutput = response.sumOutput + price
         } else {
             response.sumIncome = response.sumIncome + price
         }
