@@ -69,6 +69,34 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 
 -- ----------------------------
+-- Table structure for diary_category
+-- ----------------------------
+DROP TABLE IF EXISTS \`diary_category\`;
+CREATE TABLE \`diary_category\`  (
+  \`id\` tinyint(1) NULL DEFAULT NULL,
+  \`name_en\` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '类别英文名',
+  \`name\` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '类别名',
+  \`count\` int(6) NOT NULL DEFAULT 0 COMMENT '类别日记的数量',
+  \`color\` char(10) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '#cccccc' COMMENT '类别颜色',
+  PRIMARY KEY (\`name_en\`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of diary_category
+-- ----------------------------
+INSERT INTO \`diary_category\` VALUES (1, 'life', '生活', 0, '#FF9500');
+INSERT INTO \`diary_category\` VALUES (2, 'study', '学习', 0, '#4CD964');
+INSERT INTO \`diary_category\` VALUES (3, 'bigevent', '大事', 0, '#FF3B30');
+INSERT INTO \`diary_category\` VALUES (4, 'sport', '运动', 0, '#FFCC00');
+INSERT INTO \`diary_category\` VALUES (5, 'week', '周报', 0, '#5856D6');
+INSERT INTO \`diary_category\` VALUES (6, 'work', '日报', 0, '#007AFF');
+INSERT INTO \`diary_category\` VALUES (7, 'game', '游戏', 0, '#5AC8FA');
+INSERT INTO \`diary_category\` VALUES (8, 'film', '电影', 0, '#FF2D70');
+INSERT INTO \`diary_category\` VALUES (9, 'article', '文章', 0, '#CC73E1');
+INSERT INTO \`diary_category\` VALUES (10, 'bill', '账单', 0, '#8bc34a');
+
+
+-- ----------------------------
 -- Table structure for users
 -- ----------------------------
 DROP TABLE IF EXISTS \`users\`;
