@@ -11,22 +11,44 @@
 > http [http://kylebing.cn:3000/diary/detail?diaryId=5312](http://kylebing.cn:3000/diary/detail?diaryId=5312)
 > https [https://kylebing.cn/diary-portal/diary/detail?diaryId=5312](https://kylebing.cn/diary-portal/diary/detail?diaryId=5312)
 
-### 1. 日记项目
-### 2. 码表项目
-### 3. 二维码项目
-- [x] 数据库初始化 `2022-05-16`
-- [x] 码表操作 `2022-05-17`
-  - [x] add
-  - [x] delete
-  - [x] modify
-  - [x] list 
-- [x] 用户操作 `2022-05-17`
-  - [x] add
-  - [x] delete 
-  - [x] modify
-  - [x] list
-- [ ] 前端接口
-  - [ ] 查询用户信息
+
+
+### 
+```bash
+# 1. 日记项目
+- /diary/list
+- /diary/add
+- /diary/modify
+- /diary/delete
+- /diary/detail
+- /diary/statistics # 账单统计 `2022-05-24`
+
+- /diary-category/ # 类别管理 `2022-05-24`
+- /diary-category/add # 类别管理 `2022-05-24`
+- /diary-category/delete
+- /diary-category/modify
+- /diary-category/list
+
+- /bill/ #日记中的账单类别统计信息 `2022-05-24`
+
+# 2. 码表项目 `2022-04-24`
+- /dict/pull
+- /dict/push
+
+# 3. 二维码项目 `2022-05-18`
+- /qr-manager/list
+- /qr-manager/detail
+- /qr-manager/add
+- /qr-manager/modify
+- /qr-manager/delete
+- /qr-manager/clear-visit-count
+
+- /qr/ # 码的信息 `2022-05-18`
+
+# 4. VPS主机信息接口
+- /vps/ # vps 信息
+
+```
 
 
 

@@ -126,7 +126,6 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
-
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
     console.log(req.query)
@@ -270,7 +269,6 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-
 
 router.post('/clear-visit-count', (req, res, next) => {
     // 1. 验证用户信息是否正确
