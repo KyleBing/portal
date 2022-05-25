@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "ws": "node ./bin/ws.js"
   },
   "dependencies": {
     "axios": "^0.27.2",
@@ -14,6 +15,7 @@
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "mysql": "^2.18.1",
-    "pug": "2.0.0-beta11"
+    "pug": "2.0.0-beta11",
+    "ws": "^8.6.0"
   }
 }
