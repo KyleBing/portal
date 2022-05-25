@@ -16,20 +16,23 @@ wss.on("connection", ws => {
     ws.on("message", data => {
         console.log(JSON.stringify(data))
         console.log(`客户端返回信息: ${data}`);
-        if (data === 'start'){
-            console.log('inside switch case start');
-            timeIntervalHandle = timers.setInterval(()=>{
-                ws.send(dataIndex)
-                dataIndex = dataIndex + 1
-                console.log(dataIndex)
-            },1000)
+        let receiveMessage = data.toString()
+        switch (receiveMessage){
+            case 'start':
+                console.log('inside switch case start');
+                timeIntervalHandle = timers.setInterval(()=>{
+                    ws.send(dataIndex)
+                    dataIndex = dataIndex + 1
+                    console.log(dataIndex)
+                },1000)
+                break;
+            case 'end':
+                timers.clearInterval(timeIntervalHandle)
+                timeIntervalHandle = null
+                ws.send('已停止循环')
+                break
         }
 
-        if (data === 'end'){
-            timers.clearInterval(timeIntervalHandle)
-            timeIntervalHandle = null
-            ws.send('已停止循环')
-        }
 /*        wss.clients.forEach(function each(client) {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(data)
