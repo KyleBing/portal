@@ -169,37 +169,10 @@ location /diary-portal/ {
 
 ## 三、开发说明
 
-
-### 1. 接口记录
-
-- [x] 数据库初始化 `/diary/init`
-
-- [x] 日记操作
-  - [x] 列表 / 搜索 `/diary/list`
-  - [x] 新增 `/diary/add`
-  - [x] 修改 `/diary/modify`
-  - [x] 删除 `/diary/delete`
-  - [x] 详情 `/diary/detail`
-
-- [x] 用户操作
-  - [x] 注册 `/user/register`
-  - [x] 登录 `/user/login`
-  - [x] 修改密码 `/user/change-password` 
-  - [x] 记录最近一次操作时间
-
-- [x] 统计信息
-  - [x] 根据日记类别统计 `/statistic/category`
-  - [x] 根据年月统计 `/statistic/year`
-
-- [x] 银行卡信息 `/bank-card`
-
-- [x] 数据库相关操作
-  - [x] 转义 emoji
-
-### 2. 密码说明
+### 1. 密码说明
 密码使用 [bcrypt](https://github.com/kelektiv/node.bcrypt.js) 加密，登录后的所有传输都会用加密后的密码作为请求 token
 
-### 3. 返回数据格式
+### 2. 返回数据格式
 
 ```json
 {
@@ -210,5 +183,4 @@ location /diary-portal/ {
 ```
 
 ## 四、其它
-> 始于： 2022-04-14
-> 完成： 2022-04-17
+日记相关功能，始于 2022-04-14 完成于 2022-04-17
