@@ -72,7 +72,6 @@ function checkEmailOrUserNameExist(email, username){
     return utility.getDataFromDB(sqlArray)
 }
 
-
 router.get('/list', (req, res, next) => {
     utility.verifyAuthorization(req)
         .then(userInfo => {
@@ -172,7 +171,6 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
-
 router.post('/add', (req, res, next) => {
     checkEmailOrUserNameExist(req.body.email, req.body.username)
         .then(dataEmailExistArray => {
@@ -225,7 +223,6 @@ function checkHashExist(username, email){
     sqlArray.push(`select * from users where username ='${username.toLowerCase()}' or email = '${email}'`)
     return utility.getDataFromDB(sqlArray)
 }
-
 
 router.put('/modify', (req, res, next) => {
 
@@ -304,9 +301,6 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-
-
-
 
 router.post('/login', (req, res, next) => {
     let sqlArray = []

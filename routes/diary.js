@@ -106,7 +106,6 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
-
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility.verifyAuthorization(req)

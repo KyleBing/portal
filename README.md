@@ -15,27 +15,46 @@
 
 ### 
 ```bash
-# 1. 日记项目
+# 1. 统计信息
+- /statistics # 统计信息 `2022-05-12`
+
+# 2. 日记管理
 - /diary/list
 - /diary/add
 - /diary/modify
 - /diary/delete
 - /diary/detail
-- /diary/statistics # 账单统计 `2022-05-24`
 
+    # 2.1 银行卡列表信息
+    - /bank-card/ # 银行卡列表 `2022-05-12`
+    
+    # 2.2 账单统计信息
+    - /bill/ # 日记中的账单类别统计信息 `2022-05-24`
+
+
+# 3. 用户管理
+- /user/
+- /user/add
+- /user/delete
+- /user/modify
+- /user/detail
+- /user/list
+- /user/login
+- /user/change-password
+
+# 4. 日记类别管理
 - /diary-category/ # 类别管理 `2022-05-24`
 - /diary-category/add # 类别管理 `2022-05-24`
 - /diary-category/delete
 - /diary-category/modify
 - /diary-category/list
 
-- /bill/ #日记中的账单类别统计信息 `2022-05-24`
 
-# 2. 码表项目 `2022-04-24`
+# 5. 码表项目 `2022-04-24`
 - /dict/pull
 - /dict/push
 
-# 3. 二维码项目 `2022-05-18`
+# 6. 二维码项目 `2022-05-18`
 - /qr-manager/list
 - /qr-manager/detail
 - /qr-manager/add
@@ -43,9 +62,10 @@
 - /qr-manager/delete
 - /qr-manager/clear-visit-count
 
+# 7. 二维码前端信息
 - /qr/ # 码的信息 `2022-05-18`
 
-# 4. VPS主机信息接口
+# 8. VPS主机信息接口
 - /vps/ # vps 信息
 
 ```
