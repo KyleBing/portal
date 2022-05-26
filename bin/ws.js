@@ -15,7 +15,7 @@ wss.on("connection", ws => {
     console.log("新客户端已连接")
     // 接收到 client 数据时
     ws.on("message", data => {
-        console.log(`客户端返回信息: ${data}`)
+        // console.log(`客户端返回信息: ${data}`)
         let receiveMessage = JSON.parse(data.toString())
         if (receiveMessage.key){
             utility.getDataFromDB([`UPDATE thumbs_up SET up_count=up_count + 1 WHERE up_key = '${receiveMessage.key}'`])
@@ -27,7 +27,6 @@ wss.on("connection", ws => {
                                     key: receiveMessage.key,
                                     count: result.up_count
                                 })
-                                console.log(sendMessage)
                                 wss.clients.forEach(client =>  {
                                     console.log('111')
                                     client.send(sendMessage)
