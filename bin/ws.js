@@ -7,37 +7,20 @@ const timers = require('timers')
 const wss = new WebSocketServer.Server({ port: 9999 })
 
 let timeIntervalHandle = null
-let dataIndex = 0
 
 // 创建连接
 wss.on("connection", ws => {
-    console.log("新客户端已连接" + ws)
+    console.log("新客户端已连接")
     // 接收到 client 数据时
     ws.on("message", data => {
-        console.log(JSON.stringify(data))
-        console.log(`客户端返回信息: ${data}`);
+        console.log(`客户端返回信息: ${data}`)
         let receiveMessage = data.toString()
-        switch (receiveMessage){
-            case 'start':
-                console.log('inside switch case start');
-                timeIntervalHandle = timers.setInterval(()=>{
-                    ws.send(dataIndex)
-                    dataIndex = dataIndex + 1
-                    console.log(dataIndex)
-                },1000)
-                break;
-            case 'end':
-                timers.clearInterval(timeIntervalHandle)
-                timeIntervalHandle = null
-                ws.send('已停止循环')
-                break
-        }
-
-/*        wss.clients.forEach(function each(client) {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(data)
+        wss.clients.forEach(client =>  {
+            if (ws !== client){
+                client.send(receiveMessage)
             }
-        })*/
+        })
+
     })
     ws.on("close", () => {
         console.log("websocket server: 客户端已关闭连接")
