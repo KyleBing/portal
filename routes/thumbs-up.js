@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
         let sqlArray = [
             `SELECT *
              from thumbs_up
-             where key = '${req.query.key}'`
+             where up_key = '${req.query.key}'`
         ]
         utility.getDataFromDB(sqlArray, true)
             .then(thumbsUpResult => {
