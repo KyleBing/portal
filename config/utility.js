@@ -29,11 +29,11 @@ function getDataFromDB(sqlArray, isSingleValue) {
 function verifyAuthorization(req){
     let sqlArray = []
     sqlArray.push(`select * from users where uid = ${req.query.uid}`)
-    console.log('sqlArray: ',sqlArray)
+    // console.log('sqlArray: ',sqlArray)
     return new Promise((resolve, reject) => {
         getDataFromDB(sqlArray, true)
             .then(data => {
-                console.log('sqlResult: ', data.password, req.query.token)
+                // console.log('sqlResult: ', data.password, req.query.token)
                 if (data.password === req.query.token){
                     resolve(data) // 如果查询成功，返回查询结果
                 } else {
