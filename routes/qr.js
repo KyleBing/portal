@@ -25,6 +25,7 @@ router.get('/', (req, res, next) => {
                    qrs.visit_count,
                    users.phone,
                    users.wx,
+                   users.homepage,
                    users.uid,
                    users.nickname,
                    users.username
