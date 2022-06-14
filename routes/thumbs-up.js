@@ -27,7 +27,19 @@ router.get('/', (req, res, next) => {
     } else {
         res.send(new ResponseError('', 'key 值未定义'))
     }
-
+})
+router.get('/all', (req, res, next) => {
+    let sqlArray = [
+        `SELECT *
+             from thumbs_up`
+    ]
+    utility.getDataFromDB(sqlArray)
+        .then(thumbsUpResult => {
+            res.send(new ResponseSuccess(thumbsUpResult, '请求成功'))
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, err.message))
+        })
 })
 
 
