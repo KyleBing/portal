@@ -31,6 +31,53 @@ router.get('/', (req, res, next) => {
         })
 })
 
+router.get('/sorted', (req, res, next) => {
+    utility.verifyAuthorization(req)
+        .then(verified => {
+            let yearNow = new Date().getFullYear()
+            let sqlRequests = []
+            let sqlArray = []
+            for (let month = 1; month <= 12; month ++ ){
+                sqlArray.push(`
+                        select 
+                            *,
+                        date_format(date,'%Y%m') as id,
+                        date_format(date,'%m') as month
+                        from diaries 
+                        where year(date) = ${req.query.year}
+                        and month(date) = ${month}
+                        and category = 'bill'
+                        and uid = ${req.query.uid}
+                        order by date desc;
+                    `)
+            }
+            sqlRequests.push(utility.getDataFromDB(sqlArray))
+            // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
+            Promise.all(sqlRequests)
+                .then(values => {
+                    let response = []
+                    let afterValues = values[0].filter(item => item.length > 0)
+                    afterValues.forEach(daysArray => {
+                        response.push({
+                            month: daysArray[0].id,
+                            count: daysArray.length,
+                            days: daysArray.map(item => {
+                                return processBillOfDay(item.content, item.date)
+                            })
+                        })
+                    })
+                    response.sort((a, b) => a.year > b.year ? 1 : -1)
+                    res.send(new ResponseSuccess(response))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
 
 // 处理某天的 bill 内容
 function processBillOfDay(billContent, date){
