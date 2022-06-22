@@ -74,7 +74,8 @@ router.get('/sorted', (req, res, next) => {
                         })
 
                         response.push({
-                            month: daysArray[0].id,
+                            id: daysArray[0].id,
+                            month: daysArray[0].month,
                             count: daysArray.length,
                             days: daysData,
                             sum: monthSum,
