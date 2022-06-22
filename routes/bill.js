@@ -56,14 +56,30 @@ router.get('/sorted', (req, res, next) => {
             Promise.all(sqlRequests)
                 .then(values => {
                     let response = []
-                    let afterValues = values[0].filter(item => item.length > 0)
+                    let afterValues = values[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
                     afterValues.forEach(daysArray => {
+
+                        let daysData = []
+                        let monthSum = 0
+                        let monthSumIncome = 0
+                        let monthSumOutput = 0
+
+                        // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
+                        daysArray.forEach(item => {
+                            let processedDayData = processBillOfDay(item.content, item.date)
+                            daysData.push(processedDayData)
+                            monthSum = monthSum + processedDayData.sum
+                            monthSumIncome = monthSumIncome + processedDayData.sumIncome
+                            monthSumOutput = monthSumOutput + processedDayData.sumOutput
+                        })
+
                         response.push({
                             month: daysArray[0].id,
                             count: daysArray.length,
-                            days: daysArray.map(item => {
-                                return processBillOfDay(item.content, item.date)
-                            })
+                            days: daysData,
+                            sum: monthSum,
+                            sumIncome: monthSumIncome,
+                            sumOutput: monthSumOutput
                         })
                     })
                     response.sort((a, b) => a.year > b.year ? 1 : -1)
