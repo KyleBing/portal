@@ -334,7 +334,7 @@ router.put('/change-password', (req, res, next) => {
         return
     }
     if (req.query.email === 'test@163.com'){
-        res.send(new ResponseError('', '演示账户密码允许修改'))
+        res.send(new ResponseError('', '演示账户密码不允许修改'))
         return
     }
     utility.verifyAuthorization(req)
