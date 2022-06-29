@@ -333,6 +333,10 @@ router.put('/change-password', (req, res, next) => {
         res.send(new ResponseError('', '参数错误：password 未定义'))
         return
     }
+    if (req.query.email === 'test@163.com'){
+        res.send(new ResponseError('', '演示账户密码允许修改'))
+        return
+    }
     utility.verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.password === req.query.token){
