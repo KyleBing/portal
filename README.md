@@ -8,8 +8,8 @@
 > 前一版的后台是使用 php 写的，只是简单的能用，由于对 php 不熟悉，稍微做一些复杂的操作就感觉改动吃力，现在好了，感觉天下都是我的，哈哈哈
 
 > 线上已运行的例子：
-> http [http://kylebing.cn:3000/diary/detail?diaryId=5312](http://kylebing.cn:3000/diary/detail?diaryId=5312)
-> https [https://kylebing.cn/diary-portal/diary/detail?diaryId=5312](https://kylebing.cn/diary-portal/diary/detail?diaryId=5312)
+> http [http://kylebing.cn:3000/diary/detail?diaryId=5587](http://kylebing.cn:3000/diary/detail?diaryId=5587)
+> https [https://kylebing.cn/portal/diary/detail?diaryId=5587](https://kylebing.cn/portal/diary/detail?diaryId=5587)
 
 
 
