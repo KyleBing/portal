@@ -125,7 +125,7 @@ npm run start
 > 注意：初始化会清空 diary 数据库中的所有内容
 
 
-### 5. 配置 nginx，映射 `localhost:3000` 路径到  `/diary-portal` 路径
+### 5. 配置 nginx，映射 `localhost:3000` 路径到  `/portal` 路径
 
 1. 打开 nginx 的配置文件，linux 系统的配置文件默认在 `/etc/nginx/conf.d/` 目录下，比如我 CentOS 上的 `nginx/1.19.7` 的配置文件是在这个位置。
 
@@ -147,12 +147,12 @@ vi default.conf
 4. 然后在 server 内部添加：
 
 ```bash
-location /diary-portal/ {
+location /portal/ {
     proxy_pass http://diary_server/; # 这里对应上面的 upsteam 名字
     proxy_set_header Host $host:$server_port; # 这里照搬就可以
 }
 ```
-5. 这样，就会将 `localhost:3000` 这个接口映射到 `localhost/diary-portal/` 这个路径下
+5. 这样，就会将 `localhost:3000` 这个接口映射到 `localhost/portal/` 这个路径下
 6. 重启 nginx 服务
   ```bash
   systemctl restart nginx
@@ -164,7 +164,7 @@ location /diary-portal/ {
 3. 如果你需要修改前端请求后台的路径，修改 `/src/request.js` 中的 `BASE_URL` 即可
 4. 执行 `npm build` 生成最终项目文件
 5. 放置于服务器 nginx 主目录下的 `/diary/` 下
-6. 此时后台项目在 `/diary-portal/` 目录下，前端项目在 `/dairy/` 下，这样就能直接使用了
+6. 此时后台项目在 `/portal/` 目录下，前端项目在 `/dairy/` 下，这样就能直接使用了
 
 
 ## 三、开发说明
