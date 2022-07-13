@@ -13,7 +13,7 @@ router.get('/pull', (req, res, next) => {
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
             // 1. 先查询出码表结果
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(result => {
                     if (result.length > 0){
                         let data = result[0]
@@ -45,7 +45,7 @@ router.put('/push', (req, res, next) => {
 
             // 2. 检测是否存在内容
             let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${req.query.uid}'`]
-            return utility.getDataFromDB(sqlArray)
+            return utility.getDataFromDB( 'diary', sqlArray)
                 .then(existData => {
                     console.log(existData)
                     if (existData.length > 0) {
@@ -62,7 +62,7 @@ router.put('/push', (req, res, next) => {
                                     WHERE title='${encodedTitle}' and uid='${req.query.uid}'
                             `)
 
-                        utility.getDataFromDB(sqlArray, true)
+                        utility.getDataFromDB( 'diary', sqlArray, true)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess(data, '上传成功'))
@@ -79,7 +79,7 @@ router.put('/push', (req, res, next) => {
                             VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${req.query.uid}')`
                         )
 
-                        utility.getDataFromDB(sqlArray)
+                        utility.getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id

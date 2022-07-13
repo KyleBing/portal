@@ -37,7 +37,7 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM diaries where uid = ${req.query.uid} and category = 'bill') as count_bill
                         `)
             }
-            utility.getDataFromDB(sqlArray, true)
+            utility.getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
                     res.send(new ResponseSuccess(data))
                 })
@@ -73,7 +73,7 @@ router.get('/category', (req, res, next) => {
                 from diaries where uid='${req.query.uid}'
         `)
 
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             res.send(new ResponseSuccess(data))
         })
@@ -103,7 +103,7 @@ router.get('/year', (req, res, next) => {
                 group by month
                 order by month desc
         `)
-        sqlRequests.push(utility.getDataFromDB(sqlArray))
+        sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
     }
     // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
     Promise.all(sqlRequests)
@@ -144,7 +144,7 @@ router.get('/users', (req, res, next) => {
                                 from users
                             `)
 
-                        utility.getDataFromDB(sqlArray)
+                        utility.getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 res.send(new ResponseSuccess(data))
                             })
@@ -165,7 +165,7 @@ router.get('/users', (req, res, next) => {
 // 更新所有用户统计数据
 function updateUsersInfo() {
     return new Promise((resolve, reject) => {
-        utility.getDataFromDB([`select * from users`])
+        utility.getDataFromDB( 'diary', [`select * from users`])
             .then(data => {
                 let sqlArray = []
                 data.forEach(user => {
@@ -173,7 +173,7 @@ function updateUsersInfo() {
                     sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_qr  = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
                 })
-                utility.getDataFromDB(sqlArray, true)
+                utility.getDataFromDB( 'diary', sqlArray, true)
                     .then(data => {
                         console.log(`success: user's count diary|dict has updated`)
                         resolve()

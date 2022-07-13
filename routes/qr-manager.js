@@ -55,7 +55,7 @@ router.get('/list', (req, res, next) => {
             sqlArray.push(` order by date_init desc
                   limit ${startPoint}, ${req.query.pageCount}`)
 
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     data.forEach(diary => {
@@ -78,7 +78,7 @@ router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
     // 1. 先查询出 QR 结果
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             // decode unicode
             data.message = utility.unicodeDecode(data.message)
@@ -165,7 +165,7 @@ router.post('/add', (req, res, next) => {
                                 '${req.body.visit_count || 0}',
                                 '${req.query.uid}')
                         `)
-                        utility.getDataFromDB(sqlArray)
+                        utility.getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
@@ -190,7 +190,7 @@ router.post('/add', (req, res, next) => {
 function checkHashExist(hash){
     let sqlArray = []
     sqlArray.push(`select * from qrs where hash='${hash.toLowerCase()}'`)
-    return utility.getDataFromDB(sqlArray)
+    return utility.getDataFromDB( 'diary', sqlArray)
 }
 
 
@@ -224,7 +224,7 @@ router.put('/modify', (req, res, next) => {
                             WHERE hash='${req.body.hash}'
                     `)
 
-            utility.getDataFromDB(sqlArray, true)
+            utility.getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.body.email)
                     res.send(new ResponseSuccess(data, '修改成功'))
@@ -251,7 +251,7 @@ router.delete('/delete', (req, res, next) => {
             if (userInfo.group_id !== 1){
                 sqlArray.push(` and uid='${req.query.uid}'`) // 当为1管理员时，可以随意操作任意对象
             }
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
                         utility.updateUserLastLoginTime(req.query.email)
@@ -279,7 +279,7 @@ router.post('/clear-visit-count', (req, res, next) => {
                 let sqlArray = []
                 let timeNow = utility.dateFormatter(new Date())
                 sqlArray.push(` update qrs set visit_count = 0 where hash = '${req.body.hash}' `)
-                utility.getDataFromDB(sqlArray)
+                utility.getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         utility.updateUserLastLoginTime(req.query.email)
                         res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 QR  id

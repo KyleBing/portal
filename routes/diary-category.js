@@ -11,7 +11,7 @@ router.get('/list', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(` select * from diary_category order by id asc`)
     // 1. 先查询出 QR 结果
-    utility.getDataFromDB(sqlArray)
+    utility.getDataFromDB( 'diary', sqlArray)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
                 res.send(new ResponseSuccess(data))
@@ -38,7 +38,7 @@ router.post('/add', (req, res, next) => {
                             let sqlArray = []
                             sqlArray.push(`insert into diary_category(name, name_en, date_init) values('${req.body.name}', '${req.body.name_en}', '${timeNow}')`)
                             // 1. 先查询出 QR 结果
-                            utility.getDataFromDB(sqlArray)
+                            utility.getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
                                         utility.updateUserLastLoginTime(req.query.email)
@@ -69,7 +69,7 @@ router.post('/add', (req, res, next) => {
 function checkCategoryExist(categoryName){
     let sqlArray = []
     sqlArray.push(`select * from diary_category where name_en='${categoryName}'`)
-    return utility.getDataFromDB(sqlArray)
+    return utility.getDataFromDB( 'diary', sqlArray)
 }
 
 

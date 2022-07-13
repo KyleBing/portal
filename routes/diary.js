@@ -50,7 +50,7 @@ router.get('/list', (req, res, next) => {
             sqlArray.push(` order by date desc
                   limit ${startPoint}, ${req.query.pageCount}`)
 
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     data.forEach(diary => {
@@ -73,7 +73,7 @@ router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
     // 1. 先查询出日记结果
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             // decode unicode
             data.title = utility.unicodeDecode(data.title)
@@ -120,7 +120,7 @@ router.post('/add', (req, res, next) => {
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
                         '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.query.uid}','${req.body.isPublic || 0}')`
             )
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
@@ -159,7 +159,7 @@ router.put('/modify', (req, res, next) => {
                             WHERE id='${req.body.id}' and uid='${req.query.uid}'
                     `)
 
-            utility.getDataFromDB(sqlArray, true)
+            utility.getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess(data, '修改成功'))
@@ -183,7 +183,7 @@ router.delete('/delete', (req, res, next) => {
                         WHERE id='${req.body.diaryId}'
                         and uid='${req.query.uid}'
                     `)
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
                         utility.updateUserLastLoginTime(req.query.email)

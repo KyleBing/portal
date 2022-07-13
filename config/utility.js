@@ -2,9 +2,17 @@ const mysql = require("mysql");
 const configDatabase = require('./configDatabase')
 
 // 运行 SQL 并返回 DB 结果
-function getDataFromDB(sqlArray, isSingleValue) {
+function getDataFromDB(dbName, sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
-        let connection = mysql.createConnection(configDatabase)
+        let connection = mysql.createConnection({
+            host:       configDatabase.host,
+            user:       configDatabase.user,
+            password:   configDatabase.password,
+            port:       configDatabase.port,
+            multipleStatements: configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
+            timezone: configDatabase.timezone,
+            database: dbName
+        })
         connection.connect()
         // console.log('---- SQL', sqlArray.join(' '))
 
@@ -31,7 +39,7 @@ function verifyAuthorization(req){
     sqlArray.push(`select * from users where uid = ${req.query.uid}`)
     // console.log('sqlArray: ',sqlArray)
     return new Promise((resolve, reject) => {
-        getDataFromDB(sqlArray, true)
+        getDataFromDB( 'diary', sqlArray, true)
             .then(data => {
                 // console.log('sqlResult: ', data.password, req.query.token)
                 if (data.password === req.query.token){
@@ -96,7 +104,7 @@ function  unicodeDecode(str)
 
 function updateUserLastLoginTime(email){
     let timeNow = dateFormatter(new Date())
-    getDataFromDB([`update users set last_visit_time='${timeNow}' where email='${email}'`])
+    getDataFromDB( 'diary', [`update users set last_visit_time='${timeNow}' where email='${email}'`])
         .then(data => {
             console.log('--- 成功：记录用户最后操作时间')
         })

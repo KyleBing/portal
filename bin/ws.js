@@ -32,9 +32,9 @@ wss.on("connection", ws => {
                 ws.send(JSON.stringify(new WSMessage(WSMessage.type.heartBeat, 'pong')))
                 break;
             case WSMessage.type.thumbsUp:
-                utility.getDataFromDB([`UPDATE thumbs_up SET up_count=up_count + 1 WHERE up_key = '${receiveMessage.content.key}'`])
+                utility.getDataFromDB( 'diary', [`UPDATE thumbs_up SET up_count=up_count + 1 WHERE up_key = '${receiveMessage.content.key}'`])
                     .then(resultUpdate => {
-                        utility.getDataFromDB([`select up_count from thumbs_up where up_key = '${receiveMessage.content.key}'`], true)
+                        utility.getDataFromDB( 'diary', [`select up_count from thumbs_up where up_key = '${receiveMessage.content.key}'`], true)
                             .then(result => {
                                 if (result){
                                     let sendMessage = new WSMessage(WSMessage.type.thumbsUp, {

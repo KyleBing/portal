@@ -11,7 +11,7 @@ router.get('/', (req, res, next) => {
             // let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
             let sqlArray = []
             sqlArray.push(`SELECT *from diaries where uid='${req.query.uid}' and category = 'bill' order by  date asc`)
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(billDiaryList => {
                     utility.updateUserLastLoginTime(req.query.email)
                     let billResponse = []
@@ -51,7 +51,7 @@ router.get('/sorted', (req, res, next) => {
                         order by date desc;
                     `)
             }
-            sqlRequests.push(utility.getDataFromDB(sqlArray))
+            sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             Promise.all(sqlRequests)
                 .then(values => {

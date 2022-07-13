@@ -42,7 +42,7 @@ router.post('/register', (req, res, next) => {
                                     '2'
                                     )`
                         )
-                        utility.getDataFromDB(sqlArray)
+                        utility.getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 res.send(new ResponseSuccess('', '注册成功'))
                             })
@@ -69,7 +69,7 @@ router.post('/register', (req, res, next) => {
 function checkEmailOrUserNameExist(email, username){
     let sqlArray = []
     sqlArray.push(`select * from users where email='${email}' or username ='${username}'`)
-    return utility.getDataFromDB(sqlArray)
+    return utility.getDataFromDB( 'diary', sqlArray)
 }
 
 router.get('/list', (req, res, next) => {
@@ -100,7 +100,7 @@ router.get('/list', (req, res, next) => {
                 sqlArray.push(`limit ${startPoint}, ${req.query.pageCount}`)
             }
 
-            utility.getDataFromDB(sqlArray)
+            utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     data.forEach(diary => {
@@ -123,7 +123,7 @@ router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
     // 1. 先查询出 QR 结果
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             // decode unicode
             data.message = utility.unicodeDecode(data.message)
@@ -200,7 +200,7 @@ router.post('/add', (req, res, next) => {
                                     '${req.body.group_id}'
                                     )`
                     )
-                    utility.getDataFromDB(sqlArray)
+                    utility.getDataFromDB( 'diary', sqlArray)
                         .then(data => {
                             res.send(new ResponseSuccess('', '用户添加成功'))
                         })
@@ -221,7 +221,7 @@ router.post('/add', (req, res, next) => {
 function checkHashExist(username, email){
     let sqlArray = []
     sqlArray.push(`select * from users where username ='${username.toLowerCase()}' or email = '${email}'`)
-    return utility.getDataFromDB(sqlArray)
+    return utility.getDataFromDB( 'diary', sqlArray)
 }
 
 router.put('/modify', (req, res, next) => {
@@ -261,7 +261,7 @@ function operateUserInfo(req, res){
                             WHERE uid='${req.body.uid}'
                     `)
 
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             utility.updateUserLastLoginTime(req.query.email)
             res.send(new ResponseSuccess(data, '修改成功'))
@@ -281,7 +281,7 @@ router.delete('/delete', (req, res, next) => {
                         DELETE from users
                         WHERE uid='${req.body.uid}'
                     `)
-                utility.getDataFromDB(sqlArray)
+                utility.getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data.affectedRows > 0) {
                             utility.updateUserLastLoginTime(req.body.email)
@@ -306,7 +306,7 @@ router.post('/login', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from users where email = '${req.body.email}'`)
 
-    utility.getDataFromDB(sqlArray, true)
+    utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             if (data) {
                 bcrypt.compare(req.body.password, data.password, function(err, isPasswordMatch) {
@@ -342,7 +342,7 @@ router.put('/change-password', (req, res, next) => {
             if (userInfo.password === req.query.token){
                 bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
                     let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${req.query.email}'`]
-                    utility.getDataFromDB(changePasswordSqlArray)
+                    utility.getDataFromDB( 'diary', changePasswordSqlArray)
                         .then(dataChangePassword => {
                             utility.updateUserLastLoginTime(req.query.email)
                             res.send(new ResponseSuccess('', '修改密码成功'))

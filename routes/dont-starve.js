@@ -9,26 +9,7 @@ router.get('/', (req, res, next) => {
     // query.hash
     let sqlArray = []
     sqlArray.push(`
-            select qrs.hash,
-                   qrs.is_public,
-                   qrs.switch_phone,
-                   qrs.message,
-                   qrs.car,
-                   qrs.car_plate,
-                   qrs.car_desc,
-                   qrs.switch_car,
-                   qrs.switch_wx,
-                   qrs.description,
-                   qrs.switch_homepage,
-                   qrs.switch_gaode,
-                   qrs.date_init,
-                   qrs.visit_count,
-                   users.phone,
-                   users.wx,
-                   users.homepage,
-                   users.uid,
-                   users.nickname,
-                   users.username
+            select *
             from qrs
                      left join users on qrs.uid = users.uid
                         where qrs.hash = '${req.query.hash}'`)
