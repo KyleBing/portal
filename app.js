@@ -54,6 +54,13 @@ app.use('/vps'            , routerVPS)           // 搬瓦工 VPS
 app.use('/thumbs-up'      , routerThumbsUp)      // 获取点赞初始计数
 
 
+// don't starve
+let routerStarve       = require('./routes/dont-starve')
+app.use('/dont-starve'      , routerStarve)      // 饥荒
+
+
+
+
 
 
 

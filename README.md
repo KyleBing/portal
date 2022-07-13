@@ -68,6 +68,10 @@
 # 8. VPS主机信息接口
 - /vps/ # vps 信息
 
+# 9. 饥荒数据
+- /dont-starve/{tablename}/list # 列表数据
+- /dont-starve/{tablename}/info # 详情数据
+
 ```
 
 
