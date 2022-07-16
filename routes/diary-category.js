@@ -10,7 +10,6 @@ router.get('/list', (req, res, next) => {
     // query.name_en
     let sqlArray = []
     sqlArray.push(` select * from diary_category order by id asc`)
-    // 1. 先查询出 QR 结果
     utility.getDataFromDB( 'diary', sqlArray)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
@@ -37,7 +36,6 @@ router.post('/add', (req, res, next) => {
                             // query.name_en
                             let sqlArray = []
                             sqlArray.push(`insert into diary_category(name, name_en, date_init) values('${req.body.name}', '${req.body.name_en}', '${timeNow}')`)
-                            // 1. 先查询出 QR 结果
                             utility.getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined

@@ -122,7 +122,6 @@ router.get('/list', (req, res, next) => {
 router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
-    // 1. 先查询出 QR 结果
     utility.getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             // decode unicode

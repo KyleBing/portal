@@ -56,26 +56,34 @@ router.get('/category', (req, res, next) => {
         res.send(new ResponseError('', '参数错误：uid 未定义'))
         return
     }
-    let sqlArray = []
-    sqlArray.push(`
-                select  
-                count(case when category='life' then 1 end) as life,
-                count(case when category='study' then 1 end) as study,
-                count(case when category='film' then 1 end) as film,
-                count(case when category='game' then 1 end) as game,
-                count(case when category='work' then 1 end) as work,
-                count(case when category='sport' then 1 end) as sport,
-                count(case when category='bigevent' then 1 end) as bigevent,
-                count(case when category='week' then 1 end) as week,
-                count(case when category='article' then 1 end) as article,
-                count(case when is_public='1' then 1 end) as shared,
-                count(*) as amount
-                from diaries where uid='${req.query.uid}'
-        `)
 
-    utility.getDataFromDB( 'diary', sqlArray, true)
-        .then(data => {
-            res.send(new ResponseSuccess(data))
+    // 1. get categories list
+    utility.getDataFromDB('diary',[` select * from diary_category order by id asc`])
+        .then(categoryListData => {
+            if (categoryListData) {
+                // categoryListData = [{"id": 1, "name_en": "life", "name": "生活", "count": 0, "color": "#FF9500", "date_init": "2022-03-23T13:23:02.000Z"}]
+                let tempArray = categoryListData.map(item => {
+                    return `count(case when category='${item.name_en}' then 1 end) as ${item.name_en}`
+                })
+                let sqlArray = []
+                sqlArray.push(`
+                    select  
+                   ${tempArray.join(', ')},
+                    count(case when is_public='1' then 1 end) as shared,
+                    count(*) as amount
+                    from diaries where uid='${req.query.uid}'
+            `)
+
+                utility.getDataFromDB('diary',sqlArray, true)
+                    .then(data => {
+                        res.send(new ResponseSuccess(data))
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err))
+                    })
+            } else {
+                res.send(new ResponseError('', '类别列表查询出错'))
+            }
         })
         .catch(err => {
             res.send(new ResponseError(err,))
