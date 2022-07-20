@@ -47,7 +47,7 @@ router.put('/push', (req, res, next) => {
             let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${req.query.uid}'`]
             return utility.getDataFromDB( 'diary', sqlArray)
                 .then(existData => {
-                    console.log(existData)
+                    // console.log(existData)
                     if (existData.length > 0) {
                         // update content
                         let sqlArray = []
