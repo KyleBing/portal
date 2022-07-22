@@ -10,7 +10,7 @@ router.get('/', (req, res, next) => {
         .then(verified => {
             // let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
             let sqlArray = []
-            sqlArray.push(`SELECT *from diaries where uid='${req.query.uid}' and category = 'bill' order by  date asc`)
+            sqlArray.push(`SELECT *from diaries where uid='${req.query.uid}' and category = 'bill' order by date asc`)
             utility.getDataFromDB( 'diary', sqlArray)
                 .then(billDiaryList => {
                     utility.updateUserLastLoginTime(req.query.email)
@@ -48,7 +48,7 @@ router.get('/sorted', (req, res, next) => {
                         and month(date) = ${month}
                         and category = 'bill'
                         and uid = ${req.query.uid}
-                        order by date desc;
+                        order by date asc;
                     `)
             }
             sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
