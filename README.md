@@ -45,9 +45,9 @@
 # 4. 日记类别管理
 - /diary-category/ # 类别管理 `2022-05-24`
 - /diary-category/add # 类别管理 `2022-05-24`
+- /diary-category/modify # 类别修改 `2022-07-22`
+- /diary-category/list # 类别管理 `2022-05-24`
 - /diary-category/delete
-- /diary-category/modify
-- /diary-category/list
 
 
 # 5. 码表项目 `2022-04-24`

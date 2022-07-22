@@ -62,6 +62,42 @@ router.post('/add', (req, res, next) => {
 
 })
 
+router.put('/modify', (req, res, next) => {
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            if (userInfo.email === configProject.adminCount ){
+                let timeNow = utility.dateFormatter(new Date())
+                // query.name_en
+                let sqlArray = []
+                sqlArray.push(`
+                    update diary_category set 
+                    name = '${req.body.name}',
+                    count = '${req.body.count}',
+                    color = '${req.body.color}'
+                    where name_en = '${req.body.name_en}'
+                    `)
+                utility.getDataFromDB( 'diary', sqlArray)
+                    .then(data => {
+                        if (data) { // 没有记录时会返回  undefined
+                            utility.updateUserLastLoginTime(req.query.email)
+                            res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的日记 id
+                        } else {
+                            res.send(new ResponseError('', '日记类别操作错误'))
+                        }
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err, '类别修改失败'))
+                    })
+            } else {
+                res.send(new ResponseError('', '无权操作'))
+            }
+
+        })
+        .catch(err => {
+            res.send(new ResponseError('', err.message))
+        })
+})
+
 
 // 检查类别是否存在
 function checkCategoryExist(categoryName){
