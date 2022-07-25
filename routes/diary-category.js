@@ -102,6 +102,38 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
+router.delete('/delete', (req, res, next) => {
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            if (userInfo.email === configProject.adminCount ){
+                // query.name_en
+                let sqlArray = []
+                sqlArray.push(`
+                    delete from diary_category 
+                               where name_en = '${req.body.name_en}'
+                    `)
+                utility.getDataFromDB( 'diary', sqlArray)
+                    .then(data => {
+                        if (data) { // 没有记录时会返回  undefined
+                            utility.updateUserLastLoginTime(req.query.email)
+                            res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的日记类别 id
+                        } else {
+                            res.send(new ResponseError('', '日记类别删除失败'))
+                        }
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err, '日记类别删除失败'))
+                    })
+            } else {
+                res.send(new ResponseError('', '无权操作'))
+            }
+
+        })
+        .catch(err => {
+            res.send(new ResponseError('', err.message))
+        })
+})
+
 
 // 检查类别是否存在
 function checkCategoryExist(categoryName){
