@@ -9,7 +9,7 @@ const ResponseError = require('../response/ResponseError')
 router.get('/list', (req, res, next) => {
     // query.name_en
     let sqlArray = []
-    sqlArray.push(` select * from diary_category order by id asc`)
+    sqlArray.push(` select * from diary_category order by sort_id asc`)
     utility.getDataFromDB( 'diary', sqlArray)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
@@ -35,7 +35,10 @@ router.post('/add', (req, res, next) => {
                             let timeNow = utility.dateFormatter(new Date())
                             // query.name_en
                             let sqlArray = []
-                            sqlArray.push(`insert into diary_category(name, name_en, date_init) values('${req.body.name}', '${req.body.name_en}', '${timeNow}')`)
+                            sqlArray.push(`
+                                insert into diary_category(name, name_en, color, sort_id, date_init) 
+                                values('${req.body.name}', '${req.body.name_en}', '${req.body.color}', '${req.body.sort_id}', '${timeNow}')`
+                            )
                             utility.getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
@@ -73,14 +76,15 @@ router.put('/modify', (req, res, next) => {
                     update diary_category set 
                     name = '${req.body.name}',
                     count = '${req.body.count}',
-                    color = '${req.body.color}'
+                    color = '${req.body.color}',
+                    sort_id = ${req.body.sort_id},
                     where name_en = '${req.body.name_en}'
                     `)
                 utility.getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
                             utility.updateUserLastLoginTime(req.query.email)
-                            res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的日记 id
+                            res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的日记类别 id
                         } else {
                             res.send(new ResponseError('', '日记类别操作错误'))
                         }
