@@ -58,7 +58,7 @@ router.get('/category', (req, res, next) => {
     }
 
     // 1. get categories list
-    utility.getDataFromDB('diary',[` select * from diary_category order by id asc`])
+    utility.getDataFromDB('diary',[` select * from diary_category order by sort_id asc`])
         .then(categoryListData => {
             if (categoryListData) {
                 // categoryListData = [{"id": 1, "name_en": "life", "name": "生活", "count": 0, "color": "#FF9500", "date_init": "2022-03-23T13:23:02.000Z"}]
