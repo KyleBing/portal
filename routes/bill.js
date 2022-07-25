@@ -94,6 +94,7 @@ router.get('/sorted', (req, res, next) => {
                                 breakfast: money(food.breakfast),
                                 launch: money(food.launch),
                                 dinner: money(food.dinner),
+                                sum: money(food.breakfast + food.launch + food.dinner)
                             }
                         })
                     })
