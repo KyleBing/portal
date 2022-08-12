@@ -111,6 +111,7 @@ router.get('/year', (req, res, next) => {
                 group by month
                 order by month desc
         `)
+        console.log(sqlArray)
         sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
     }
     // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
@@ -149,7 +150,7 @@ router.get('/users', (req, res, next) => {
                         let sqlArray = []
                         sqlArray.push(`
                                 select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict
-                                from users
+                                from users order by count_diary desc 
                             `)
 
                         utility.getDataFromDB( 'diary', sqlArray)
