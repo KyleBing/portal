@@ -69,6 +69,49 @@ router.get('/list', (req, res, next) => {
         })
 })
 
+router.get('/temperature', (req, res, next) => {
+    utility.verifyAuthorization(req)
+        .then(verified => {
+            let sqlArray = []
+            sqlArray.push(`SELECT
+                               date,
+                               temperature,
+                               temperature_outside
+                           FROM
+                               diaries
+                           WHERE
+                               uid='${req.query.uid}'
+                             AND category = 'life'
+
+                           ORDER BY
+                               date desc
+                               LIMIT 100 `)
+
+            // date range
+            if (req.query.dateFilter){
+                let year = req.query.dateFilter.substring(0,4)
+                let month = req.query.dateFilter.substring(4,6)
+                sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+            }
+            utility.getDataFromDB( 'diary', sqlArray)
+                .then(data => {
+                    utility.updateUserLastLoginTime(req.query.email)
+                    data.forEach(diary => {
+                        // decode unicode
+                        diary.title = utility.unicodeDecode(diary.title)
+                        diary.content = utility.unicodeDecode(diary.content)
+                    })
+                    res.send(new ResponseSuccess(data, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
 router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
