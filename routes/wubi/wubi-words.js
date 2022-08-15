@@ -1,8 +1,48 @@
 const express = require('express')
 const router = express.Router()
-const utility = require('../config/utility')
-const ResponseSuccess = require('../response/ResponseSuccess')
-const ResponseError = require('../response/ResponseError')
+const utility = require('../../config/utility')
+const ResponseSuccess = require('../../response/ResponseSuccess')
+const ResponseError = require('../../response/ResponseError')
+
+const multer = require('multer')
+const Dict = require("./Dict");
+const uploadLocal = multer({dest: 'upload'})
+const storage = multer.memoryStorage()
+const uploadStorage = multer({ storage: storage })
+
+const DatabaseTableName = 'wubi_words'
+
+
+router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
+    // 1. 验证用户信息是否正确
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            let dict = new Dict(req.file.buffer.toString(), 'temp', 'temp')
+            let sqlArray = []
+            // let parsedTitle = utility.unicodeEncode(req.body.title) // !
+            // let parsedContent = utility.unicodeEncode(req.body.content) || ''
+            let timeNow = utility.dateFormatter(new Date())
+            dict.wordsOrigin.forEach(word => {
+                sqlArray.push(`
+                    INSERT into ${DatabaseTableName}(word, code, priority, date_create, comment, user_create)
+                    VALUES(
+                        '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${req.query.uid}');`
+                )
+            })
+
+            utility.getDataFromDB( 'diary', sqlArray)
+                .then(data => {
+                    utility.updateUserLastLoginTime(req.query.email)
+                    res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的日记 id
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '导入词条失败'))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, '无权操作'))
+        })
+})
 
 
 router.get('/list', (req, res, next) => {
