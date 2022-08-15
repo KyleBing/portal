@@ -35,7 +35,7 @@ let routerQrManager      = require('./routes/qr-manager')
 let routerVPS            = require('./routes/vps')
 
 let routerThumbsUp       = require('./routes/thumbs-up')
-
+let routerWubiWords       = require('./routes/wubi-words')
 
 
 app.use('/'           , indexRouter)
@@ -52,6 +52,8 @@ app.use('/qr'             , routerQr)            // QR 二维码
 app.use('/qr-manager'     , routerQrManager)     // QR 二维码
 app.use('/vps'            , routerVPS)           // 搬瓦工 VPS
 app.use('/thumbs-up'      , routerThumbsUp)      // 获取点赞初始计数
+
+app.use('/wubi-words'      , routerWubiWords)      // 词条操作
 
 
 // don't starve
