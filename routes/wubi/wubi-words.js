@@ -5,7 +5,8 @@ const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 
 const multer = require('multer')
-const Dict = require("./Dict");
+const Dict = require("./Dict")
+
 const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
 const uploadStorage = multer({ storage: storage })
@@ -24,7 +25,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
             let timeNow = utility.dateFormatter(new Date())
             dict.wordsOrigin.forEach(word => {
                 sqlArray.push(`
-                    INSERT into ${DatabaseTableName}(word, code, priority, date_create, comment, user_create)
+                    INSERT into ${DatabaseTableName}(word, code, priority, date_create, comment, uid_create)
                     VALUES(
                         '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${req.query.uid}');`
                 )
@@ -47,68 +48,63 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
 
 router.get('/list', (req, res, next) => {
     /**
-     * start
-     * end
+     * dateStart
+     * dateEnd
      * pageSize
-     *
+     * pageNo
      */
     utility.verifyAuthorization(req)
         .then(verified => {
-            let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
+            let sqlBase = `SELECT * from ${DatabaseTableName} `
 
-            let sqlArray = []
-            sqlArray.push(`SELECT *
-                  from diaries 
-                  where uid='${req.query.uid}'`)
-
+            let filterArray = []
             // keywords
-            if (req.query.keywords){
-                let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
-                console.log(keywords)
+            if (req.query.keyword){
+                let keywords = req.query.keyword.split(' ').map(item => utility.unicodeEncode(item))
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
-                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+                    let keywordStrArray = keywords.map(keyword => `( word like '%${keyword}%' ESCAPE '/'  or code like '%${keyword}%' ESCAPE '/')` )
+                    filterArray.push( keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
-
-            // categories
-            if (req.query.categories){
-                let categories = JSON.parse(req.query.categories)
-                if (categories.length > 0) {
-                    let categoryStrArray = categories.map(category => `category='${category}'`)
-                    let tempString = categoryStrArray.join(' or ')
-                    sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
-                }
-            }
-
-            // share
-            if (req.query.filterShared === '1'){
-                sqlArray.push(' and is_public = 1')
-            }
-
             // date range
-            if (req.query.dateFilter){
-                let year = req.query.dateFilter.substring(0,4)
-                let month = req.query.dateFilter.substring(4,6)
-                sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+            if (req.query.dateRange && req.query.dateRange.length === 2){
+                filterArray.push(` and  date_create between '${req.query.dateRange[0]}' AND'${req.query.dateRange[1]}'`)
             }
 
-            sqlArray.push(` order by date desc
-                  limit ${startPoint}, ${req.query.pageCount}`)
 
-            utility.getDataFromDB( 'diary', sqlArray)
-                .then(data => {
+            if (filterArray.length > 0){
+                filterArray.unshift('where')
+            }
+
+
+            let promisesAll = []
+            let pointStart = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize)
+            promisesAll.push(utility.getDataFromDB(
+                'diary',
+                [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.query.pageSize}`])
+            )
+            promisesAll.push(utility.getDataFromDB(
+                'diary',
+                [`select count(*) as sum from ${DatabaseTableName} ${filterArray.join(' ')}`], true)
+            )
+
+            Promise.all(promisesAll)
+                .then(([dataList, dataSum]) => {
                     utility.updateUserLastLoginTime(req.query.email)
-                    data.forEach(diary => {
-                        // decode unicode
-                        diary.title = utility.unicodeDecode(diary.title)
-                        diary.content = utility.unicodeDecode(diary.content)
-                    })
-                    res.send(new ResponseSuccess(data, '请求成功'))
+                    res.send(new ResponseSuccess({
+                        list: dataList,
+                        pager: {
+                            pageSize: Number(req.query.pageSize),
+                            pageNo: Number(req.query.pageNo),
+                            total: dataSum.sum
+                        }
+                    }, '请求成功'))
+
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))
                 })
+
         })
         .catch(verified => {
             res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
@@ -186,9 +182,8 @@ router.delete('/delete', (req, res, next) => {
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
-                        DELETE from diaries
-                        WHERE id='${req.body.diaryId}'
-                        and uid='${req.query.uid}'
+                        DELETE from ${DatabaseTableName}
+                        WHERE id='${req.body.id}'
                     `)
             utility.getDataFromDB( 'diary', sqlArray)
                 .then(data => {
