@@ -149,7 +149,7 @@ router.get('/users', (req, res, next) => {
                         let sqlArray = []
                         sqlArray.push(`
                                 select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict
-                                from users order by count_diary desc 
+                                from users
                             `)
 
                         utility.getDataFromDB( 'diary', sqlArray)
