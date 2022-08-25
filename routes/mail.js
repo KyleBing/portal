@@ -80,8 +80,5 @@ function sendEmailToAdmin(title, content){
     })
 }
 
-module.exports = {
-    sendEmailToAdmin,
-    sendEmail
-}
+module.exports = router
 
