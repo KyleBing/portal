@@ -38,10 +38,13 @@ let routerThumbsUp       = require('./routes/thumbs-up')
 let routerWubiWords      = require('./routes/wubi/wubi-words')
 let routerMail           = require('./routes/mail')
 
+let routerWx           = require('./routes/wx')
+
 
 app.use('/'           , indexRouter)
 app.use('/init'       , init)
 app.use('/user'       , usersRouter)
+app.use('/wx'         , routerWx)
 app.use('/statistic'  , diaryStatisticRouter)
 
 app.use('/diary'          , routerDiary)
