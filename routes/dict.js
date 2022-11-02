@@ -9,11 +9,13 @@ const DatabaseTableName = 'wubi_dict'
 router.get('/pull', (req, res, next) => {
     // 1. 是否属于系统中的用户
     console.log(req.query)
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
             // 1. 先查询出码表结果
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(result => {
                     if (result.length > 0){
                         let data = result[0]
@@ -39,7 +41,8 @@ router.put('/push', (req, res, next) => {
     let timeNow = utility.dateFormatter(new Date())
 
     // 1. 是否属于系统中的用户
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             let encodedTitle = utility.unicodeEncode(req.body.title) // encode 是因为，文件名中可能包含 emoji
 
@@ -62,7 +65,8 @@ router.put('/push', (req, res, next) => {
                                     WHERE title='${encodedTitle}' and uid='${req.query.uid}'
                             `)
 
-                        utility.getDataFromDB( 'diary', sqlArray, true)
+                        utility
+                            .getDataFromDB( 'diary', sqlArray, true)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess(data, '上传成功'))
@@ -79,7 +83,8 @@ router.put('/push', (req, res, next) => {
                             VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${req.query.uid}')`
                         )
 
-                        utility.getDataFromDB( 'diary', sqlArray)
+                        utility
+                            .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 utility.updateUserLastLoginTime(req.query.email)
                                 res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id

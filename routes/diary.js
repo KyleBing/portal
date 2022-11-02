@@ -6,7 +6,8 @@ const ResponseError = require('../response/ResponseError')
 
 
 router.get('/list', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
 
@@ -50,7 +51,8 @@ router.get('/list', (req, res, next) => {
             sqlArray.push(` order by date desc
                   limit ${startPoint}, ${req.query.pageCount}`)
 
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     data.forEach(diary => {
@@ -70,7 +72,8 @@ router.get('/list', (req, res, next) => {
 })
 
 router.get('/temperature', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             let sqlArray = []
             sqlArray.push(`SELECT
@@ -93,7 +96,8 @@ router.get('/temperature', (req, res, next) => {
                 let month = req.query.dateFilter.substring(4,6)
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     data.forEach(diary => {
@@ -116,7 +120,8 @@ router.get('/detail', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
     // 1. 先查询出日记结果
-    utility.getDataFromDB( 'diary', sqlArray, true)
+    utility
+        .getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             // decode unicode
             data.title = utility.unicodeDecode(data.title)
@@ -128,7 +133,8 @@ router.get('/detail', (req, res, next) => {
                 res.send(new ResponseSuccess(data))
             } else {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
-                utility.verifyAuthorization(req)
+                utility
+                    .verifyAuthorization(req)
                     .then(verified => {
                         // 3. 判断日记是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
@@ -151,7 +157,8 @@ router.get('/detail', (req, res, next) => {
 
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
@@ -163,7 +170,8 @@ router.post('/add', (req, res, next) => {
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
                         '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.query.uid}','${req.body.isPublic || 0}')`
             )
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
@@ -180,7 +188,8 @@ router.post('/add', (req, res, next) => {
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
             let parsedContent = utility.unicodeEncode(req.body.content) || ''
@@ -202,7 +211,8 @@ router.put('/modify', (req, res, next) => {
                             WHERE id='${req.body.id}' and uid='${req.query.uid}'
                     `)
 
-            utility.getDataFromDB( 'diary', sqlArray, true)
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess(data, '修改成功'))
@@ -218,7 +228,8 @@ router.put('/modify', (req, res, next) => {
 
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
@@ -226,7 +237,8 @@ router.delete('/delete', (req, res, next) => {
                         WHERE id='${req.body.diaryId}'
                         and uid='${req.query.uid}'
                     `)
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
                         utility.updateUserLastLoginTime(req.query.email)

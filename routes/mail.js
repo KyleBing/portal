@@ -14,7 +14,8 @@ router.post('/send', (req, res, next) => {
         return
     }
 
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             if (req.query.email === configProject.adminCount) {
                 if (req.body.receiver.length > 0){
@@ -45,7 +46,8 @@ router.post('/send-to-admin', (req, res, next) => {
         return
     }
 
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             if (req.query.email === configProject.adminCount) {
                 sendEmailToAdmin(req.body.title, req.body.content)

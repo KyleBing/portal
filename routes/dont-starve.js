@@ -8,10 +8,11 @@ const ResponseError = require('../response/ResponseError')
 // get list
 function getDataList(sqlArray, path){
     router.get(path, (req, res, next) => {
-        utility.getDataFromDB(
-            'starve',
-            sqlArray,
-        )
+        utility
+            .getDataFromDB(
+                'starve',
+                sqlArray,
+            )
             .then(data => {
                 if (data) { // 没有记录时会返回  undefined
                     res.send(new ResponseSuccess(data))
@@ -86,11 +87,12 @@ ListGetInfo.forEach(item => {
 
 function getDataInfo(tableName, path){
     router.get(path, (req, res, next) => {
-        utility.getDataFromDB(
-            'starve',
-            [`select * from ${tableName} where id = ${req.query.id}`],
-            true
-        )
+        utility
+            .getDataFromDB(
+                'starve',
+                [`select * from ${tableName} where id = ${req.query.id}`],
+                true
+            )
             .then(data => {
                 if (data) { // 没有记录时会返回  undefined
                     res.send(new ResponseSuccess(data))

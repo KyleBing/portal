@@ -8,14 +8,16 @@ router.get('/', (req, res, next) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where title = '我的银行卡列表' and uid = ${req.query.uid}`) // 固定 '银行卡列表' 为标题的日记作为存储银行卡列表
     // 1. 先查询出日记结果
-    utility.getDataFromDB( 'diary', sqlArray, true)
+    utility
+        .getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             if (data) {
                 // decode unicode
                 data.title = utility.unicodeDecode(data.title || '')
                 data.content = utility.unicodeDecode(data.content || '')
 
-                utility.verifyAuthorization(req)
+                utility
+                    .verifyAuthorization(req)
                     .then(verified => {
                         // 3. 判断日记是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){

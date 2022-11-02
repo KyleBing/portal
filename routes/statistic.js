@@ -12,7 +12,8 @@ router.get('/', (req, res, next) => {
         return
     }
 
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             updateUsersInfo()
             let sqlArray = []
@@ -37,7 +38,8 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM diaries where uid = ${req.query.uid} and category = 'bill') as count_bill
                         `)
             }
-            utility.getDataFromDB( 'diary', sqlArray, true)
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
                     res.send(new ResponseSuccess(data))
                 })
@@ -58,7 +60,8 @@ router.get('/category', (req, res, next) => {
     }
 
     // 1. get categories list
-    utility.getDataFromDB('diary',[` select * from diary_category order by sort_id asc`])
+    utility
+        .getDataFromDB('diary',[` select * from diary_category order by sort_id asc`])
         .then(categoryListData => {
             if (categoryListData) {
                 // categoryListData = [{"id": 1, "name_en": "life", "name": "生活", "count": 0, "color": "#FF9500", "date_init": "2022-03-23T13:23:02.000Z"}]
@@ -74,7 +77,8 @@ router.get('/category', (req, res, next) => {
                     from diaries where uid='${req.query.uid}'
             `)
 
-                utility.getDataFromDB('diary',sqlArray, true)
+                utility
+                    .getDataFromDB('diary',sqlArray, true)
                     .then(data => {
                         res.send(new ResponseSuccess(data))
                     })
@@ -143,7 +147,8 @@ router.get('/users', (req, res, next) => {
 
     updateUsersInfo()
         .then(() => {
-            utility.verifyAuthorization(req)
+            utility
+                .verifyAuthorization(req)
                 .then(verified => {
                     if (req.query.email === configProject.adminCount) {
                         let sqlArray = []
@@ -152,7 +157,8 @@ router.get('/users', (req, res, next) => {
                                 from users
                             `)
 
-                        utility.getDataFromDB( 'diary', sqlArray)
+                        utility
+                            .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 res.send(new ResponseSuccess(data))
                             })
@@ -173,7 +179,8 @@ router.get('/users', (req, res, next) => {
 // 更新所有用户统计数据
 function updateUsersInfo() {
     return new Promise((resolve, reject) => {
-        utility.getDataFromDB( 'diary', [`select * from users`])
+        utility
+            .getDataFromDB( 'diary', [`select * from users`])
             .then(data => {
                 let sqlArray = []
                 data.forEach(user => {
@@ -181,7 +188,8 @@ function updateUsersInfo() {
                     sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_qr  = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
                 })
-                utility.getDataFromDB( 'diary', sqlArray, true)
+                utility
+                    .getDataFromDB( 'diary', sqlArray, true)
                     .then(data => {
                         console.log(`success: user's count diary|dict has updated`)
                         resolve()

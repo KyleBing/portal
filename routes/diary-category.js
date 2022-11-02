@@ -10,7 +10,8 @@ router.get('/list', (req, res, next) => {
     // query.name_en
     let sqlArray = []
     sqlArray.push(` select * from diary_category order by sort_id asc`)
-    utility.getDataFromDB( 'diary', sqlArray)
+    utility
+        .getDataFromDB( 'diary', sqlArray)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
                 res.send(new ResponseSuccess(data))
@@ -29,7 +30,8 @@ router.post('/add', (req, res, next) => {
             if (dataCategoryExistanceArray.length > 0){
                 return res.send(new ResponseError('', '类别名已存在'))
             } else {
-                utility.verifyAuthorization(req)
+                utility
+                    .verifyAuthorization(req)
                     .then(userInfo => {
                         if (userInfo.email === configProject.adminCount ){
                             let timeNow = utility.dateFormatter(new Date())
@@ -39,7 +41,8 @@ router.post('/add', (req, res, next) => {
                                 insert into diary_category(name, name_en, color, sort_id, date_init) 
                                 values('${req.body.name}', '${req.body.name_en}', '${req.body.color}', '${req.body.sort_id}', '${timeNow}')`
                             )
-                            utility.getDataFromDB( 'diary', sqlArray)
+                            utility
+                                .getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
                                         utility.updateUserLastLoginTime(req.query.email)
@@ -66,7 +69,8 @@ router.post('/add', (req, res, next) => {
 })
 
 router.put('/modify', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount ){
                 let timeNow = utility.dateFormatter(new Date())
@@ -80,7 +84,8 @@ router.put('/modify', (req, res, next) => {
                     sort_id = ${req.body.sort_id},
                     where name_en = '${req.body.name_en}'
                     `)
-                utility.getDataFromDB( 'diary', sqlArray)
+                utility
+                    .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
                             utility.updateUserLastLoginTime(req.query.email)
@@ -103,7 +108,8 @@ router.put('/modify', (req, res, next) => {
 })
 
 router.delete('/delete', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount ){
                 // query.name_en
@@ -112,7 +118,8 @@ router.delete('/delete', (req, res, next) => {
                     delete from diary_category 
                                where name_en = '${req.body.name_en}'
                     `)
-                utility.getDataFromDB( 'diary', sqlArray)
+                utility
+                    .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
                             utility.updateUserLastLoginTime(req.query.email)

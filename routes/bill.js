@@ -6,12 +6,14 @@ const ResponseError = require('../response/ResponseError')
 
 
 router.get('/', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             // let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
             let sqlArray = []
             sqlArray.push(`SELECT *from diaries where uid='${req.query.uid}' and category = 'bill' order by date asc`)
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(billDiaryList => {
                     utility.updateUserLastLoginTime(req.query.email)
                     let billResponse = []
@@ -33,7 +35,8 @@ router.get('/', (req, res, next) => {
 
 
 router.get('/sorted', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             let yearNow = new Date().getFullYear()
             let sqlRequests = []

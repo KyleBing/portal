@@ -33,7 +33,8 @@ router.get('/', (req, res, next) => {
                      left join users on qrs.uid = users.uid
                         where qrs.hash = '${req.query.hash}'`)
     // 1. 先查询出 QR 结果
-    utility.getDataFromDB( 'diary', sqlArray, true)
+    utility
+        .getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
                 // decode unicode
