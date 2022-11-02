@@ -16,7 +16,8 @@ const DatabaseTableName = 'wubi_words'
 
 router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let dict = new Dict(req.file.buffer.toString(), 'temp', 'temp')
             let sqlArray = []
@@ -31,7 +32,8 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
                 )
             })
 
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的日记 id
@@ -53,7 +55,8 @@ router.get('/list', (req, res, next) => {
      * pageSize
      * pageNo
      */
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(verified => {
             let sqlBase = `SELECT * from ${DatabaseTableName} `
 
@@ -113,7 +116,8 @@ router.get('/list', (req, res, next) => {
 
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
@@ -125,7 +129,8 @@ router.post('/add', (req, res, next) => {
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
                         '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.query.uid}','${req.body.isPublic || 0}')`
             )
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
@@ -141,7 +146,8 @@ router.post('/add', (req, res, next) => {
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
             let parsedContent = utility.unicodeEncode(req.body.content) || ''
@@ -163,7 +169,8 @@ router.put('/modify', (req, res, next) => {
                             WHERE id='${req.body.id}' and uid='${req.query.uid}'
                     `)
 
-            utility.getDataFromDB( 'diary', sqlArray, true)
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
                     utility.updateUserLastLoginTime(req.query.email)
                     res.send(new ResponseSuccess(data, '修改成功'))
@@ -178,14 +185,16 @@ router.put('/modify', (req, res, next) => {
 })
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    utility.verifyAuthorization(req)
+    utility
+        .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
                         DELETE from ${DatabaseTableName}
                         WHERE id='${req.body.id}'
                     `)
-            utility.getDataFromDB( 'diary', sqlArray)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
                         utility.updateUserLastLoginTime(req.query.email)

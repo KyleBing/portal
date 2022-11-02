@@ -17,7 +17,8 @@ router.get('/', (req, res, next) => {
              from thumbs_up
              where up_key = '${req.query.key}'`
         ]
-        utility.getDataFromDB( 'diary', sqlArray, true)
+        utility
+            .getDataFromDB( 'diary', sqlArray, true)
             .then(thumbsUpResult => {
                 res.send(new ResponseSuccess(thumbsUpResult.up_count, '请求成功'))
             })
@@ -33,7 +34,8 @@ router.get('/all', (req, res, next) => {
         `SELECT *
              from thumbs_up`
     ]
-    utility.getDataFromDB( 'diary', sqlArray)
+    utility
+        .getDataFromDB( 'diary', sqlArray)
         .then(thumbsUpResult => {
             res.send(new ResponseSuccess(thumbsUpResult, '请求成功'))
         })
