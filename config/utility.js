@@ -114,9 +114,40 @@ function updateUserLastLoginTime(email){
 }
 
 
+// 处理账单文本内容，转成格式化的账单数据
+function processBillOfDay(billContent, date){
+    let str = billContent.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
+    let strArray = str.split('\n').filter(item => item.trim().length > 0)
+
+    let response = {
+        date: date,
+        items: [],
+        sum: 0,
+        sumIncome: 0,
+        sumOutput: 0
+    }
+    strArray.forEach(item => {
+        let itemInfos = item.split(' ')
+        let price = Number(itemInfos[1]) || 0 // 避免账单填写出错的情况
+        if (price < 0) {
+            response.sumOutput = response.sumOutput + price
+        } else {
+            response.sumIncome = response.sumIncome + price
+        }
+        response.sum = response.sum + price
+
+        response.items.push({
+            item: itemInfos[0],
+            price: price
+        })
+    })
+
+    return response
+}
+
 
 module.exports = {
     getDataFromDB, dateFormatter, updateUserLastLoginTime,
     unicodeEncode, unicodeDecode,
-    verifyAuthorization
+    verifyAuthorization, processBillOfDay
 }

@@ -20,7 +20,7 @@ router.get('/', (req, res, next) => {
 
                     billDiaryList.forEach(diary => {
                         // decode unicode
-                        billResponse.push(processBillOfDay(diary.content, diary.date))
+                        billResponse.push(utility.processBillOfDay(diary.content, diary.date))
                     })
                     res.send(new ResponseSuccess(billResponse, '请求成功'))
                 })
@@ -75,7 +75,7 @@ router.get('/sorted', (req, res, next) => {
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         daysArray.forEach(item => {
-                            let processedDayData = processBillOfDay(item.content, item.date)
+                            let processedDayData = utility.processBillOfDay(item.content, item.date)
                             daysData.push(processedDayData)
                             monthSum = monthSum + processedDayData.sum
                             monthSumIncome = monthSumIncome + processedDayData.sumIncome
@@ -114,36 +114,6 @@ router.get('/sorted', (req, res, next) => {
 })
 
 
-// 处理某天的 bill 内容
-function processBillOfDay(billContent, date){
-    let str = billContent.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
-    let strArray = str.split('\n').filter(item => item.trim().length > 0)
-
-    let response = {
-        date: date,
-        items: [],
-        sum: 0,
-        sumIncome: 0,
-        sumOutput: 0
-    }
-    strArray.forEach(item => {
-        let itemInfos = item.split(' ')
-        let price = Number(itemInfos[1]) || 0 // 避免账单填写出错的情况
-        if (price < 0) {
-            response.sumOutput = response.sumOutput + price
-        } else {
-            response.sumIncome = response.sumIncome + price
-        }
-        response.sum = response.sum + price
-
-        response.items.push({
-            item: itemInfos[0],
-            price: price
-        })
-    })
-
-    return response
-}
 
 function money(number){
     return Number(number.toFixed(2))
