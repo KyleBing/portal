@@ -25,11 +25,11 @@ router.get('/', (req, res, next) => {
                             utility.updateUserLastLoginTime(req.query.email)
                             res.send(new ResponseSuccess(data.content))
                         } else {
-                            res.send(new ResponseError('','当前用户无权查看该日记：请求用户 ID 与日记归属不匹配'))
+                            res.send(new ResponseError('','无权查看该日记：请求用户 ID 与日记归属不匹配'))
                         }
                     })
                     .catch(unverified => {
-                        res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
+                        res.send(new ResponseError('','无权查看该日记：用户信息错误'))
                     })
             } else {
                 res.send(new ResponseSuccess('', '未保存任何银行卡信息'))

@@ -3,6 +3,7 @@ const router = express.Router()
 const utility = require('../config/utility')
 const ResponseSuccess = require('../response/ResponseSuccess')
 const ResponseError = require('../response/ResponseError')
+const {user} = require("../config/configDatabase");
 
 
 router.get('/list', (req, res, next) => {
@@ -130,7 +131,14 @@ router.get('/detail', (req, res, next) => {
             // 2. 判断是否为共享日记
             if (data.is_public === 1){
                 // 2.1 如果是，直接返回结果，不需要判断任何东西
-                res.send(new ResponseSuccess(data))
+                let diaryOwnerId = data.uid
+                utility
+                    .getDataFromDB('diary', [`select * from users where uid = '${diaryOwnerId}'`], true)
+                    .then(userData => {
+                        data.nickname = userData.nickname
+                        data.username = userData.username
+                        res.send(new ResponseSuccess(data))
+                    })
             } else {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
                 utility
@@ -142,11 +150,11 @@ router.get('/detail', (req, res, next) => {
                             utility.updateUserLastLoginTime(req.query.email)
                             res.send(new ResponseSuccess(data))
                         } else {
-                            res.send(new ResponseError('','当前用户无权查看该日记：请求用户 ID 与日记归属不匹配'))
+                            res.send(new ResponseError('','无权查看该日记：请求用户 ID 与日记归属不匹配'))
                         }
                     })
                     .catch(unverified => {
-                        res.send(new ResponseError('','当前用户无权查看该日记：用户信息错误'))
+                        res.send(new ResponseError('','无权查看该日记：用户信息错误'))
                     })
             }
         })
