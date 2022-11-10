@@ -130,11 +130,11 @@ function processBillOfDay(billContent, date){
         let itemInfos = item.split(' ')
         let price = Number(itemInfos[1]) || 0 // 避免账单填写出错的情况
         if (price < 0) {
-            response.sumOutput = response.sumOutput + price
+            response.sumOutput = formatMoney(response.sumOutput + price)
         } else {
-            response.sumIncome = response.sumIncome + price
+            response.sumIncome = formatMoney(response.sumIncome + price)
         }
-        response.sum = response.sum + price
+        response.sum = formatMoney(response.sum + price)
 
         response.items.push({
             item: itemInfos[0],
@@ -145,9 +145,15 @@ function processBillOfDay(billContent, date){
     return response
 }
 
+function formatMoney(number){
+    return Number(number.toFixed(2))
+}
+
 
 module.exports = {
     getDataFromDB, dateFormatter, updateUserLastLoginTime,
     unicodeEncode, unicodeDecode,
-    verifyAuthorization, processBillOfDay
+    verifyAuthorization,
+    // Bill
+    processBillOfDay, formatMoney
 }

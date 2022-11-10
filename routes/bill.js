@@ -90,14 +90,14 @@ router.get('/sorted', (req, res, next) => {
                             month: daysArray[0].month,
                             count: daysArray.length,
                             days: daysData,
-                            sum: money(monthSum),
-                            sumIncome: money(monthSumIncome),
-                            sumOutput: money(monthSumOutput),
+                            sum: utility.formatMoney(monthSum),
+                            sumIncome: utility.formatMoney(monthSumIncome),
+                            sumOutput: utility.formatMoney(monthSumOutput),
                             food: {
-                                breakfast: money(food.breakfast),
-                                launch: money(food.launch),
-                                dinner: money(food.dinner),
-                                sum: money(food.breakfast + food.launch + food.dinner)
+                                breakfast: utility.formatMoney(food.breakfast),
+                                launch: utility.formatMoney(food.launch),
+                                dinner: utility.formatMoney(food.dinner),
+                                sum: utility.formatMoney(food.breakfast + food.launch + food.dinner)
                             }
                         })
                     })
@@ -114,9 +114,5 @@ router.get('/sorted', (req, res, next) => {
 })
 
 
-
-function money(number){
-    return Number(number.toFixed(2))
-}
 
 module.exports = router
