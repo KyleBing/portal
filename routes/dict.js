@@ -62,7 +62,7 @@ router.put('/push', (req, res, next) => {
                                        content_size='${req.body.contentSize}',
                                        word_count='${req.body.wordCount}',
                                        date_update='${timeNow}'
-                                    WHERE title='${encodedTitle}' and uid='${req.query.uid};'
+                                    WHERE title='${encodedTitle}' and uid='${req.query.uid}';
                             `)
                         sqlArray.push(`update users set sync_count=sync_count + 1 WHERE uid='${req.query.uid}'`)
 
