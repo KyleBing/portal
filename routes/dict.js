@@ -61,11 +61,10 @@ router.put('/push', (req, res, next) => {
                                        content='${req.body.content}',
                                        content_size='${req.body.contentSize}',
                                        word_count='${req.body.wordCount}',
-                                       date_update='${timeNow}',
-                                       sync_count=sync_count + 1
+                                       date_update='${timeNow}'
                                     WHERE title='${encodedTitle}' and uid='${req.query.uid}'
                             `)
-                        sqlArray.push(` update users set sync_count=sync_count + 1 WHERE uid='${req.query.uid}' `)
+                        sqlArray.push(`update users set sync_count=sync_count + 1 WHERE uid='${req.query.uid}'`)
 
                         utility
                             .getDataFromDB( 'diary', sqlArray, true)
