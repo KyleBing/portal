@@ -153,7 +153,7 @@ router.get('/users', (req, res, next) => {
                     if (req.query.email === configProject.adminCount) {
                         let sqlArray = []
                         sqlArray.push(`
-                                select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict
+                                select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict, sync_count
                                 from users
                             `)
 

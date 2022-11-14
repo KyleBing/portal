@@ -102,27 +102,28 @@ INSERT INTO \`diary_category\` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-
 -- Table structure for users
 -- ----------------------------
 DROP TABLE IF EXISTS \`users\`;
-CREATE TABLE \`users\` (
+CREATE TABLE \`users\`  (
   \`uid\` int(11) NOT NULL AUTO_INCREMENT,
-  \`email\` varchar(50) NOT NULL,
-  \`nickname\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '昵称',
-  \`username\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL COMMENT '用户名',
-  \`password\` varchar(100) NOT NULL COMMENT '密码',
-  \`register_time\` datetime DEFAULT NULL COMMENT '注册时间',
-  \`last_visit_time\` datetime DEFAULT NULL COMMENT '最后访问时间',
-  \`comment\` varchar(255) DEFAULT NULL COMMENT '注释',
-  \`wx\` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT '' COMMENT '微信二维码',
-  \`phone\` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin COMMENT '手机号',
-  \`homepage\` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '个人主页',
-  \`gaode\` varchar(250) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '高德组队邀请码',
+  \`email\` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  \`nickname\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '昵称',
+  \`username\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '用户名',
+  \`password\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '密码',
+  \`register_time\` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
+  \`last_visit_time\` datetime(0) NULL DEFAULT NULL COMMENT '最后访问时间',
+  \`comment\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '注释',
+  \`wx\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT '' COMMENT '微信二维码',
+  \`phone\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '手机号',
+  \`homepage\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '个人主页',
+  \`gaode\` varchar(250) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '高德组队邀请码',
   \`group_id\` int(11) NOT NULL DEFAULT 2 COMMENT '用户组别ID',
-  \`count_diary\` int(6) DEFAULT NULL,
-  \`count_dict\` int(6) DEFAULT NULL,
-  \`count_qr\` int(6) DEFAULT NULL,
-  PRIMARY KEY (\`uid\`,\`email\`) USING BTREE,
+  \`count_diary\` int(6) NULL DEFAULT NULL,
+  \`count_dict\` int(6) NULL DEFAULT NULL,
+  \`count_qr\` int(6) NULL DEFAULT NULL,
+  \`sync_count\` int(6) NULL DEFAULT 0 COMMENT '同步次数',
+  PRIMARY KEY (\`uid\`, \`email\`) USING BTREE,
+  INDEX \`group_id\`(\`group_id\`) USING BTREE,
   CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`) ON DELETE RESTRICT ON UPDATE RESTRICT
-
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+) ENGINE = InnoDB AUTO_INCREMENT = 88 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for user_group
@@ -203,7 +204,6 @@ CREATE TABLE \`wubi_dict\`  (
   \`date_update\` datetime(0) NULL DEFAULT NULL COMMENT '最后同步时间',
   \`comment\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '注释',
   \`uid\` int(11) NULL DEFAULT NULL COMMENT '所属用户',
-  \`sync_count\` int(6) NULL DEFAULT 0 COMMENT '同步次数',
   PRIMARY KEY (\`id\`, \`title\`) USING BTREE,
   INDEX \`uid\`(\`uid\`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 52 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
