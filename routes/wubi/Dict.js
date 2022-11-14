@@ -17,14 +17,14 @@ const os = require('os')
 
 class Dict {
     constructor(fileContent, fileName, filePath) {
-        this.dictTypeName = 'Dict'
-        this.filePath = filePath // 文件路径
-        this.fileName = fileName // 文件名字
-        this.header = null // 文件头部内容
-        this.wordsOrigin = [] // 文件词条数组，groupMode 的时候，是 WordGroup Array，否则是 Word Array
-        this.lastIndex = 0 // 最后一个Word Index 的值，用于新添加词时，作为唯一的 id 传入
-        this.lastGroupIndex = 0 // 最后一个WordGroup Index 的值，用于新添加词时，作为唯一的 id 传入
-        this.isGroupMode = false // 识别码表是否为分组形式的
+        this.dictTypeName    = 'Dict'
+        this.filePath        = filePath  // 文件路径
+        this.fileName        = fileName  // 文件名字
+        this.header          = null      // 文件头部内容
+        this.wordsOrigin     = []        // 文件词条数组，groupMode 的时候，是 WordGroup Array，否则是 Word Array
+        this.lastIndex       = 0         // 最后一个Word Index 的值，用于新添加词时，作为唯一的 id 传入
+        this.lastGroupIndex  = 0         // 最后一个WordGroup Index 的值，用于新添加词时，作为唯一的 id 传入
+        this.isGroupMode     = false     // 识别码表是否为分组形式的
 
         let indexEndOfHeader = fileContent.indexOf('...')
         if (indexEndOfHeader < 0){

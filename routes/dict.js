@@ -61,7 +61,8 @@ router.put('/push', (req, res, next) => {
                                        content='${req.body.content}',
                                        content_size='${req.body.contentSize}',
                                        word_count='${req.body.wordCount}',
-                                       date_update='${timeNow}'
+                                       date_update='${timeNow}',
+                                       sync_count=sync_count + 1
                                     WHERE title='${encodedTitle}' and uid='${req.query.uid}'
                             `)
 
