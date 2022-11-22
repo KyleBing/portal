@@ -173,7 +173,9 @@ router.post('/add', (req, res, next) => {
         .then(userInfo => {
             let sqlArray = []
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
+            // parsedTitle = parsedTitle.replaceAll(`'`, `''`)
             let parsedContent = utility.unicodeEncode(req.body.content) || ''
+            parsedContent = parsedContent.replaceAll(`'`, `''`)
             let timeNow = utility.dateFormatter(new Date())
             sqlArray.push(`
                     INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
@@ -203,11 +205,11 @@ router.put('/modify', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let parsedTitle = utility.unicodeEncode(req.body.title) // !
+            parsedTitle = parsedTitle.replaceAll(`'`, `''`)
             let parsedContent = utility.unicodeEncode(req.body.content) || ''
+            parsedContent = parsedContent.replaceAll(`'`, `''`)
             let timeNow = utility.dateFormatter(new Date())
-
-            let sqlArray = []
-            sqlArray.push(`
+            let sqlArray = [`
                         update diaries
                             set
                                 diaries.date_modify='${timeNow}',
@@ -220,8 +222,7 @@ router.put('/modify', (req, res, next) => {
                                 diaries.temperature_outside='${req.body.temperatureOutside}',
                                 diaries.is_public='${req.body.isPublic}'
                             WHERE id='${req.body.id}' and uid='${req.query.uid}'
-                    `)
-
+                    `]
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
