@@ -33,15 +33,15 @@ wss.on("connection", ws => {
                 break;
             case WSMessage.type.thumbsUp:
                 utility
-                    .getDataFromDB( 'diary', [`UPDATE thumbs_up SET up_count=up_count + 1 WHERE up_key = '${receiveMessage.content.key}'`])
+                    .getDataFromDB( 'diary', [`UPDATE thumbs_up SET count=count + 1 WHERE name = '${receiveMessage.content.key}'`])
                     .then(resultUpdate => {
                         utility
-                            .getDataFromDB( 'diary', [`select up_count from thumbs_up where up_key = '${receiveMessage.content.key}'`], true)
+                            .getDataFromDB( 'diary', [`select count from thumbs_up where name = '${receiveMessage.content.key}'`], true)
                             .then(result => {
                                 if (result){
                                     let sendMessage = new WSMessage(WSMessage.type.thumbsUp, {
                                         key: receiveMessage.content.key,
-                                        count: result.up_count
+                                        count: result.count
                                     })
                                     wss.clients.forEach(client =>  {
                                         client.send(JSON.stringify(sendMessage))

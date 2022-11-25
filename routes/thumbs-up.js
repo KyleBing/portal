@@ -48,7 +48,7 @@ router.get('/all', (req, res, next) => {
 
 router.get('/list', (req, res, next) => {
     let sqlArray = []
-    sqlArray.push(` select * from thumbs_up`)
+    sqlArray.push(` select * from thumbs_up order by date_init asc`)
     utility
         .getDataFromDB( 'diary', sqlArray)
         .then(data => {
@@ -78,7 +78,7 @@ router.post('/add', (req, res, next) => {
                             let sqlArray = []
                             sqlArray.push(`
                                 insert into thumbs_up(name, count, description, link_address, date_init) 
-                                values('${req.body.name}', ${req.body.count}, '${req.body.description}', '${req.body.link_address}', '${timeNow}')`
+                                values('${req.body.name}', ${req.body.count}, '${req.body.description || ''}', '${req.body.link_address}', '${timeNow}')`
                             )
                             utility
                                 .getDataFromDB( 'diary', sqlArray)
