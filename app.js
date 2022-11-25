@@ -38,7 +38,7 @@ let routerThumbsUp       = require('./routes/thumbs-up')
 let routerWubiWords      = require('./routes/wubi/wubi-words')
 let routerMail           = require('./routes/mail')
 
-let routerWx           = require('./routes/wx')
+let routerWx             = require('./routes/wx')
 
 
 app.use('/'           , indexRouter)
@@ -55,7 +55,7 @@ app.use('/bill'           , routerBill)          // 账单
 app.use('/qr'             , routerQr)            // QR 二维码
 app.use('/qr-manager'     , routerQrManager)     // QR 二维码
 app.use('/vps'            , routerVPS)           // 搬瓦工 VPS
-app.use('/thumbs-up'      , routerThumbsUp)      // 获取点赞初始计数
+app.use('/thumbs-up'      , routerThumbsUp)      // 点赞管理
 
 app.use('/wubi'      , routerWubiWords)      // 词条操作
 

@@ -5,7 +5,6 @@ const utility = require('../config/utility')
 const ResponseSuccess = require('../response/ResponseSuccess')
 const ResponseError = require('../response/ResponseError')
 
-
 router.get('/list', (req, res, next) => {
     // query.name_en
     let sqlArray = []
@@ -67,7 +66,6 @@ router.post('/add', (req, res, next) => {
         })
 
 })
-
 router.put('/modify', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -106,7 +104,6 @@ router.put('/modify', (req, res, next) => {
             res.send(new ResponseError('', err.message))
         })
 })
-
 router.delete('/delete', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -140,7 +137,6 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError('', err.message))
         })
 })
-
 
 // 检查类别是否存在
 function checkCategoryExist(categoryName){
