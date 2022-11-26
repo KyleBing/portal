@@ -11,18 +11,19 @@ router.get('/', (req, res, next) => {
     sqlArray.push(`
             select qrs.hash,
                    qrs.is_public,
-                   qrs.switch_phone,
+                   qrs.is_show_phone,
                    qrs.message,
                    qrs.car,
                    qrs.car_plate,
                    qrs.car_desc,
-                   qrs.switch_car,
-                   qrs.switch_wx,
+                   qrs.is_show_car,
+                   qrs.is_show_wx,
                    qrs.description,
-                   qrs.switch_homepage,
-                   qrs.switch_gaode,
+                   qrs.is_show_homepage,
+                   qrs.is_show_gaode,
                    qrs.date_init,
                    qrs.visit_count,
+                   qrs.imgs,
                    users.phone,
                    users.wx,
                    users.homepage,
@@ -60,7 +61,9 @@ router.get('/', (req, res, next) => {
 })
 
 function countPlusOne(hash){
-    utility.getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
+    utility
+        .getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
+        .then()
 }
 
 

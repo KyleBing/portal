@@ -13,7 +13,6 @@ const bucket = 'qrmanager'
  * 七牛云 图片处理
  */
 
-let mac = new qiniu.auth.digest.Mac(configProject.qiniuAccessKey, configProject.qiniuSecretKey);
 
 router.get('/', (req, res, next) => {
     utility
@@ -32,12 +31,12 @@ router.get('/', (req, res, next) => {
 })
 
 function getQiniuToken(){
+    let mac = new qiniu.auth.digest.Mac(configProject.qiniuAccessKey, configProject.qiniuSecretKey);
     const options = {
         scope: bucket
     };
     let putPolicy = new qiniu.rs.PutPolicy(options);
-    let uploadToken = putPolicy.uploadToken(mac);
-    return uploadToken
+    return putPolicy.uploadToken(mac)
 }
 
 

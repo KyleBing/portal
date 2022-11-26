@@ -146,18 +146,18 @@ router.get('/detail', (req, res, next) => {
                             // 记录最后访问时间
                             utility.updateUserLastLoginTime(req.query.email)
                             /*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
-                                                        if (data.switch_wx){
+                                                        if (data.is_show_wx){
                                                             data.wx = ''
                                                         }
-                                                        if (data.switch_car){
+                                                        if (data.is_show_car){
                                                             data.car = ''
                                                             data.car_desc = ''
                                                             data.car_plate = ''
                                                         }
-                                                        if (data.switch_gaode){
+                                                        if (data.is_show_gaode){
                                                             data.gaode = ''
                                                         }
-                                                        if (data.switch_homepage){
+                                                        if (data.is_show_homepage){
                                                             data.homepage = ''
                                                         }*/
                             res.send(new ResponseSuccess(data))

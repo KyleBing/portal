@@ -24,6 +24,7 @@ router.get('/list', (req, res, next) => {
                                    qrs.is_show_gaode,
                                    qrs.date_init,
                                    qrs.visit_count,
+                                   qrs.imgs,
                                    users.phone,
                                    users.wx,
                                    users.uid,
@@ -150,7 +151,7 @@ router.post('/add', (req, res, next) => {
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
                            insert into qrs(hash, is_public, is_show_phone, message, description, car, car_plate, car_desc, is_show_car, is_show_wx,
-                           is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid)
+                           is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid, imgs)
                             values(
                                 '${req.body.hash.toLowerCase()}',
                                 '${req.body.is_public}',
@@ -167,7 +168,9 @@ router.post('/add', (req, res, next) => {
                                 '${timeNow}',
                                 '${timeNow}',
                                 '${req.body.visit_count || 0}',
-                                '${req.query.uid}')
+                                '${req.query.uid}',
+                                '${req.body.imgs}'
+                                )
                         `)
                         utility
                             .getDataFromDB( 'diary', sqlArray)
@@ -226,7 +229,8 @@ router.put('/modify', (req, res, next) => {
                                 qrs.is_show_gaode = '${req.body.is_show_gaode}',
                                 qrs.date_modify = '${timeNow}',
                                 qrs.visit_count = '${req.body.visit_count}',
-                                qrs.uid = '${req.body.uid}'
+                                qrs.uid = '${req.body.uid}',
+                                qrs.imgs = '${req.body.imgs}'
                             WHERE hash='${req.body.hash}'
                     `)
 
