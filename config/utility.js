@@ -35,23 +35,27 @@ function getDataFromDB(dbName, sqlArray, isSingleValue) {
 
 // 验证用户是否有权限
 function verifyAuthorization(req){
-    let sqlArray = []
-    sqlArray.push(`select * from users where uid = ${req.query.uid}`)
-    // console.log('sqlArray: ',sqlArray)
     return new Promise((resolve, reject) => {
-        getDataFromDB( 'diary', sqlArray, true)
-            .then(data => {
-                // console.log('sqlResult: ', data.password, req.query.token)
-                if (data.password === req.query.token){
-                    resolve(data) // 如果查询成功，返回查询结果
-                } else {
-                    reject (false)
-                }
-            })
-            .catch(err => {
-                console.log('验证权限失败', err, err.message)
-                reject(false)
-            })
+        if (!req.query.uid){
+            reject (false)
+        } else {
+            let sqlArray = []
+            sqlArray.push(`select * from users where uid = ${req.query.uid}`)
+            // console.log('sqlArray: ',sqlArray)
+            getDataFromDB( 'diary', sqlArray, true)
+                .then(data => {
+                    // console.log('sqlResult: ', data.password, req.query.token)
+                    if (data.password === req.query.token){
+                        resolve(data) // 如果查询成功，返回查询结果
+                    } else {
+                        reject (false)
+                    }
+                })
+                .catch(err => {
+                    console.log('验证权限失败', err, err.message)
+                    reject(false)
+                })
+        }
     })
 }
 

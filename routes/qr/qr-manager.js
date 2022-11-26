@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const utility = require('../config/utility')
-const ResponseSuccess = require('../response/ResponseSuccess')
-const ResponseError = require('../response/ResponseError')
+const utility = require('../../config/utility')
+const ResponseSuccess = require('../../response/ResponseSuccess')
+const ResponseError = require('../../response/ResponseError')
 
 
 router.get('/list', (req, res, next) => {
