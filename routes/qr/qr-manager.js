@@ -12,16 +12,16 @@ router.get('/list', (req, res, next) => {
             let sqlArray = []
             sqlArray.push(`select  qrs.hash,
                                    qrs.is_public,
-                                   qrs.switch_phone,
+                                   qrs.is_show_phone,
                                    qrs.message,
                                    qrs.car,
                                    qrs.car_plate,
                                    qrs.car_desc,
-                                   qrs.switch_car,
-                                   qrs.switch_wx,
+                                   qrs.is_show_car,
+                                   qrs.is_show_wx,
                                    qrs.description,
-                                   qrs.switch_homepage,
-                                   qrs.switch_gaode,
+                                   qrs.is_show_homepage,
+                                   qrs.is_show_gaode,
                                    qrs.date_init,
                                    qrs.visit_count,
                                    users.phone,
@@ -100,18 +100,18 @@ router.get('/detail', (req, res, next) => {
                             // 记录最后访问时间
                             utility.updateUserLastLoginTime(req.query.email)
 /*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
-                            if (data.switch_wx){
+                            if (data.is_show_wx){
                                 data.wx = ''
                             }
-                            if (data.switch_car){
+                            if (data.is_show_car){
                                 data.car = ''
                                 data.car_desc = ''
                                 data.car_plate = ''
                             }
-                            if (data.switch_gaode){
+                            if (data.is_show_gaode){
                                 data.gaode = ''
                             }
-                            if (data.switch_homepage){
+                            if (data.is_show_homepage){
                                 data.homepage = ''
                             }*/
                             res.send(new ResponseSuccess(data))
@@ -149,21 +149,21 @@ router.post('/add', (req, res, next) => {
                         let parsedDescription = utility.unicodeEncode(req.body.description) || ''
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
-                           insert into qrs(hash, is_public, switch_phone, message, description, car, car_plate, car_desc, switch_car, switch_wx,
-                           switch_homepage, switch_gaode, date_modify, date_init, visit_count, uid)
+                           insert into qrs(hash, is_public, is_show_phone, message, description, car, car_plate, car_desc, is_show_car, is_show_wx,
+                           is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid)
                             values(
                                 '${req.body.hash.toLowerCase()}',
                                 '${req.body.is_public}',
-                                '${req.body.switch_phone}',
+                                '${req.body.is_show_phone}',
                                 '${parsedMessage}',
                                 '${parsedDescription}',
                                 '${req.body.car}',
                                 '${req.body.car_plate}',
                                 '${req.body.car_desc}',
-                                '${req.body.switch_car}',
-                                '${req.body.switch_wx}',
-                                '${req.body.switch_homepage}',
-                                '${req.body.switch_gaode}',
+                                '${req.body.is_show_car}',
+                                '${req.body.is_show_wx}',
+                                '${req.body.is_show_homepage}',
+                                '${req.body.is_show_gaode}',
                                 '${timeNow}',
                                 '${timeNow}',
                                 '${req.body.visit_count || 0}',
@@ -214,16 +214,16 @@ router.put('/modify', (req, res, next) => {
                         update qrs
                             set
                                 qrs.is_public = '${req.body.is_public}',
-                                qrs.switch_phone = '${req.body.switch_phone}',
+                                qrs.is_show_phone = '${req.body.is_show_phone}',
                                 qrs.message = '${parsedMessage}',
                                 qrs.description = '${parsedDescription}',
                                 qrs.car = '${req.body.car}',
                                 qrs.car_plate = '${req.body.car_plate}',
                                 qrs.car_desc = '${req.body.car_desc}',
-                                qrs.switch_car = '${req.body.switch_car}',
-                                qrs.switch_wx = '${req.body.switch_wx}',
-                                qrs.switch_homepage = '${req.body.switch_homepage}',
-                                qrs.switch_gaode = '${req.body.switch_gaode}',
+                                qrs.is_show_car = '${req.body.is_show_car}',
+                                qrs.is_show_wx = '${req.body.is_show_wx}',
+                                qrs.is_show_homepage = '${req.body.is_show_homepage}',
+                                qrs.is_show_gaode = '${req.body.is_show_gaode}',
                                 qrs.date_modify = '${timeNow}',
                                 qrs.visit_count = '${req.body.visit_count}',
                                 qrs.uid = '${req.body.uid}'
