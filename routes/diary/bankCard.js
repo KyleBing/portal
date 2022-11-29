@@ -5,40 +5,38 @@ const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 
 router.get('/', (req, res, next) => {
-    let sqlArray = []
-    sqlArray.push(`select * from diaries where title = '我的银行卡列表' and uid = ${req.query.uid}`) // 固定 '银行卡列表' 为标题的日记作为存储银行卡列表
-    // 1. 先查询出日记结果
+
+    // 1. 验证 token
     utility
-        .getDataFromDB( 'diary', sqlArray, true)
-        .then(data => {
-            if (data) {
-                // decode unicode
-                data.title = utility.unicodeDecode(data.title || '')
-                data.content = utility.unicodeDecode(data.content || '')
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`select * from diaries where title = '我的银行卡列表' and uid = ${userInfo.uid}`) // 固定 '银行卡列表' 为标题的日记作为存储银行卡列表
+            // 2. 查询出日记结果
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
+                .then(dataDiary => {
+                    if (dataDiary) {
+                        // decode unicode
+                        dataDiary.title = utility.unicodeDecode(dataDiary.title || '')
+                        dataDiary.content = utility.unicodeDecode(dataDiary.content || '')
 
-                utility
-                    .verifyAuthorization(req)
-                    .then(verified => {
-                        // 3. 判断日记是否属于当前请求用户
-                        if (Number(req.query.uid) === data.uid){
-                            // 记录最后访问时间
-                            utility.updateUserLastLoginTime(uid)
-                            res.send(new ResponseSuccess(data.content))
-                        } else {
-                            res.send(new ResponseError('','无权查看该日记：请求用户 ID 与日记归属不匹配'))
-                        }
-                    })
-                    .catch(unverified => {
-                        res.send(new ResponseError('','无权查看该日记：用户信息错误'))
-                    })
-            } else {
-                res.send(new ResponseSuccess('', '未保存任何银行卡信息'))
-            }
+                        // 记录最后访问时间
+                        utility.updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess(dataDiary.content))
+                    } else {
+                        res.send(new ResponseSuccess('', '未保存任何银行卡信息'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(unverified => {
+            res.send(new ResponseError('','无权查看该日记：用户信息错误'))
+        })
 
-        })
-        .catch(err => {
-            res.send(new ResponseError(err, err.message))
-        })
+
 })
 
 
