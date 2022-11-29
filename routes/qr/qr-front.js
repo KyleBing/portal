@@ -36,16 +36,16 @@ router.get('/', (req, res, next) => {
     // 1. 先查询出 QR 结果
     utility
         .getDataFromDB( 'diary', sqlArray, true)
-        .then(data => {
-            if (data) { // 没有记录时会返回  undefined
+        .then(dataQr => {
+            if (dataQr) { // 没有记录时会返回  undefined
                 // decode unicode
-                data.message = utility.unicodeDecode(data.message)
-                data.description = utility.unicodeDecode(data.description)
+                dataQr.message = utility.unicodeDecode(dataQr.message)
+                dataQr.description = utility.unicodeDecode(dataQr.description)
 
                 // 2. 判断是否为共享 QR
-                if (data.is_public === 1){
+                if (dataQr.is_public === 1){
                     // 2.1 如果是，直接返回结果，不需要判断任何东西
-                    res.send(new ResponseSuccess(data))
+                    res.send(new ResponseSuccess(dataQr))
                     countPlusOne(req.query.hash)
                 } else{
                     res.send(new ResponseError('', '该码未启用'))
@@ -53,7 +53,6 @@ router.get('/', (req, res, next) => {
             } else {
                 res.send(new ResponseError('', '查无此码'))
             }
-
         })
         .catch(err => {
             res.send(new ResponseError(err, err.message))

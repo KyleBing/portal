@@ -9,14 +9,9 @@ const router = express.Router()
 
 // 发送邮件
 router.post('/send', (req, res, next) => {
-    if (!req.query.uid || !req.query.token) {
-        res.send(new ResponseError('参数错误：uid 未定义'))
-        return
-    }
-
     utility
         .verifyAuthorization(req)
-        .then(verified => {
+        .then(userInfo => {
             if (req.query.email === configProject.adminCount) {
                 if (req.body.receiver.length > 0){
                     req.body.receiver.forEach(receiverEmail => {
@@ -39,10 +34,6 @@ router.post('/send', (req, res, next) => {
 router.post('/send-to-admin', (req, res, next) => {
     if (!configProject.adminCount) {
         res.send(new ResponseError('后台管理员邮箱未设置'))
-        return
-    }
-    if (!req.query.uid || !req.query.token) {
-        res.send(new ResponseError('参数错误：uid 未定义'))
         return
     }
 

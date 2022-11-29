@@ -39,7 +39,7 @@ router.get('/list', (req, res, next) => {
             if (userInfo.group_id === 1){
 
             } else {
-                sqlArray.push([`where qrs.uid = ${req.query.uid}`])
+                sqlArray.push([`where qrs.uid = ${userInfo.uid}`])
             }
 
 
@@ -60,7 +60,7 @@ router.get('/list', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(uid)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     data.forEach(diary => {
                         // decode unicode
                         diary.message = utility.unicodeDecode(diary.message)
@@ -82,24 +82,24 @@ router.get('/detail', (req, res, next) => {
     sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
     utility
         .getDataFromDB( 'diary', sqlArray, true)
-        .then(data => {
+        .then(dataQr => {
             // decode unicode
-            data.message = utility.unicodeDecode(data.message)
-            data.description = utility.unicodeDecode(data.description)
+            dataQr.message = utility.unicodeDecode(dataQr.message)
+            dataQr.description = utility.unicodeDecode(dataQr.description)
 
             // 2. 判断是否为共享 QR
-            if (data.is_public === 1){
+            if (dataQr.is_public === 1){
                 // 2.1 如果是，直接返回结果，不需要判断任何东西
-                res.send(new ResponseSuccess(data))
+                res.send(new ResponseSuccess(dataQr))
             } else {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
                 utility
                     .verifyAuthorization(req)
-                    .then(verified => {
+                    .then(userInfo => {
                         // 3. 判断 QR 是否属于当前请求用户
-                        if (Number(req.query.uid) === data.uid){
+                        if (Number(userInfo.uid) === dataQr.uid){
                             // 记录最后访问时间
-                            utility.updateUserLastLoginTime(uid)
+                            utility.updateUserLastLoginTime(userInfo.uid)
 /*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
                             if (data.is_show_wx){
                                 data.wx = ''
@@ -115,7 +115,7 @@ router.get('/detail', (req, res, next) => {
                             if (data.is_show_homepage){
                                 data.homepage = ''
                             }*/
-                            res.send(new ResponseSuccess(data))
+                            res.send(new ResponseSuccess(dataQr))
                         } else {
                             res.send(new ResponseError('','当前用户无权查看该 QR ：请求用户 ID 与 QR 归属不匹配'))
                         }
@@ -168,14 +168,14 @@ router.post('/add', (req, res, next) => {
                                 '${timeNow}',
                                 '${timeNow}',
                                 '${req.body.visit_count || 0}',
-                                '${req.query.uid}',
+                                '${userInfo.uid}',
                                 '${req.body.imgs}'
                                 )
                         `)
                         utility
                             .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(uid)
+                                utility.updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
                             })
                             .catch(err => {
@@ -261,13 +261,13 @@ router.delete('/delete', (req, res, next) => {
                         WHERE hash='${req.body.hash}'
                     `)
             if (userInfo.group_id !== 1){
-                sqlArray.push(` and uid='${req.query.uid}'`) // 当为1管理员时，可以随意操作任意对象
+                sqlArray.push(` and uid='${userInfo.uid}'`) // 当为1管理员时，可以随意操作任意对象
             }
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(uid)
+                        utility.updateUserLastLoginTime(userInfo.uid)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))
@@ -296,7 +296,7 @@ router.post('/clear-visit-count', (req, res, next) => {
                 utility
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
-                        utility.updateUserLastLoginTime(uid)
+                        utility.updateUserLastLoginTime(userInfo.uid)
                         res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 QR  id
                     })
                     .catch(err => {
