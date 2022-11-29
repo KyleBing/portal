@@ -1,7 +1,6 @@
 const mysql = require("mysql");
 const configDatabase = require('./configDatabase')
 const configProject = require('./configProject')
-const {user} = require("./configDatabase");
 
 // 运行 SQL 并返回 DB 结果
 function getDataFromDB(dbName, sqlArray, isSingleValue) {
