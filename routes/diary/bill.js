@@ -15,7 +15,7 @@ router.get('/', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(billDiaryList => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     let billResponse = []
 
                     billDiaryList.forEach(diary => {

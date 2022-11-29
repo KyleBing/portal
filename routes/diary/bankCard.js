@@ -22,7 +22,7 @@ router.get('/', (req, res, next) => {
                         // 3. 判断日记是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
                             // 记录最后访问时间
-                            utility.updateUserLastLoginTime(req.query.email)
+                            utility.updateUserLastLoginTime(uid)
                             res.send(new ResponseSuccess(data.content))
                         } else {
                             res.send(new ResponseError('','无权查看该日记：请求用户 ID 与日记归属不匹配'))

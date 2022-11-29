@@ -60,7 +60,7 @@ router.get('/list', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     data.forEach(diary => {
                         // decode unicode
                         diary.message = utility.unicodeDecode(diary.message)
@@ -99,7 +99,7 @@ router.get('/detail', (req, res, next) => {
                         // 3. 判断 QR 是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
                             // 记录最后访问时间
-                            utility.updateUserLastLoginTime(req.query.email)
+                            utility.updateUserLastLoginTime(uid)
 /*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
                             if (data.is_show_wx){
                                 data.wx = ''
@@ -175,7 +175,7 @@ router.post('/add', (req, res, next) => {
                         utility
                             .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(req.query.email)
+                                utility.updateUserLastLoginTime(uid)
                                 res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
                             })
                             .catch(err => {
@@ -267,7 +267,7 @@ router.delete('/delete', (req, res, next) => {
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(req.query.email)
+                        utility.updateUserLastLoginTime(uid)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))
@@ -296,7 +296,7 @@ router.post('/clear-visit-count', (req, res, next) => {
                 utility
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
-                        utility.updateUserLastLoginTime(req.query.email)
+                        utility.updateUserLastLoginTime(uid)
                         res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 QR  id
                     })
                     .catch(err => {

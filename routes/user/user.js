@@ -105,7 +105,7 @@ router.get('/list', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     data.forEach(diary => {
                         // decode unicode
                         diary.title = utility.unicodeDecode(diary.title)
@@ -144,7 +144,7 @@ router.get('/detail', (req, res, next) => {
                         // 3. 判断 QR 是否属于当前请求用户
                         if (Number(req.query.uid) === data.uid){
                             // 记录最后访问时间
-                            utility.updateUserLastLoginTime(req.query.email)
+                            utility.updateUserLastLoginTime(uid)
                             /*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
                                                         if (data.is_show_wx){
                                                             data.wx = ''
@@ -270,7 +270,7 @@ function operateUserInfo(req, res){
     utility
         .getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
-            utility.updateUserLastLoginTime(req.query.email)
+            utility.updateUserLastLoginTime(uid)
             res.send(new ResponseSuccess(data, '修改成功'))
         })
         .catch(err => {
@@ -356,7 +356,7 @@ router.put('/change-password', (req, res, next) => {
                     utility
                         .getDataFromDB( 'diary', changePasswordSqlArray)
                         .then(dataChangePassword => {
-                            utility.updateUserLastLoginTime(req.query.email)
+                            utility.updateUserLastLoginTime(uid)
                             res.send(new ResponseSuccess('', '修改密码成功'))
                         })
                         .catch(errChangePassword => {

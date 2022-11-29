@@ -35,7 +35,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
@@ -93,7 +93,7 @@ router.get('/list', (req, res, next) => {
 
             Promise.all(promisesAll)
                 .then(([dataList, dataSum]) => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     res.send(new ResponseSuccess({
                         list: dataList,
                         pager: {
@@ -132,7 +132,7 @@ router.post('/add', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
@@ -172,7 +172,7 @@ router.put('/modify', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(uid)
                     res.send(new ResponseSuccess(data, '修改成功'))
                 })
                 .catch(err => {
@@ -197,7 +197,7 @@ router.delete('/delete', (req, res, next) => {
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(req.query.email)
+                        utility.updateUserLastLoginTime(uid)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))

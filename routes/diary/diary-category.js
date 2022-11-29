@@ -44,7 +44,7 @@ router.post('/add', (req, res, next) => {
                                 .getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
-                                        utility.updateUserLastLoginTime(req.query.email)
+                                        utility.updateUserLastLoginTime(userInfo.uid)
                                         res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
                                     } else {
                                         res.send(new ResponseError('', '日记类别查询错误'))
@@ -86,7 +86,7 @@ router.put('/modify', (req, res, next) => {
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(req.query.email)
+                            utility.updateUserLastLoginTime(uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的日记类别 id
                         } else {
                             res.send(new ResponseError('', '日记类别操作错误'))
@@ -119,7 +119,7 @@ router.delete('/delete', (req, res, next) => {
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(req.query.email)
+                            utility.updateUserLastLoginTime(uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的日记类别 id
                         } else {
                             res.send(new ResponseError('', '日记类别删除失败'))

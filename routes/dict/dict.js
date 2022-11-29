@@ -21,7 +21,7 @@ router.get('/pull', (req, res, next) => {
                         let data = result[0]
                         data.title = utility.unicodeDecode(data.title)
                         // 记录最后访问时间
-                        utility.updateUserLastLoginTime(req.query.email)
+                        utility.updateUserLastLoginTime(uid)
                         res.send(new ResponseSuccess(data))
                     } else {
                         res.send(new ResponseSuccess('','不存在词库'))
@@ -69,7 +69,7 @@ router.put('/push', (req, res, next) => {
                         utility
                             .getDataFromDB( 'diary', sqlArray, true)
                             .then(data => {
-                                utility.updateUserLastLoginTime(req.query.email)
+                                utility.updateUserLastLoginTime(uid)
                                 res.send(new ResponseSuccess(data, '上传成功'))
                             })
                             .catch(err => {
@@ -87,7 +87,7 @@ router.put('/push', (req, res, next) => {
                         utility
                             .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(req.query.email)
+                                utility.updateUserLastLoginTime(uid)
                                 res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id
                             })
                             .catch(err => {

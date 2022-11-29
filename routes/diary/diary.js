@@ -8,13 +8,13 @@ const ResponseError = require('../../response/ResponseError')
 router.get('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
-        .then(verified => {
+        .then(userInfo => {
             let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
 
             let sqlArray = []
             sqlArray.push(`SELECT *
                   from diaries 
-                  where uid='${req.query.uid}'`)
+                  where uid='${userInfo.uid}'`)
 
             // keywords
             if (req.query.keywords){
@@ -54,7 +54,7 @@ router.get('/list', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     data.forEach(diary => {
                         // decode unicode
                         diary.title = utility.unicodeDecode(diary.title)
@@ -78,7 +78,7 @@ router.get('/list', (req, res, next) => {
 router.get('/temperature', (req, res, next) => {
     utility
         .verifyAuthorization(req)
-        .then(verified => {
+        .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`SELECT
                                date,
@@ -87,7 +87,7 @@ router.get('/temperature', (req, res, next) => {
                            FROM
                                diaries
                            WHERE
-                               uid='${req.query.uid}'
+                               uid='${userInfo.uid}'
                              AND category = 'life'
 
                            ORDER BY
@@ -103,7 +103,7 @@ router.get('/temperature', (req, res, next) => {
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     data.forEach(diary => {
                         // decode unicode
                         diary.title = utility.unicodeDecode(diary.title)
@@ -126,32 +126,32 @@ router.get('/detail', (req, res, next) => {
     // 1. 先查询出日记结果
     utility
         .getDataFromDB( 'diary', sqlArray, true)
-        .then(data => {
+        .then(dataDiary => {
             // decode unicode
-            data.title = utility.unicodeDecode(data.title)
-            data.content = utility.unicodeDecode(data.content)
+            dataDiary.title = utility.unicodeDecode(dataDiary.title)
+            dataDiary.content = utility.unicodeDecode(dataDiary.content)
 
             // 2. 判断是否为共享日记
-            if (data.is_public === 1){
+            if (dataDiary.is_public === 1){
                 // 2.1 如果是，直接返回结果，不需要判断任何东西
-                let diaryOwnerId = data.uid
+                let diaryOwnerId = dataDiary.uid
                 utility
                     .getDataFromDB('diary', [`select * from users where uid = '${diaryOwnerId}'`], true)
                     .then(userData => {
-                        data.nickname = userData.nickname
-                        data.username = userData.username
-                        res.send(new ResponseSuccess(data))
+                        dataDiary.nickname = userData.nickname
+                        dataDiary.username = userData.username
+                        res.send(new ResponseSuccess(dataDiary))
                     })
             } else {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
                 utility
                     .verifyAuthorization(req)
-                    .then(verified => {
+                    .then(userInfo => {
                         // 3. 判断日记是否属于当前请求用户
-                        if (Number(req.query.uid) === data.uid){
+                        if (Number(userInfo.uid) === dataDiary.uid){
                             // 记录最后访问时间
-                            utility.updateUserLastLoginTime(req.query.email)
-                            res.send(new ResponseSuccess(data))
+                            utility.updateUserLastLoginTime(userInfo.uid)
+                            res.send(new ResponseSuccess(dataDiary))
                         } else {
                             res.send(new ResponseError('','无权查看该日记：请求用户 ID 与日记归属不匹配'))
                         }
@@ -181,12 +181,12 @@ router.post('/add', (req, res, next) => {
                     INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
                     VALUES(
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.query.uid}','${req.body.isPublic || 0}')`
+                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${userInfo.uid}','${req.body.isPublic || 0}')`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
@@ -221,12 +221,12 @@ router.put('/modify', (req, res, next) => {
                                 diaries.temperature='${req.body.temperature}',
                                 diaries.temperature_outside='${req.body.temperatureOutside}',
                                 diaries.is_public='${req.body.isPublic}'
-                            WHERE id='${req.body.id}' and uid='${req.query.uid}'
+                            WHERE id='${req.body.id}' and uid='${userInfo.uid}'
                     `]
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
-                    utility.updateUserLastLoginTime(req.query.email)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '修改成功'))
                 })
                 .catch(err => {
@@ -247,13 +247,13 @@ router.delete('/delete', (req, res, next) => {
             sqlArray.push(`
                         DELETE from diaries
                         WHERE id='${req.body.diaryId}'
-                        and uid='${req.query.uid}'
+                        and uid='${userInfo.uid}'
                     `)
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(req.query.email)
+                        utility.updateUserLastLoginTime(userInfo.uid)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))
