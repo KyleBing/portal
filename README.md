@@ -176,6 +176,7 @@ location /portal/ {
 
 ### 1. 密码说明
 密码使用 [bcrypt](https://github.com/kelektiv/node.bcrypt.js) 加密，登录后的所有传输都会用加密后的密码作为请求 token
+token 放到请求头的 `Diary-Token` 字段中
 
 ### 2. 返回数据格式
 
