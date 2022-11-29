@@ -8,11 +8,10 @@ const DatabaseTableName = 'wubi_dict'
 
 router.get('/pull', (req, res, next) => {
     // 1. 是否属于系统中的用户
-    console.log(req.query)
     utility
         .verifyAuthorization(req)
-        .then(verified => {
-            let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${req.query.uid}'`]
+        .then(userInfo => {
+            let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${userInfo.uid}'`]
             // 1. 先查询出码表结果
             utility
                 .getDataFromDB( 'diary', sqlArray)
@@ -21,7 +20,7 @@ router.get('/pull', (req, res, next) => {
                         let data = result[0]
                         data.title = utility.unicodeDecode(data.title)
                         // 记录最后访问时间
-                        utility.updateUserLastLoginTime(uid)
+                        utility.updateUserLastLoginTime(userInfo.uid)
                         res.send(new ResponseSuccess(data))
                     } else {
                         res.send(new ResponseSuccess('','不存在词库'))
@@ -43,11 +42,11 @@ router.put('/push', (req, res, next) => {
     // 1. 是否属于系统中的用户
     utility
         .verifyAuthorization(req)
-        .then(verified => {
+        .then(userInfo => {
             let encodedTitle = utility.unicodeEncode(req.body.title) // encode 是因为，文件名中可能包含 emoji
 
             // 2. 检测是否存在内容
-            let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${req.query.uid}'`]
+            let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${userInfo.uid}'`]
             return utility.getDataFromDB( 'diary', sqlArray)
                 .then(existData => {
                     // console.log(existData)
@@ -62,14 +61,14 @@ router.put('/push', (req, res, next) => {
                                        content_size='${req.body.contentSize}',
                                        word_count='${req.body.wordCount}',
                                        date_update='${timeNow}'
-                                    WHERE title='${encodedTitle}' and uid='${req.query.uid}';
+                                    WHERE title='${encodedTitle}' and uid='${userInfo.uid}';
                             `)
-                        sqlArray.push(`update users set sync_count=sync_count + 1 WHERE uid='${req.query.uid}'`)
+                        sqlArray.push(`update users set sync_count=sync_count + 1 WHERE uid='${userInfo.uid}'`)
 
                         utility
                             .getDataFromDB( 'diary', sqlArray, true)
                             .then(data => {
-                                utility.updateUserLastLoginTime(uid)
+                                utility.updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess(data, '上传成功'))
                             })
                             .catch(err => {
@@ -81,7 +80,7 @@ router.put('/push', (req, res, next) => {
                         let sqlArray = []
                         sqlArray.push(`
                             INSERT into ${DatabaseTableName}(title, content, content_size, word_count, date_init, date_update, comment, uid)
-                            VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${req.query.uid}')`
+                            VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${userInfo.uid}')`
                         )
 
                         utility
