@@ -86,7 +86,7 @@ router.put('/push', (req, res, next) => {
                         utility
                             .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(uid)
+                                utility.updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess({id: data.insertId}, '上传成功')) // 添加成功之后，返回添加后的码表 id
                             })
                             .catch(err => {

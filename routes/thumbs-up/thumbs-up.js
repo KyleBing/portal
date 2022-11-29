@@ -84,7 +84,7 @@ router.post('/add', (req, res, next) => {
                                 .getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
-                                        utility.updateUserLastLoginTime(uid)
+                                        utility.updateUserLastLoginTime(userInfo.uid)
                                         res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 id
                                     } else {
                                         res.send(new ResponseError('', '点赞信息查询错误'))
@@ -125,7 +125,7 @@ router.put('/modify', (req, res, next) => {
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(uid)
+                            utility.updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的点赞信息 id
                         } else {
                             res.send(new ResponseError('', '点赞信息操作错误'))
@@ -157,7 +157,7 @@ router.delete('/delete', (req, res, next) => {
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(uid)
+                            utility.updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的点赞信息 id
                         } else {
                             res.send(new ResponseError('', '点赞信息删除失败'))

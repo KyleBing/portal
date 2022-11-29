@@ -83,7 +83,7 @@ router.get('/list', (req, res, next) => {
             if (userInfo.group_id === 1){
 
             } else {
-                sqlArray.push([`where uid = ${req.query.uid}`])
+                sqlArray.push([`where uid = ${userInfo.uid}`])
             }
 
 
@@ -104,14 +104,14 @@ router.get('/list', (req, res, next) => {
 
             utility
                 .getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    utility.updateUserLastLoginTime(uid)
-                    data.forEach(diary => {
+                .then(dataDiary => {
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    dataDiary.forEach(diary => {
                         // decode unicode
                         diary.title = utility.unicodeDecode(diary.title)
                         diary.content = utility.unicodeDecode(diary.content)
                     })
-                    res.send(new ResponseSuccess(data, '请求成功'))
+                    res.send(new ResponseSuccess(dataDiary, '请求成功'))
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))
@@ -140,11 +140,11 @@ router.get('/detail', (req, res, next) => {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
                 utility
                     .verifyAuthorization(req)
-                    .then(verified => {
+                    .then(userInfo => {
                         // 3. 判断 QR 是否属于当前请求用户
-                        if (Number(req.query.uid) === data.uid){
+                        if (Number(userInfo.uid) === data.uid){
                             // 记录最后访问时间
-                            utility.updateUserLastLoginTime(uid)
+                            utility.updateUserLastLoginTime(userInfo.uid)
                             /*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
                                                         if (data.is_show_wx){
                                                             data.wx = ''
@@ -236,7 +236,7 @@ router.put('/modify', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.group_id === 1) {
-                operateUserInfo(req, res)
+                operateUserInfo(req, res, userInfo)
             } else {
                 if (userInfo.uid !== req.body.uid){
                     res.send(new ResponseError('', '你无权操作该用户信息'))
@@ -250,7 +250,7 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
-function operateUserInfo(req, res){
+function operateUserInfo(req, res, userInfo){
     let sqlArray = []
     sqlArray.push(`
                         update users
@@ -270,7 +270,7 @@ function operateUserInfo(req, res){
     utility
         .getDataFromDB( 'diary', sqlArray, true)
         .then(data => {
-            utility.updateUserLastLoginTime(uid)
+            utility.updateUserLastLoginTime(userInfo.uid)
             res.send(new ResponseSuccess(data, '修改成功'))
         })
         .catch(err => {
@@ -356,7 +356,7 @@ router.put('/change-password', (req, res, next) => {
                     utility
                         .getDataFromDB( 'diary', changePasswordSqlArray)
                         .then(dataChangePassword => {
-                            utility.updateUserLastLoginTime(uid)
+                            utility.updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess('', '修改密码成功'))
                         })
                         .catch(errChangePassword => {
