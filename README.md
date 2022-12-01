@@ -96,11 +96,19 @@ module.exports = {
     password:   '----',
     port:       '3306',
     database:   'diary',
-    invitation: '----', // 邀请码，用于注册时使用
-    multipleStatements: true,
-    adminCount: 'kylebing@163.com' // 管理员账户，该用户可以在统计页面中查看所有用户统计数据
+    multipleStatements: true
 }
 ```
+
+和项目配置文件 `/config/configProject.js`
+```js
+module.exports = {
+    invitation: '----', // 邀请码，用于注册时使用
+    adminCount: 'kylebing@163.com', // 管理员账户，该用户可以在统计页面中查看所有用户统计数据
+    TOKEN_NAME: 'Diary-Token', // header 中的 token 字段
+}
+```
+
 ### 3. 启动程序
 这里推荐使用 pm2 管理程序，创建名为 `diary` 的 pm2 项目，并启动
 > pm2 的使用方法： [https://blog.csdn.net/KimBing/article/details/124249590](https://blog.csdn.net/KimBing/article/details/124249590)
