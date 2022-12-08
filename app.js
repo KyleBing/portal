@@ -35,10 +35,13 @@ let routerQrManager      = require('./routes/qr/qr-manager')
 let routerVPS            = require('./routes/vps/vps')
 
 let routerThumbsUp       = require('./routes/thumbs-up/thumbs-up')
-let routerWubiWords      = require('./routes/wubi/wubi-words')
 let routerMail           = require('./routes/mail/mail')
 let routerFile           = require('./routes/file/file')
 let routerWx             = require('./routes/wx/wx')
+
+let routerWubiWords      = require('./routes/wubi/wubi-words')
+let routerWubiCategory   = require('./routes/wubi/wubi-category')
+
 
 
 app.use('/'           , indexRouter)
@@ -56,9 +59,11 @@ app.use('/qr-front'       , routerQr)            // QR 二维码
 app.use('/qr-manager'     , routerQrManager)     // QR 二维码
 app.use('/vps'            , routerVPS)           // 搬瓦工 VPS
 app.use('/thumbs-up'      , routerThumbsUp)      // 点赞管理
-app.use('/wubi'           , routerWubiWords)     // 词条操作
 app.use('/mail'           , routerMail)          // 邮件操作
 app.use('/file'           , routerFile)          // 图片、文件操作
+
+app.use('/wubi/words'     , routerWubiWords)     // 词条操作
+app.use('/wubi/category'  , routerWubiCategory)  // 词条类别
 
 
 // don't starve
