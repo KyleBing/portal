@@ -106,10 +106,10 @@ function updateUserLastLoginTime(uid){
     let timeNow = dateFormatter(new Date())
     getDataFromDB( 'diary', [`update users set last_visit_time='${timeNow}' where uid='${uid}'`])
         .then(data => {
-            console.log('--- 成功：记录用户最后操作时间')
+            console.log(`--- 成功：记录用户最后操作时间 ${timeNow} ${uid}`)
         })
         .catch(err => {
-            console.log('--- 失败：记录用户最后操作时间')
+            console.log('--- 失败：记录用户最后操作时间 ${timeNow} ${uid}`')
         })
 }
 

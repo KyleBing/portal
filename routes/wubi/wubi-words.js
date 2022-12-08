@@ -11,7 +11,7 @@ const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
 const uploadStorage = multer({ storage: storage })
 
-const DatabaseTableName = 'wubi_words'
+const TABLE_NAME = 'wubi_words'
 
 
 router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
@@ -26,16 +26,16 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
             let timeNow = utility.dateFormatter(new Date())
             dict.wordsOrigin.forEach(word => {
                 sqlArray.push(`
-                    INSERT into ${DatabaseTableName}(word, code, priority, date_create, comment, uid_create)
+                    INSERT into ${TABLE_NAME}(word, code, priority, date_create, comment, uid)
                     VALUES(
-                        '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${req.query.uid}');`
+                        '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${userInfo.uid}');`
                 )
             })
 
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(uid)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
@@ -48,7 +48,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
 })
 
 
-router.get('/list', (req, res, next) => {
+router.post('/list', (req, res, next) => {
     /**
      * dateStart
      * dateEnd
@@ -57,48 +57,57 @@ router.get('/list', (req, res, next) => {
      */
     utility
         .verifyAuthorization(req)
-        .then(verified => {
-            let sqlBase = `SELECT * from ${DatabaseTableName} `
+        .then(userInfo => {
+            let sqlBase = `SELECT * from ${TABLE_NAME} `
 
             let filterArray = []
+
             // keywords
-            if (req.query.keyword){
-                let keywords = req.query.keyword.split(' ').map(item => utility.unicodeEncode(item))
+            if (req.body.keyword){
+                let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
                 if (keywords.length > 0){
                     let keywordStrArray = keywords.map(keyword => `( word like '%${keyword}%' ESCAPE '/'  or code like '%${keyword}%' ESCAPE '/')` )
                     filterArray.push( keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
             // date range
-            if (req.query.dateRange && req.query.dateRange.length === 2){
-                filterArray.push(` and  date_create between '${req.query.dateRange[0]}' AND'${req.query.dateRange[1]}'`)
+            if (req.body.dateRange && req.body.dateRange.length === 2){
+                if (filterArray.length > 0){
+                    filterArray.push(`and`)
+                }
+                filterArray.push(`date_create between '${req.body.dateRange[0]}' AND '${req.body.dateRange[1]}'`)
             }
-
+            // category
+            if (req.body.category_id){
+                if (filterArray.length > 0){
+                    filterArray.push(`and`)
+                }
+                filterArray.push(`category_id = ${req.body.category_id}`)
+            }
 
             if (filterArray.length > 0){
                 filterArray.unshift('where')
             }
 
-
             let promisesAll = []
-            let pointStart = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize)
+            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
             promisesAll.push(utility.getDataFromDB(
                 'diary',
-                [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.query.pageSize}`])
+                [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`])
             )
             promisesAll.push(utility.getDataFromDB(
                 'diary',
-                [`select count(*) as sum from ${DatabaseTableName} ${filterArray.join(' ')}`], true)
+                [`select count(*) as sum from ${TABLE_NAME} ${filterArray.join(' ')}`], true)
             )
 
             Promise.all(promisesAll)
                 .then(([dataList, dataSum]) => {
-                    utility.updateUserLastLoginTime(uid)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess({
                         list: dataList,
                         pager: {
-                            pageSize: Number(req.query.pageSize),
-                            pageNo: Number(req.query.pageNo),
+                            pageSize: Number(req.body.pageSize),
+                            pageNo: Number(req.body.pageNo),
                             total: dataSum.sum
                         }
                     }, '请求成功'))
@@ -120,19 +129,18 @@ router.post('/add', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            let parsedTitle = utility.unicodeEncode(req.body.title) // !
-            let parsedContent = utility.unicodeEncode(req.body.content) || ''
+            let parseWord = utility.unicodeEncode(req.body.word) // !
             let timeNow = utility.dateFormatter(new Date())
             sqlArray.push(`
-                    INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
+                    INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, uid, category_id )
                     VALUES(
-                        '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${req.query.uid}','${req.body.isPublic || 0}')`
+                        '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
+                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${req.body.category_id || 1}')`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(uid)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
@@ -149,30 +157,27 @@ router.put('/modify', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let parsedTitle = utility.unicodeEncode(req.body.title) // !
-            let parsedContent = utility.unicodeEncode(req.body.content) || ''
+            let parseWord = utility.unicodeEncode(req.body.word) // !
             let timeNow = utility.dateFormatter(new Date())
-
             let sqlArray = []
             sqlArray.push(`
-                        update diaries
+                        update ${TABLE_NAME}
                             set
-                                diaries.date_modify='${timeNow}',
-                                diaries.date='${req.body.date}',
-                                diaries.category='${req.body.category}',
-                                diaries.title='${parsedTitle}',
-                                diaries.content='${parsedContent}',
-                                diaries.weather='${req.body.weather}',
-                                diaries.temperature='${req.body.temperature}',
-                                diaries.temperature_outside='${req.body.temperatureOutside}',
-                                diaries.is_public='${req.body.isPublic}'
-                            WHERE id='${req.body.id}' and uid='${req.query.uid}'
+                                date_modify='${timeNow}',
+                                word='${parseWord}',
+                                code='${req.body.code}',
+                                priority='${req.body.priority}',
+                                up='${req.body.up}',
+                                down='${req.body.down}',
+                                comment='${req.body.comment}',
+                                category_id='${req.body.category_id}'
+                            WHERE id='${req.body.id}'
                     `)
 
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
-                    utility.updateUserLastLoginTime(uid)
+                    utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '修改成功'))
                 })
                 .catch(err => {
@@ -190,14 +195,14 @@ router.delete('/delete', (req, res, next) => {
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
-                        DELETE from ${DatabaseTableName}
+                        DELETE from ${TABLE_NAME}
                         WHERE id='${req.body.id}'
                     `)
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(uid)
+                        utility.updateUserLastLoginTime(userInfo.uid)
                         res.send(new ResponseSuccess('', '删除成功'))
                     } else {
                         res.send(new ResponseError('', '删除失败'))
