@@ -39,7 +39,7 @@ let routerMail           = require('./routes/mail/mail')
 let routerFile           = require('./routes/file/file')
 let routerWx             = require('./routes/wx/wx')
 
-let routerWubiWords      = require('./routes/wubi/wubi-words')
+let routerWubiWord      = require('./routes/wubi/wubi-word')
 let routerWubiCategory   = require('./routes/wubi/wubi-category')
 
 
@@ -62,7 +62,7 @@ app.use('/thumbs-up'      , routerThumbsUp)      // 点赞管理
 app.use('/mail'           , routerMail)          // 邮件操作
 app.use('/file'           , routerFile)          // 图片、文件操作
 
-app.use('/wubi/words'     , routerWubiWords)     // 词条操作
+app.use('/wubi/word'     , routerWubiWord)     // 词条操作
 app.use('/wubi/category'  , routerWubiCategory)  // 词条类别
 
 

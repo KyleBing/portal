@@ -100,8 +100,13 @@ router.post('/list', (req, res, next) => {
                 [`select count(*) as sum from ${TABLE_NAME} ${filterArray.join(' ')}`], true)
             )
 
-            Promise.all(promisesAll)
+            Promise
+                .all(promisesAll)
                 .then(([dataList, dataSum]) => {
+                    dataList.forEach(item => {
+                        item.word = utility.unicodeDecode(item.word)
+                        return item
+                    })
                     utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess({
                         list: dataList,
@@ -120,6 +125,36 @@ router.post('/list', (req, res, next) => {
         })
         .catch(verified => {
             res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
+
+router.post('/check-exist', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            let parseWord = utility.unicodeEncode(req.body.word) // !
+            sqlArray.push(`
+            select * from ${TABLE_NAME} where word='${parseWord}' and code = '${req.body.code}'`
+            )
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
+                .then(data => {
+                    // 当没有数据时， data = undefined
+                    if (data){
+                        res.send(new ResponseSuccess(data, '词条已存在')) // 添加成功之后，返回添加后的日记 id
+                    } else {
+                        res.send(new ResponseSuccess(null, '词条不存在')) // 添加成功之后，返回添加后的日记 id
+                    }
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '查询失败'))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, '无权操作'))
         })
 })
 
@@ -142,6 +177,39 @@ router.post('/add', (req, res, next) => {
                 .then(data => {
                     utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '添加失败'))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, '无权操作'))
+        })
+})
+router.post('/add-batch', (req, res, next) => {
+    // 1. 验证用户信息是否正确
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            req.body.words.forEach(item => {
+
+                let parseWord = utility.unicodeEncode(item.word) // !
+                let timeNow = utility.dateFormatter(new Date())
+                sqlArray.push(`
+                    INSERT into ${TABLE_NAME}(word, code, priority, 
+                                              date_create, date_modify, comment, uid, category_id )
+                    VALUES(
+                        '${parseWord}','${item.code}', '${item.priority || 0}', 
+                           '${timeNow}','${timeNow}','${item.comment || ''}','${userInfo.uid}','${req.body.category_id || 1}');`
+                )
+            })
+
+            utility
+                .getDataFromDB( 'diary', sqlArray)
+                .then(data => {
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    res.send(new ResponseSuccess(null, '批量添加成功')) // 添加成功之后，返回添加后的日记 id
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, '添加失败'))
@@ -196,7 +264,7 @@ router.delete('/delete', (req, res, next) => {
             let sqlArray = []
             sqlArray.push(`
                         DELETE from ${TABLE_NAME}
-                        WHERE id='${req.body.id}'
+                        WHERE id in (${req.body.ids.join(',')})
                     `)
             utility
                 .getDataFromDB( 'diary', sqlArray)
