@@ -89,8 +89,6 @@ router.get('/category', (req, res, next) => {
         .catch(err => {
             res.send(new ResponseError(err, '权限错误'))
         })
-
-
 })
 
 // 年份月份数据

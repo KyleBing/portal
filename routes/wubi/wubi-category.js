@@ -9,23 +9,52 @@ const TABLE_NAME = 'wubi_category'      // 表名
 const DATA_NAME = '五笔码表类别'          // 操作的数据名
 
 router.get('/list', (req, res, next) => {
-    // query.name_en
-    let sqlArray = []
-    sqlArray.push(` select * from ${TABLE_NAME} order by sort_id asc`)
     utility
-        .getDataFromDB( 'diary', sqlArray)
-        .then(data => {
-            if (data) { // 没有记录时会返回  undefined
-                res.send(new ResponseSuccess(data))
-            } else {
-                res.send(new ResponseError('', `${DATA_NAME}查询错误`))
-            }
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            // 1. get categories list
+            utility
+                .getDataFromDB('diary', [` select * from ${TABLE_NAME} order by sort_id asc`])
+                .then(categoryListData => {
+                    if (categoryListData) {
+                        // categoryListData = [{"id": 1, "name": "主码表", "sort_id": 1, "date_init": "2022-12-09T08:27:08.000Z"}]
+                        let tempArray = categoryListData.map(item => {
+                            return `count(case when category_id=${item.id} then 1 end) as '${item.id}'`
+                        })
+                        let sqlArray = []
+                        sqlArray.push(`
+                                select  
+                               ${tempArray.join(', ')},
+                                count(*) as amount
+                                from wubi_words where uid=${userInfo.uid}
+                        `)
+
+                        utility
+                            .getDataFromDB('diary', sqlArray, true)
+                            .then(countData => {
+                                categoryListData.forEach(category => {
+                                    category.count = countData[category.id]
+                                })
+                                res.send(new ResponseSuccess(categoryListData))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err))
+                            })
+                    } else {
+                        res.send(new ResponseError('', '类别列表查询出错'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err,))
+                })
         })
         .catch(err => {
-            res.send(new ResponseError(err, err.message))
+            res.send(new ResponseError(err, '权限错误'))
         })
+
 })
 router.post('/add', (req, res, next) => {
+
     checkCategoryExist(req.body.name)
         .then(dataCategoryExistanceArray => {
             // email 记录是否已经存在
@@ -40,8 +69,8 @@ router.post('/add', (req, res, next) => {
                             // query.name_en
                             let sqlArray = []
                             sqlArray.push(`
-                                insert into ${TABLE_NAME}(name, sort_id, date_init) 
-                                values('${req.body.name}', ${req.body.sort_id}, '${timeNow}')`
+                                insert into ${TABLE_NAME}(name, sort_id, date_init)
+                                values ('${req.body.name}', ${req.body.sort_id}, '${timeNow}')`
                             )
                             utility
                                 .getDataFromDB( 'diary', sqlArray)
@@ -64,10 +93,8 @@ router.post('/add', (req, res, next) => {
                     .catch(err => {
                         res.send(new ResponseError('', err.message))
                     })
-
             }
         })
-
 })
 router.put('/modify', (req, res, next) => {
     utility
