@@ -49,12 +49,6 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
 
 
 router.post('/list', (req, res, next) => {
-    /**
-     * dateStart
-     * dateEnd
-     * pageSize
-     * pageNo
-     */
     utility
         .verifyAuthorization(req)
         .then(userInfo => {

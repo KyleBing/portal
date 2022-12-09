@@ -11,7 +11,7 @@ const DATA_NAME = '五笔码表类别'          // 操作的数据名
 router.get('/list', (req, res, next) => {
     // query.name_en
     let sqlArray = []
-    sqlArray.push(` select * from ${TABLE_NAME}`)
+    sqlArray.push(` select * from ${TABLE_NAME} order by sort_id asc`)
     utility
         .getDataFromDB( 'diary', sqlArray)
         .then(data => {
