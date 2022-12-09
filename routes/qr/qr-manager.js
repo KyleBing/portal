@@ -54,9 +54,9 @@ router.get('/list', (req, res, next) => {
                 }
             }
 
-            let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
+            let startPoint = (req.query.pageNo - 1) * req.query.pageSize //  QR 起点
             sqlArray.push(` order by date_init desc
-                  limit ${startPoint}, ${req.query.pageCount}`)
+                  limit ${startPoint}, ${req.query.pageSize}`)
 
             utility
                 .getDataFromDB( 'diary', sqlArray)

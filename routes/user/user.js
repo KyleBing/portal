@@ -73,45 +73,41 @@ function checkEmailOrUserNameExist(email, username){
     return utility.getDataFromDB( 'diary', sqlArray)
 }
 
-router.get('/list', (req, res, next) => {
+router.post('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let sqlArray = []
-            sqlArray.push(`SELECT * from users `)
+            let sqlBase = `SELECT * from users `
 
-            if (userInfo.group_id === 1){
+            let promisesAll = []
+            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+            promisesAll.push(utility.getDataFromDB(
+                'diary',
+                [`${sqlBase} limit ${pointStart} , ${req.body.pageSize}`])
+            )
+            promisesAll.push(utility.getDataFromDB(
+                'diary',
+                [`select count(*) as sum from users`], true)
+            )
 
-            } else {
-                sqlArray.push([`where uid = ${userInfo.uid}`])
-            }
-
-
-            // keywords
-            if (req.query.keywords){
-                let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
-                console.log(keywords)
-                if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( message like '%${keyword}%' ESCAPE '/'  or description like '%${keyword}%' ESCAPE '/')` )
-                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
-                }
-            }
-
-            if (req.query.pageNo && req.query.pageCount){
-                let startPoint = (req.query.pageNo - 1) * req.query.pageCount //  QR 起点
-                sqlArray.push(`limit ${startPoint}, ${req.query.pageCount}`)
-            }
-
-            utility
-                .getDataFromDB( 'diary', sqlArray)
-                .then(dataDiary => {
+            Promise
+                .all(promisesAll)
+                .then(([userList, dataSum]) => {
                     utility.updateUserLastLoginTime(userInfo.uid)
-                    dataDiary.forEach(diary => {
+                    userList.forEach(diary => {
                         // decode unicode
                         diary.title = utility.unicodeDecode(diary.title)
                         diary.content = utility.unicodeDecode(diary.content)
                     })
-                    res.send(new ResponseSuccess(dataDiary, '请求成功'))
+                    res.send(new ResponseSuccess({
+                        list: userList,
+                        pager: {
+                            pageSize: Number(req.body.pageSize),
+                            pageNo: Number(req.body.pageNo),
+                            total: dataSum.sum
+                        }
+                    }, '请求成功'))
+
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))

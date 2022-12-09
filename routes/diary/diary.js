@@ -9,7 +9,7 @@ router.get('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
+            let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 日记起点
 
             let sqlArray = []
             sqlArray.push(`SELECT *
@@ -49,7 +49,7 @@ router.get('/list', (req, res, next) => {
             }
 
             sqlArray.push(` order by date desc
-                  limit ${startPoint}, ${req.query.pageCount}`)
+                  limit ${startPoint}, ${req.query.pageSize}`)
 
             utility
                 .getDataFromDB( 'diary', sqlArray)

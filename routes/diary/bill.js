@@ -9,7 +9,7 @@ router.get('/', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            // let startPoint = (req.query.pageNo - 1) * req.query.pageCount // 日记起点
+            // let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 日记起点
             let sqlArray = []
             sqlArray.push(`SELECT *from diaries where uid='${ruserInfo.uid}' and category = 'bill' order by date asc`)
             utility
