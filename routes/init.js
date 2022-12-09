@@ -209,9 +209,42 @@ CREATE TABLE \`wubi_dict\`  (
   INDEX \`uid\`(\`uid\`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 52 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
+-- ----------------------------
+-- Table structure for wubi_category
+-- ----------------------------
+DROP TABLE IF EXISTS \`wubi_category\`;
+CREATE TABLE \`wubi_category\` (
+  \`id\` int(10) NOT NULL AUTO_INCREMENT,
+  \`name\` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  \`sort_id\` int(11) NOT NULL,
+  \`date_init\` datetime NOT NULL,
+  PRIMARY KEY (\`id\`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
+
+
+-- ----------------------------
+-- Table structure for wubi_words
+-- ----------------------------
+DROP TABLE IF EXISTS \`wubi_words\`;
+CREATE TABLE \`wubi_words\` (
+  \`id\` int(11) NOT NULL AUTO_INCREMENT,
+  \`word\` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '词条',
+  \`code\` varchar(20) COLLATE utf8mb4_bin NOT NULL COMMENT '编码',
+  \`priority\` int(11) NOT NULL DEFAULT 0 COMMENT '权重',
+  \`up\` int(11) NOT NULL DEFAULT 0 COMMENT '赞同数量',
+  \`down\` int(11) NOT NULL DEFAULT 0 COMMENT '反对数量',
+  \`date_create\` datetime NOT NULL COMMENT '创建时间',
+  \`date_modify\` datetime DEFAULT NULL COMMENT '编辑时间',
+  \`comment\` varchar(100) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '备注',
+  \`uid\` int(11) NOT NULL,
+  \`category_id\` int(10) NOT NULL COMMENT '类别 id',
+  PRIMARY KEY (\`id\`) USING BTREE,
+  KEY \`user_create\` (\`uid\`) USING BTREE,
+  KEY \`category_id\` (\`category_id\`) USING BTREE,
+  CONSTRAINT \`category_id\` FOREIGN KEY (\`category_id\`) REFERENCES \`wubi_category\` (\`id\`),
+  CONSTRAINT \`uid\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`)
+) ENGINE=InnoDB AUTO_INCREMENT=90211 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Table structure for thumbs_up
