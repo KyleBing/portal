@@ -235,7 +235,7 @@ router.put('/modify', (req, res, next) => {
                 if (userInfo.uid !== req.body.uid){
                     res.send(new ResponseError('', '你无权操作该用户信息'))
                 } else {
-                    operateUserInfo(req, res)
+                    operateUserInfo(req, res, userInfo)
                 }
             }
         })
@@ -258,7 +258,7 @@ function operateUserInfo(req, res, userInfo){
                                     users.homepage = '${req.body.homepage}', 
                                     users.gaode = '${req.body.gaode}', 
                                     users.group_id = '${req.body.group_id}'
-                            WHERE uid='${req.body.uid}'
+                            WHERE uid='${userInfo.uid}'
                     `)
 
     utility
@@ -337,27 +337,26 @@ router.put('/change-password', (req, res, next) => {
         res.send(new ResponseError('', '参数错误：password 未定义'))
         return
     }
-    if (req.query.email === 'test@163.com'){
-        res.send(new ResponseError('', '演示账户密码不允许修改'))
-        return
-    }
+
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.password === req.query.token){
-                bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
-                    let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${req.query.email}'`]
-                    utility
-                        .getDataFromDB( 'diary', changePasswordSqlArray)
-                        .then(dataChangePassword => {
-                            utility.updateUserLastLoginTime(userInfo.uid)
-                            res.send(new ResponseSuccess('', '修改密码成功'))
-                        })
-                        .catch(errChangePassword => {
-                            res.send(new ResponseError('', '修改密码失败'))
-                        })
-                })
+            if (userInfo.email === 'test@163.com'){
+                res.send(new ResponseError('', '演示账户密码不允许修改'))
+                return
             }
+            bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
+                let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${userInfo.email}'`]
+                utility
+                    .getDataFromDB( 'diary', changePasswordSqlArray)
+                    .then(dataChangePassword => {
+                        utility.updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess('', '修改密码成功'))
+                    })
+                    .catch(errChangePassword => {
+                        res.send(new ResponseError('', '修改密码失败'))
+                    })
+            })
         })
         .catch(err => {
             res.send(new ResponseError(err, '无权操作'))
