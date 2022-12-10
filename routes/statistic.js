@@ -17,20 +17,22 @@ router.get('/', (req, res, next) => {
                         SELECT
                           (SELECT COUNT(*) FROM diaries) as count_diary,
                           (SELECT COUNT(*) FROM qrs) as count_qr,
-                          (SELECT COUNT(*) FROM wubi_dict) as count_dict,
                           (SELECT COUNT(*) FROM users) as count_user,
                           (SELECT COUNT(*) FROM diary_category) as count_category,
-                          (SELECT COUNT(*) FROM diaries where category = 'bill') as count_bill
+                          (SELECT COUNT(*) FROM diaries where category = 'bill') as count_bill,
+                          (SELECT COUNT(*) FROM wubi_dict) as count_dict,
+                          (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words
                     `)
             } else {
                 sqlArray.push(`
                             SELECT
                               (SELECT COUNT(*) FROM diaries where uid = ${userInfo.uid}) as count_diary,
                               (SELECT COUNT(*) FROM qrs where uid = ${userInfo.uid}) as count_qr,
-                              (SELECT COUNT(*) FROM wubi_dict where uid = ${userInfo.uid}) as count_dict,
                               (SELECT COUNT(*) FROM users where uid = ${userInfo.uid}) as count_user,
                               (SELECT COUNT(*) FROM diary_category) as count_category,
-                              (SELECT COUNT(*) FROM diaries where uid = ${userInfo.uid} and category = 'bill') as count_bill
+                              (SELECT COUNT(*) FROM diaries where uid = ${userInfo.uid} and category = 'bill') as count_bill,
+                              (SELECT COUNT(*) FROM wubi_dict where uid = ${userInfo.uid}) as count_dict,
+                              (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words
                         `)
             }
             utility

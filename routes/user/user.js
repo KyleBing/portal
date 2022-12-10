@@ -77,13 +77,11 @@ router.post('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let sqlBase = `SELECT * from users `
-
             let promisesAll = []
             let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
             promisesAll.push(utility.getDataFromDB(
                 'diary',
-                [`${sqlBase} limit ${pointStart} , ${req.body.pageSize}`])
+                [`SELECT * from users limit ${pointStart} , ${req.body.pageSize}`])
             )
             promisesAll.push(utility.getDataFromDB(
                 'diary',
