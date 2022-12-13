@@ -64,7 +64,11 @@ router.post('/list', (req, res, next) => {
                                wubi_words.comment,
                                wubi_category.id AS category_id,
                                wubi_category.name as category_name,
-                               wubi_words.uid, users.email, users.group_id
+                               wubi_words.uid, 
+                               wubi_words.approved, 
+                               users.email, 
+                               users.nickname, 
+                               users.group_id
                                 from ${TABLE_NAME} 
                                 LEFT JOIN wubi_category ON category_id = wubi_category.id
                                 LEFT JOIN users ON wubi_words.uid = users.uid
