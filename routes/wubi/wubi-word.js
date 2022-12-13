@@ -156,7 +156,7 @@ router.post('/export-extra', (req, res, next) => {
                          LEFT JOIN users ON wubi_words.uid = users.uid
                 WHERE category_id != 1
                 ORDER BY
-                    concat( wubi_category.id, wubi_category.sort_id ) ASC;
+                    concat(lpad(wubi_category.sort_id, 3, '000'), lpad(wubi_category.id, 3, '000') ) ASC;
             `
 
             utility
