@@ -75,7 +75,7 @@ router.post('/list', (req, res, next) => {
             if (req.body.keyword){
                 let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( word like '%${keyword}%' ESCAPE '/'  or code like '%${keyword}%' ESCAPE '/') or comment like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray = keywords.map(keyword => `( wubi_words.word like '%${keyword}%' ESCAPE '/'  or  wubi_words.code like '%${keyword}%' ESCAPE '/' or wubi_words.comment like '%${keyword}%' ESCAPE '/')` )
                     filterArray.push( keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
