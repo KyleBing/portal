@@ -247,19 +247,19 @@ router.put('/modify', (req, res, next) => {
 function operateUserInfo(req, res, userInfo){
     let sqlArray = []
     sqlArray.push(`
-                        update users
-                            set
-                                    users.email = '${req.body.email}', 
-                                    users.nickname = '${req.body.nickname}', 
-                                    users.username = '${req.body.username}', 
-                                    users.comment = '${req.body.comment || ''}', 
-                                    users.wx = '${req.body.wx}', 
-                                    users.phone = '${req.body.phone}', 
-                                    users.homepage = '${req.body.homepage}', 
-                                    users.gaode = '${req.body.gaode}', 
-                                    users.group_id = '${req.body.group_id}'
-                            WHERE uid='${userInfo.uid}'
-                    `)
+                update users
+                    set
+                            users.email = '${req.body.email}', 
+                            users.nickname = '${req.body.nickname}', 
+                            users.username = '${req.body.username}', 
+                            users.comment = '${req.body.comment || ''}', 
+                            users.wx = '${req.body.wx}', 
+                            users.phone = '${req.body.phone}', 
+                            users.homepage = '${req.body.homepage}', 
+                            users.gaode = '${req.body.gaode}', 
+                            users.group_id = '${req.body.group_id}'
+                    WHERE uid='${userInfo.uid}'
+            `)
 
     utility
         .getDataFromDB( 'diary', sqlArray, true)

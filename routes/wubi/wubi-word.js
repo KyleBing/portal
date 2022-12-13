@@ -118,9 +118,47 @@ router.post('/list', (req, res, next) => {
 
         })
         .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+            res.send(new ResponseError(verified, '无权查看词条列表：用户信息错误'))
         })
 })
+
+
+router.post('/export-extra', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlBase = `
+                SELECT word.id,
+                       word.word,
+                       word.code,
+                       word.priority,
+                       word.uid,
+                       word.comment,
+                       category.id AS category_id,
+                       category.name as category_name
+                FROM ${TABLE_NAME} AS word
+                         LEFT JOIN wubi_category AS category ON category_id = category.id
+                WHERE category_id != 1
+                ORDER BY
+                    concat( category.id, category.sort_id ) ASC;
+            `
+
+            utility
+                .getDataFromDB('diary',[sqlBase], false)
+                .then(wordList => {
+                    wordList.forEach(item => {
+                        item.word = utility.unicodeDecode(item.word)
+                    })
+                    // 由于服务器性能有限，不适合在服务器端作码表的处理操作，放到客户端即可
+                    res.send(new ResponseSuccess(wordList, '请求成功'))
+                })
+
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看词条列表：用户信息错误'))
+        })
+})
+
 
 
 router.post('/check-exist', (req, res, next) => {
