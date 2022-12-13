@@ -78,15 +78,31 @@ router.post('/list', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let promisesAll = []
-            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
-            promisesAll.push(utility.getDataFromDB(
-                'diary',
-                [`SELECT * from users limit ${pointStart} , ${req.body.pageSize}`])
-            )
-            promisesAll.push(utility.getDataFromDB(
-                'diary',
-                [`select count(*) as sum from users`], true)
-            )
+
+            if (userInfo.group_id === 1){
+                // admin user
+                let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+                promisesAll.push(utility.getDataFromDB(
+                    'diary',
+                    [`SELECT * from users limit ${pointStart} , ${req.body.pageSize}`])
+                )
+                promisesAll.push(utility.getDataFromDB(
+                    'diary',
+                    [`select count(*) as sum from users`], true)
+                )
+            } else {
+                // normal user
+                let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+                promisesAll.push(utility.getDataFromDB(
+                    'diary',
+                    [`SELECT * from users where uid = '${userInfo.uid}' limit ${pointStart} , ${req.body.pageSize}`])
+                )
+                promisesAll.push(utility.getDataFromDB(
+                    'diary',
+                    [`select count(*) as sum from users where uid = '${userInfo.uid}' `], true)
+                )
+            }
+
 
             Promise
                 .all(promisesAll)
