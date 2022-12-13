@@ -52,15 +52,30 @@ router.post('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let sqlBase = `SELECT * from ${TABLE_NAME} `
-
+            let sqlBase = `SELECT
+                               wubi_words.id,
+                               wubi_words.word,
+                               wubi_words.code,
+                               wubi_words.priority,
+                               wubi_words.up,
+                               wubi_words.down,
+                               wubi_words.date_create,
+                               wubi_words.date_modify,
+                               wubi_words.comment,
+                               wubi_category.id AS category_id,
+                               wubi_category.name as category_name,
+                               wubi_words.uid, users.email, users.group_id
+                                from ${TABLE_NAME} 
+                                LEFT JOIN wubi_category ON category_id = wubi_category.id
+                                LEFT JOIN users ON wubi_words.uid = users.uid
+                            `
             let filterArray = []
 
             // keywords
             if (req.body.keyword){
                 let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( word like '%${keyword}%' ESCAPE '/'  or code like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray = keywords.map(keyword => `( word like '%${keyword}%' ESCAPE '/'  or code like '%${keyword}%' ESCAPE '/') or comment like '%${keyword}%' ESCAPE '/')` )
                     filterArray.push( keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
@@ -128,19 +143,20 @@ router.post('/export-extra', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let sqlBase = `
-                SELECT word.id,
-                       word.word,
-                       word.code,
-                       word.priority,
-                       word.uid,
-                       word.comment,
-                       category.id AS category_id,
-                       category.name as category_name
-                FROM ${TABLE_NAME} AS word
-                         LEFT JOIN wubi_category AS category ON category_id = category.id
+                SELECT wubi_words.id,
+                       wubi_words.word,
+                       wubi_words.code,
+                       wubi_words.priority,
+                       wubi_words.comment,
+                       wubi_category.id AS category_id,
+                       wubi_category.name as category_name,
+                       wubi_words.uid, users.email,users.group_id
+                FROM ${TABLE_NAME} 
+                         LEFT JOIN wubi_category  ON category_id = wubi_category.id
+                         LEFT JOIN users ON wubi_words.uid = users.uid
                 WHERE category_id != 1
                 ORDER BY
-                    concat( category.id, category.sort_id ) ASC;
+                    concat( wubi_category.id, wubi_category.sort_id ) ASC;
             `
 
             utility
