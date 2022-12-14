@@ -3,7 +3,6 @@ const router = express.Router()
 const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
-
 const multer = require('multer')
 const Dict = require("./Dict")
 
@@ -36,7 +35,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的日记 id
+                    res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的 id
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, '导入词条失败'))
@@ -46,8 +45,6 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-
-
 router.post('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -140,8 +137,6 @@ router.post('/list', (req, res, next) => {
             res.send(new ResponseError(verified, '无权查看词条列表：用户信息错误'))
         })
 })
-
-
 router.post('/export-extra', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -178,9 +173,6 @@ router.post('/export-extra', (req, res, next) => {
             res.send(new ResponseError(verified, '无权查看词条列表：用户信息错误'))
         })
 })
-
-
-
 router.post('/check-exist', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -188,17 +180,12 @@ router.post('/check-exist', (req, res, next) => {
             let sqlArray = []
             let parseWord = utility.unicodeEncode(req.body.word) // !
             sqlArray.push(`
-            select * from ${TABLE_NAME} where word='${parseWord}' and code = '${req.body.code}'`
+                select * from ${TABLE_NAME} where word like '%${parseWord}%' and code like '${req.body.code}%' limit 5`
             )
             utility
-                .getDataFromDB( 'diary', sqlArray, true)
+                .getDataFromDB( 'diary', sqlArray, false)
                 .then(data => {
-                    // 当没有数据时， data = undefined
-                    if (data){
-                        res.send(new ResponseSuccess(data, '词条已存在')) // 添加成功之后，返回添加后的日记 id
-                    } else {
-                        res.send(new ResponseSuccess(null, '词条不存在')) // 添加成功之后，返回添加后的日记 id
-                    }
+                    res.send(new ResponseSuccess(data, '查询成功'))
                     utility.updateUserLastLoginTime(userInfo.uid)
                 })
                 .catch(err => {
@@ -228,7 +215,7 @@ router.post('/add', (req, res, next) => {
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
+                    res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 id
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, '添加失败'))
@@ -261,7 +248,7 @@ router.post('/add-batch', (req, res, next) => {
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess(null, '批量添加成功')) // 添加成功之后，返回添加后的日记 id
+                    res.send(new ResponseSuccess(null, '批量添加成功')) // 添加成功之后，返回添加后的 id
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, '添加失败'))
@@ -336,7 +323,6 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-
 
 router.get('/statistic', (req, res, next) => {})
 router.get('/thumbs-up', (req, res, next) => {})
