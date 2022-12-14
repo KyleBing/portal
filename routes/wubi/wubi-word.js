@@ -5,6 +5,7 @@ const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 const multer = require('multer')
 const Dict = require("./Dict")
+const axios = require("axios");
 
 const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
@@ -230,34 +231,69 @@ router.post('/add-batch', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let sqlArray = []
-            req.body.words.forEach(item => {
 
-                let parseWord = utility.unicodeEncode(item.word) // !
-                let timeNow = utility.dateFormatter(new Date())
-                sqlArray.push(`
-                    INSERT into ${TABLE_NAME}(word, code, priority, 
-                                              date_create, date_modify, comment, uid, category_id )
-                    VALUES(
-                        '${parseWord}','${item.code}', '${item.priority || 0}', 
-                           '${timeNow}','${timeNow}','${item.comment || ''}','${userInfo.uid}','${req.body.category_id || 1}');`
-                )
-            })
-
-            utility
-                .getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess(null, '批量添加成功')) // 添加成功之后，返回添加后的 id
+            Promise.all(
+                req.body.words.map(word => {
+                    return utility.getDataFromDB('diary', [`select * from ${TABLE_NAME} where code = '${word.code}' and word = '${word.word}'`], true)
                 })
-                .catch(err => {
-                    res.send(new ResponseError(err, '添加失败'))
+            )
+                .then(results => {
+                    // results : 所有 words 是否存在于数据库的结果值
+                    let wordsWithExistTag = req.body.words.map((word,index) => {
+                        word.isExist = !!results[index]
+                        return word
+                    })
+
+                    // 需要插入的词条数组
+                    let insertWords = wordsWithExistTag.filter(item => !item.isExist)
+
+                    if (insertWords.length === 0){
+                        // 当所有词条都已存在数据库中时，直接返回成功
+                        res.send(new ResponseSuccess(
+                            {
+                                addedCount: 0,
+                                existCount: results.length,
+                            },
+                            '批量添加成功')) // 添加成功之后，返回添加后的 id
+                    } else {
+                        let sqlArray = insertWords.map(word => {
+                            let parseWord = utility.unicodeEncode(word.word) // !
+                            let timeNow = utility.dateFormatter(new Date())
+                            return `INSERT into ${TABLE_NAME}(word, code, priority,
+                                                          date_create, date_modify, comment, uid, category_id)
+                                VALUES ('${parseWord}', '${word.code}', '${word.priority || 0}',
+                                        '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}',
+                                        '${req.body.category_id || 1}');`
+                        })
+                        utility
+                            .getDataFromDB( 'diary', sqlArray)
+                            .then(data => {
+                                utility.updateUserLastLoginTime(userInfo.uid)
+                                res.send(new ResponseSuccess(
+                                    {
+                                        addedCount: insertWords.length,
+                                        existCount: results.length - insertWords.length,
+                                    },
+                                    '批量添加成功')) // 添加成功之后，返回添加后的 id
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err, '添加失败'))
+                            })
+                    }
                 })
         })
         .catch(err => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
+
+// 数据库是否存在当前词条
+async function isWordExistence(word){
+    let result = await utility.getDataFromDB('diary', [`select * from ${TABLE_NAME} where code = '${word.code}' and word = '${word.word}'`], true)
+    return !!result
+}
+
+
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确

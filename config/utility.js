@@ -34,6 +34,7 @@ function getDataFromDB(dbName, sqlArray, isSingleValue) {
     })
 }
 
+
 // 验证用户是否有权限
 function verifyAuthorization(req){
     let token = req.get(configProject.TOKEN_NAME) || req.query.token
@@ -151,7 +152,8 @@ function formatMoney(number){
 
 
 module.exports = {
-    getDataFromDB, dateFormatter, updateUserLastLoginTime,
+    getDataFromDB,
+    dateFormatter, updateUserLastLoginTime,
     unicodeEncode, unicodeDecode,
     verifyAuthorization,
     // Bill
