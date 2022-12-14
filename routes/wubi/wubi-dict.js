@@ -6,6 +6,7 @@ const ResponseError = require('../../response/ResponseError')
 
 const DatabaseTableName = 'wubi_dict'
 
+// 下载码表文件
 router.get('/pull', (req, res, next) => {
     // 1. 是否属于系统中的用户
     utility
@@ -35,7 +36,7 @@ router.get('/pull', (req, res, next) => {
         })
 })
 
-
+// 上传码表文件
 router.put('/push', (req, res, next) => {
     let timeNow = utility.dateFormatter(new Date())
 
@@ -102,6 +103,29 @@ router.put('/push', (req, res, next) => {
             res.send(new ResponseError('','当前用户无权查看该码表：用户信息错误'))
         })
 })
+
+// 检查对应的文件是否存在备份
+router.post('/check-backup-exist', (req, res, next) => {
+    // 1. 是否属于系统中的用户
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = [`select id,title,content_size,word_count, date_init, date_update, comment, uid, sync_count from ${DatabaseTableName} where title = '${req.body.fileName}' and  uid='${userInfo.uid}'`]
+            // 1. 先查询出码表结果
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
+                .then(result => {
+                    res.send(new ResponseSuccess(result, '信息获取成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err,))
+                })
+        })
+        .catch(unverified => {
+            res.send(new ResponseError('', '当前用户无权查看该码表：用户信息错误'))
+        })
+})
+
 
 
 

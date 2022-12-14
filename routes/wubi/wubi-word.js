@@ -197,7 +197,6 @@ router.post('/check-exist', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility
@@ -292,7 +291,6 @@ async function isWordExistence(word){
     let result = await utility.getDataFromDB('diary', [`select * from ${TABLE_NAME} where code = '${word.code}' and word = '${word.word}'`], true)
     return !!result
 }
-
 
 router.put('/modify', (req, res, next) => {
 
