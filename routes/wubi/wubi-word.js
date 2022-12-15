@@ -286,12 +286,6 @@ router.post('/add-batch', (req, res, next) => {
         })
 })
 
-// 数据库是否存在当前词条
-async function isWordExistence(word){
-    let result = await utility.getDataFromDB('diary', [`select * from ${TABLE_NAME} where code = '${word.code}' and word = '${word.word}'`], true)
-    return !!result
-}
-
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
@@ -357,6 +351,34 @@ router.delete('/delete', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
+
+// 批量修改词条类别
+router.put('/modify-batch', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let timeNow = utility.dateFormatter(new Date())
+            let sqlArray = [`
+                        update ${TABLE_NAME}
+                        set date_modify='${timeNow}',
+                            category_id='${req.body.category_id}'
+                        WHERE id in (${req.body.ids.join(',')})
+                    `]
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
+                .then(data => {
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    res.send(new ResponseSuccess(data, '修改成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '修改失败'))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, '无权操作'))
+        })
+})
+
 
 router.get('/statistic', (req, res, next) => {})
 router.get('/thumbs-up', (req, res, next) => {})
