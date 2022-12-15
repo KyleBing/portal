@@ -100,6 +100,13 @@ router.post('/list', (req, res, next) => {
                 }
                 filterArray.push(`category_id = ${req.body.category_id}`)
             }
+            // approved
+            if (req.body.isFilterApproved){
+                if (filterArray.length > 0){
+                    filterArray.push(`and`)
+                }
+                filterArray.push(`wubi_words.approved = 0 `)
+            }
 
             if (filterArray.length > 0){
                 filterArray.unshift('where')
