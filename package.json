@@ -1,23 +1,24 @@
 {
   "name": "diary-portal-node",
-  "version": "1.0.0",
+  "version": "0.0.2",
+  "date-modify": "2022-12-15",
+  "date-init": "2022-03-21",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
     "ws": "node ./bin/ws.js"
   },
   "dependencies": {
-    "axios": "^0.27.2",
-    "bcrypt": "^5.0.1",
-    "cookie-parser": "~1.4.4",
+    "axios": "^1.2.1",
+    "bcrypt": "^5.1.0",
     "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1",
+    "express": "~4.18.2",
+    "http-errors": "~2.0.0",
+    "morgan": "~1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql": "^2.18.1",
-    "pug": "2.0.0-beta11",
+    "pug": "3.0.2",
     "qiniu": "^7.8.0",
-    "ws": "^8.6.0"
+    "ws": "^8.11.0"
   }
 }
