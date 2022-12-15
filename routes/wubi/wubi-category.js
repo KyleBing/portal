@@ -26,7 +26,7 @@ router.get('/list', (req, res, next) => {
                                 select  
                                ${tempArray.join(', ')},
                                 count(*) as amount
-                                from wubi_words where uid=${userInfo.uid}
+                                from wubi_words where user_init=${userInfo.uid}
                         `)
 
                         utility

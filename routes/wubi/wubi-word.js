@@ -5,7 +5,6 @@ const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 const multer = require('multer')
 const Dict = require("./Dict")
-const axios = require("axios");
 
 const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
@@ -13,7 +12,7 @@ const uploadStorage = multer({ storage: storage })
 
 const TABLE_NAME = 'wubi_words'
 
-
+// used for dict init
 router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility
@@ -26,9 +25,9 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
             let timeNow = utility.dateFormatter(new Date())
             dict.wordsOrigin.forEach(word => {
                 sqlArray.push(`
-                    INSERT into ${TABLE_NAME}(word, code, priority, date_create, comment, uid)
+                    INSERT into ${TABLE_NAME}(word, code, priority, date_create, comment, user_init, user_modify)
                     VALUES(
-                        '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${userInfo.uid}');`
+                        '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${userInfo.uid}', '${userInfo.uid}');`
                 )
             })
 
@@ -62,14 +61,19 @@ router.post('/list', (req, res, next) => {
                                wubi_words.comment,
                                wubi_category.id AS category_id,
                                wubi_category.name as category_name,
-                               wubi_words.uid, 
+                               wubi_words.user_init, 
+                               wubi_words.user_modify, 
                                wubi_words.approved, 
-                               users.email, 
-                               users.nickname, 
-                               users.group_id
+                               users_init.uid as uid_init, 
+                               users_init.nickname as nickname_init, 
+                               users_init.group_id as group_id_init,
+                               users_modify.uid as uid_modify, 
+                               users_modify.nickname as nickname_modify, 
+                               users_modify.group_id as group_id_modify
                                 from ${TABLE_NAME} 
                                 LEFT JOIN wubi_category ON category_id = wubi_category.id
-                                LEFT JOIN users ON wubi_words.uid = users.uid
+                                LEFT JOIN users users_init ON wubi_words.user_init = users_init.uid
+                                LEFT JOIN users users_modify ON wubi_words.user_modify = users_modify.uid
                             `
             let filterArray = []
 
@@ -99,6 +103,8 @@ router.post('/list', (req, res, next) => {
             if (filterArray.length > 0){
                 filterArray.unshift('where')
             }
+
+            filterArray.push('order by code asc, priority asc')
 
             let promisesAll = []
             let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
@@ -150,10 +156,13 @@ router.post('/export-extra', (req, res, next) => {
                        wubi_words.comment,
                        wubi_category.id AS category_id,
                        wubi_category.name as category_name,
-                       wubi_words.uid, users.email,users.group_id
+                       wubi_words.user_init,
+                       wubi_words.user_modify, 
+                       users.email,
+                       users.group_id
                 FROM ${TABLE_NAME} 
                          LEFT JOIN wubi_category  ON category_id = wubi_category.id
-                         LEFT JOIN users ON wubi_words.uid = users.uid
+                         LEFT JOIN users ON wubi_words.user_init = users.uid
                 WHERE category_id != 1
                 ORDER BY
                     concat(lpad(wubi_category.sort_id, 3, '000'), lpad(wubi_category.id, 3, '000') ) ASC;
@@ -206,10 +215,10 @@ router.post('/add', (req, res, next) => {
             let parseWord = utility.unicodeEncode(req.body.word) // !
             let timeNow = utility.dateFormatter(new Date())
             sqlArray.push(`
-                    INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, uid, category_id )
+                    INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id )
                     VALUES(
                         '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
-                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${req.body.category_id || 1}')`
+                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}')`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
@@ -259,9 +268,9 @@ router.post('/add-batch', (req, res, next) => {
                             let parseWord = utility.unicodeEncode(word.word) // !
                             let timeNow = utility.dateFormatter(new Date())
                             return `INSERT into ${TABLE_NAME}(word, code, priority,
-                                                          date_create, date_modify, comment, uid, category_id)
+                                                          date_create, date_modify, comment, user_init, user_modify, category_id)
                                 VALUES ('${parseWord}', '${word.code}', '${word.priority || 0}',
-                                        '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}',
+                                        '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}','${userInfo.uid}',
                                         '${req.body.category_id || 1}');`
                         })
                         utility
