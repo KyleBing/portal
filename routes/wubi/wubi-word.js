@@ -5,6 +5,7 @@ const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 const multer = require('multer')
 const Dict = require("./Dict")
+const {adminCount} = require("../../config/configProject");
 
 const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
@@ -163,7 +164,7 @@ router.post('/export-extra', (req, res, next) => {
                 FROM ${TABLE_NAME} 
                          LEFT JOIN wubi_category  ON category_id = wubi_category.id
                          LEFT JOIN users ON wubi_words.user_init = users.uid
-                WHERE category_id != 1
+                WHERE category_id != 1 and approved = 1
                 ORDER BY
                     concat(lpad(wubi_category.sort_id, 3, '000'), lpad(wubi_category.id, 3, '000') ) ASC;
             `
@@ -214,11 +215,12 @@ router.post('/add', (req, res, next) => {
             let sqlArray = []
             let parseWord = utility.unicodeEncode(req.body.word) // !
             let timeNow = utility.dateFormatter(new Date())
+            let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
             sqlArray.push(`
-                    INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id )
+                    INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id, approved )
                     VALUES(
                         '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
-                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}')`
+                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}'), ${isApproved}`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
@@ -267,11 +269,12 @@ router.post('/add-batch', (req, res, next) => {
                         let sqlArray = insertWords.map(word => {
                             let parseWord = utility.unicodeEncode(word.word) // !
                             let timeNow = utility.dateFormatter(new Date())
+                            let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
                             return `INSERT into ${TABLE_NAME}(word, code, priority,
-                                                          date_create, date_modify, comment, user_init, user_modify, category_id)
+                                                          date_create, date_modify, comment, user_init, user_modify, category_id, approved)
                                 VALUES ('${parseWord}', '${word.code}', '${word.priority || 0}',
                                         '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}','${userInfo.uid}',
-                                        '${req.body.category_id || 1}');`
+                                        '${req.body.category_id || 1}', ${isApproved});`
                         })
                         utility
                             .getDataFromDB( 'diary', sqlArray)
@@ -303,6 +306,7 @@ router.put('/modify', (req, res, next) => {
         .then(userInfo => {
             let parseWord = utility.unicodeEncode(req.body.word) // !
             let timeNow = utility.dateFormatter(new Date())
+            let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
             let sqlArray = []
             sqlArray.push(`
                         update ${TABLE_NAME}
@@ -314,10 +318,17 @@ router.put('/modify', (req, res, next) => {
                                 up='${req.body.up}',
                                 down='${req.body.down}',
                                 comment='${req.body.comment}',
-                                category_id='${req.body.category_id}'
+                                category_id='${req.body.category_id}',
+                                user_modify = ${userInfo.uid},
+                                approved = ${isApproved}
                             WHERE id='${req.body.id}'
                     `)
+            // 除管理员之外，只能操作自己创造的词
+            if (userInfo.group_id === 1){ // 管理员时
 
+            } else {
+                sqlArray.push(`and uid_init = ${userInfo.uid}`)
+            }
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
@@ -342,6 +353,12 @@ router.delete('/delete', (req, res, next) => {
                         DELETE from ${TABLE_NAME}
                         WHERE id in (${req.body.ids.join(',')})
                     `)
+            // 除管理员之外，只能操作自己创造的词
+            if (userInfo.group_id === 1){ // 管理员时
+
+            } else {
+                sqlArray.push(`and uid_init = ${userInfo.uid}`)
+            }
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
