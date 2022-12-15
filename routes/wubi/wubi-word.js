@@ -391,13 +391,15 @@ router.put('/modify-batch', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let timeNow = utility.dateFormatter(new Date())
-            let sqlArray = [`
-                        update ${TABLE_NAME}
-                        set date_modify='${timeNow}',
-                            category_id='${req.body.category_id}',
-                            approved=${req.body.approved}
-                        WHERE id in (${req.body.ids.join(',')})
-                    `]
+            let sqlArray = [`update ${TABLE_NAME} set date_modify='${timeNow}', user_modify=${userInfo.uid}, `]
+            // 以下两个不会同时出现，所以不用加中间的 , 了
+            if (req.body.hasOwnProperty('category_id')){
+                sqlArray.push(`category_id='${req.body.category_id}'`)
+            }
+            if (req.body.hasOwnProperty('approved')){
+                sqlArray.push(`approved='${req.body.approved}'`)
+            }
+            sqlArray.push(`WHERE id in (${req.body.ids.join(',')})`)
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
