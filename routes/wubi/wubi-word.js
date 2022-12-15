@@ -334,7 +334,7 @@ router.put('/modify', (req, res, next) => {
             if (userInfo.group_id === 1){ // 管理员时
 
             } else {
-                sqlArray.push(`and uid_init = ${userInfo.uid}`)
+                sqlArray.push(`and user_init = ${userInfo.uid}`)
             }
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
@@ -364,7 +364,7 @@ router.delete('/delete', (req, res, next) => {
             if (userInfo.group_id === 1){ // 管理员时
 
             } else {
-                sqlArray.push(`and uid_init = ${userInfo.uid}`)
+                sqlArray.push(`and user_init = ${userInfo.uid}`)
             }
             utility
                 .getDataFromDB( 'diary', sqlArray)
