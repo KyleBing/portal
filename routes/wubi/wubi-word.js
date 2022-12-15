@@ -101,7 +101,7 @@ router.post('/list', (req, res, next) => {
                 filterArray.push(`category_id = ${req.body.category_id}`)
             }
             // approved
-            if (req.body.hasOwnProperty('approved')){
+            if (req.body.hasOwnProperty('approved') && req.body.approved !== ''){
                 if (filterArray.length > 0){
                     filterArray.push(`and`)
                 }
