@@ -227,7 +227,7 @@ router.post('/add', (req, res, next) => {
                     INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id, approved )
                     VALUES(
                         '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
-                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}'), ${isApproved}`
+                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}', ${isApproved})`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
