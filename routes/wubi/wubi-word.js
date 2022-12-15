@@ -101,11 +101,11 @@ router.post('/list', (req, res, next) => {
                 filterArray.push(`category_id = ${req.body.category_id}`)
             }
             // approved
-            if (req.body.isFilterApproved){
+            if (req.body.hasOwnProperty('approved')){
                 if (filterArray.length > 0){
                     filterArray.push(`and`)
                 }
-                filterArray.push(`wubi_words.approved = 0 `)
+                filterArray.push(`wubi_words.approved = ${req.body.approved} `)
             }
 
             if (filterArray.length > 0){
@@ -394,7 +394,8 @@ router.put('/modify-batch', (req, res, next) => {
             let sqlArray = [`
                         update ${TABLE_NAME}
                         set date_modify='${timeNow}',
-                            category_id='${req.body.category_id}'
+                            category_id='${req.body.category_id}',
+                            approved=${req.body.approved}
                         WHERE id in (${req.body.ids.join(',')})
                     `]
             utility
