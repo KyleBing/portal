@@ -112,7 +112,7 @@ router.post('/list', (req, res, next) => {
                 filterArray.unshift('where')
             }
 
-            filterArray.push('order by code asc, priority asc')
+            filterArray.push('order by wubi_words.code asc, wubi_words.priority asc')
 
             let promisesAll = []
             let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
@@ -172,8 +172,8 @@ router.post('/export-extra', (req, res, next) => {
                          LEFT JOIN wubi_category  ON category_id = wubi_category.id
                          LEFT JOIN users ON wubi_words.user_init = users.uid
                 WHERE category_id != 1 and approved = 1
-                ORDER BY
-                    concat(lpad(wubi_category.sort_id, 3, '000'), lpad(wubi_category.id, 3, '000') ) ASC;
+                ORDER BY 
+                    wubi_category.sort_id, wubi_words.id ASC;
             `
 
             utility
