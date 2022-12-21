@@ -116,9 +116,16 @@ function updateUserLastLoginTime(uid){
 
 
 // 处理账单文本内容，转成格式化的账单数据
-function processBillOfDay(billContent, date){
+function processBillOfDay(billContent, date, filterKeywords){
     let str = billContent.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
-    let strArray = str.split('\n').filter(item => item.trim().length > 0)
+    let strArray =
+        str
+            .split('\n')
+            .filter(item => item.trim().length > 0)
+            .filter(item => { // {item, price}
+                let reg = new RegExp(`.*(${filterKeywords.join('|')}).*`, 'ig')
+                return reg.test(item)
+            })
 
     let response = {
         date: date,

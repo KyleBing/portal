@@ -43,8 +43,7 @@ router.get('/sorted', (req, res, next) => {
             let sqlArray = []
             for (let month = 1; month <= 12; month ++ ){
                 sqlArray.push(`
-                        select 
-                            *,
+                        select *,
                         date_format(date,'%Y%m') as id,
                         date_format(date,'%m') as month
                         from diaries 
@@ -74,15 +73,19 @@ router.get('/sorted', (req, res, next) => {
                         }
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
+                        let keywords = req.query.keyword.split(' ')
                         daysArray.forEach(item => {
-                            let processedDayData = utility.processBillOfDay(item.content, item.date)
-                            daysData.push(processedDayData)
-                            monthSum = monthSum + processedDayData.sum
-                            monthSumIncome = monthSumIncome + processedDayData.sumIncome
-                            monthSumOutput = monthSumOutput + processedDayData.sumOutput
-                            food.breakfast = food.breakfast + processedDayData.items.filter(item => item.item.indexOf('早餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
-                            food.launch = food.launch + processedDayData.items.filter(item => item.item.indexOf('午餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
-                            food.dinner = food.dinner + processedDayData.items.filter(item => item.item.indexOf('晚餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
+                            let processedDayData = utility.processBillOfDay(item.content, item.date, keywords)
+                            // 当内容 items 的数量大于 0 时
+                            if (processedDayData.items.length > 0){
+                                daysData.push(processedDayData)
+                                monthSum = monthSum + processedDayData.sum
+                                monthSumIncome = monthSumIncome + processedDayData.sumIncome
+                                monthSumOutput = monthSumOutput + processedDayData.sumOutput
+                                food.breakfast = food.breakfast + processedDayData.items.filter(item => item.item.indexOf('早餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
+                                food.launch = food.launch + processedDayData.items.filter(item => item.item.indexOf('午餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
+                                food.dinner = food.dinner + processedDayData.items.filter(item => item.item.indexOf('晚餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
+                            }
                         })
 
                         responseData.push({
@@ -107,6 +110,55 @@ router.get('/sorted', (req, res, next) => {
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))
                 })
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
+
+router.get('/search', (req, res, next) => {
+    let keywords = req.query.keyword.split(' ')
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let yearNow = new Date().getFullYear()
+            let sqlRequests = []
+            let sqlArray = []
+            sqlArray.push(`
+                        select *,
+                        date_format(date,'%Y%m') as id
+                        from diaries 
+                        where year(date) = ${req.query.year}
+                        and category = 'bill'
+                        and uid = ${userInfo.uid}
+                        order by date asc;
+                    `)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
+                .then(records => {
+                    let matchRecords = []
+                    let sum = 0
+
+                    // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
+                    records.forEach(dayData => {
+                        let processedDayData = utility.processBillOfDay(dayData.content, dayData.date)
+                            .items
+                            .filter(item => { // {item, price}
+                                let reg = new RegExp(`.*(${keywords.join('|')}).*`, 'ig')
+                                return reg.test(item.item)
+                            })
+                        matchRecords = matchRecords.concat(processedDayData)
+                        sum = matchRecords.reduce((a,b) => a.price+b.price, sum)
+                    })
+
+                    res.send(new ResponseSuccess({
+                        records: matchRecords,
+                        sum
+                    }))
+
+                })
+
         })
         .catch(verified => {
             res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
