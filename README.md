@@ -1,15 +1,12 @@
-# 《标题日记》 后台 - nodejs
+# 《标题日记》 后台 - nodejs 版
 
 
 ## 一、项目说明
-服务对象： [标题日记](https://github.com/KyleBing/diary-vue) 
-
-该后台使用 javascript 作为唯一语言，运行于 [nodejs](https://github.com/nodejs/node) 环境中，使用 [express](https://github.com/expressjs/express) 框架作为 web 服务框架。
-> 前一版的后台是使用 php 写的，只是简单的能用，由于对 php 不熟悉，稍微做一些复杂的操作就感觉改动吃力，现在好了，感觉天下都是我的，哈哈哈
+服务对象： [《标题日记》](https://github.com/KyleBing/diary-vue)
 
 > 线上已运行的例子：
-> http [http://kylebing.cn:3000/diary/detail?diaryId=5587](http://kylebing.cn:3000/diary/detail?diaryId=5587)
-> https [https://kylebing.cn/portal/diary/detail?diaryId=5587](https://kylebing.cn/portal/diary/detail?diaryId=5587)
+
+> http [http://kylebing.cn:3000/diary/detail?diaryId=6766](http://kylebing.cn:3000/diary/detail?diaryId=6766)
 
 
 
@@ -140,36 +137,37 @@ npm run start
 
 ### 5. 配置 nginx，映射 `localhost:3000` 路径到  `/portal` 路径
 
-1. 打开 nginx 的配置文件，linux 系统的配置文件默认在 `/etc/nginx/conf.d/` 目录下，比如我 CentOS 上的 `nginx/1.19.7` 的配置文件是在这个位置。
+1. 打开 nginx 的配置文件，
+- CentOS 的 nginx 配置文件在 `/etc/nginx/conf.d/` 目录下。
+- Ubuntu 的 nginx 配置文件在 `/etc/nginx/site-avilable/default` 中。
 
-
-2. 打开 `default.conf` 文件
-```bash
-vi default.conf
-```
+2. 打开 `default.conf` 或 `default` 文件
+    ```bash
+    vi default.conf
+    ```
 
 3. 在 http 内部， server 外部，添加以下内容
 
-```bash
- upstream diary_server {
-     server localhost:3000;
-     keepalive 2000;
- }
-```
+    ```bash
+     upstream diary_server {
+         server localhost:3000;
+         keepalive 2000;
+     }
+    ```
 
 4. 然后在 server 内部添加：
 
-```bash
-location /portal/ {
-    proxy_pass http://diary_server/; # 这里对应上面的 upsteam 名字
-    proxy_set_header Host $host:$server_port; # 这里照搬就可以
-}
-```
+    ```bash
+    location /portal/ {
+        proxy_pass http://diary_server/; # 这里对应上面的 upstream 名字
+        proxy_set_header Host $host:$server_port; # 这里照搬就可以
+    }
+    ```
 5. 这样，就会将 `localhost:3000` 这个接口映射到 `localhost/portal/` 这个路径下
 6. 重启 nginx 服务
-  ```bash
-  systemctl restart nginx
-  ```
+    ```bash
+    systemctl restart nginx
+    ```
 
 ### 6. 配置前端项目
 1. 下载 [https://github.com/KyleBing/diary-vue](https://github.com/KyleBing/diary-vue)
@@ -201,5 +199,6 @@ token 放到请求头的 `Diary-Token` 字段中
 需要系统是 `linux`，并已安装 `postfix` 邮件服务。
 它会给管理员发送对应内容的邮件提醒
 
-## 结尾
-日记相关功能，始于 2022-04-14 完成于 2022-04-17
+
+## 五、其它
+> 始于 `2022-04-14`
