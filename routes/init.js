@@ -116,14 +116,17 @@ CREATE TABLE \`users\`  (
   \`homepage\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '个人主页',
   \`gaode\` varchar(250) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '高德组队邀请码',
   \`group_id\` int(11) NOT NULL DEFAULT 2 COMMENT '用户组别ID',
-  \`count_diary\` int(6) NULL DEFAULT NULL,
-  \`count_dict\` int(6) NULL DEFAULT NULL,
-  \`count_qr\` int(6) NULL DEFAULT NULL,
+  \`count_diary\` int(8) NULL DEFAULT 0 COMMENT '数量 - 日记',
+  \`count_dict\` int(8) NULL DEFAULT 0 COMMENT '数量 - 码表',
+  \`count_qr\` int(8) NULL DEFAULT 0 COMMENT '数量 - 二维码',
+  \`count_words\` int(8) NULL DEFAULT 0 COMMENT '数量 - 五笔词条',
   \`sync_count\` int(6) NULL DEFAULT 0 COMMENT '同步次数',
   PRIMARY KEY (\`uid\`, \`email\`) USING BTREE,
   INDEX \`group_id\`(\`group_id\`) USING BTREE,
+  INDEX \`uid\`(\`uid\`) USING BTREE,
   CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 88 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 106 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
+
 
 -- ----------------------------
 -- Table structure for user_group

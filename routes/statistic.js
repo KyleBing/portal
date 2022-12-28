@@ -21,7 +21,8 @@ router.get('/', (req, res, next) => {
                           (SELECT COUNT(*) FROM diary_category) as count_category,
                           (SELECT COUNT(*) FROM diaries where category = 'bill') as count_bill,
                           (SELECT COUNT(*) FROM wubi_dict) as count_dict,
-                          (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words
+                          (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words,
+                          (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved
                     `)
             } else {
                 sqlArray.push(`
@@ -184,6 +185,7 @@ function updateUsersInfo() {
                     sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_qr    = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
+                    sqlArray.push(`update users set count_words = (SELECT count(*) from wubi_words where user_init = ${user.uid}) where uid = ${user.uid};`)
                 })
                 utility
                     .getDataFromDB('diary', sqlArray, true)
