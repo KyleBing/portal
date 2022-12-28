@@ -73,7 +73,7 @@ router.get('/sorted', (req, res, next) => {
                         }
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
-                        let keywords = req.query.keyword.split(' ')
+                        let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
                         daysArray.forEach(item => {
                             let processedDayData = utility.processBillOfDay(item.content, item.date, keywords)
                             // 当内容 items 的数量大于 0 时
