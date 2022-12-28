@@ -61,7 +61,7 @@ router.get('/list', (req, res, next) => {
                         diary.content = utility.unicodeDecode(diary.content)
                         // 处理账单数据
                         if (diary.category === 'bill'){
-                            diary.billData = utility.processBillOfDay(diary.content, diary.date)
+                            diary.billData = utility.processBillOfDay(diary.content, diary.date, [])
                         }
                     })
                     res.send(new ResponseSuccess(data, '请求成功'))
