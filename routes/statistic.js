@@ -33,7 +33,8 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM diary_category) as count_category,
                               (SELECT COUNT(*) FROM diaries where uid = ${userInfo.uid} and category = 'bill') as count_bill,
                               (SELECT COUNT(*) FROM wubi_dict where uid = ${userInfo.uid}) as count_dict,
-                              (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words
+                              (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words,
+                              (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved
                         `)
             }
             utility
