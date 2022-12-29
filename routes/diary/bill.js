@@ -88,21 +88,24 @@ router.get('/sorted', (req, res, next) => {
                             }
                         })
 
-                        responseData.push({
-                            id: daysArray[0].id,
-                            month: daysArray[0].month,
-                            count: daysArray.length,
-                            days: daysData,
-                            sum: utility.formatMoney(monthSum),
-                            sumIncome: utility.formatMoney(monthSumIncome),
-                            sumOutput: utility.formatMoney(monthSumOutput),
-                            food: {
-                                breakfast: utility.formatMoney(food.breakfast),
-                                launch: utility.formatMoney(food.launch),
-                                dinner: utility.formatMoney(food.dinner),
-                                sum: utility.formatMoney(food.breakfast + food.launch + food.dinner)
-                            }
-                        })
+                        if (daysData.length > 0){
+                            responseData.push({
+                                id: daysArray[0].id,
+                                month: daysArray[0].month,
+                                count: daysArray.length,
+                                days: daysData,
+                                sum: utility.formatMoney(monthSum),
+                                sumIncome: utility.formatMoney(monthSumIncome),
+                                sumOutput: utility.formatMoney(monthSumOutput),
+                                food: {
+                                    breakfast: utility.formatMoney(food.breakfast),
+                                    launch: utility.formatMoney(food.launch),
+                                    dinner: utility.formatMoney(food.dinner),
+                                    sum: utility.formatMoney(food.breakfast + food.launch + food.dinner)
+                                }
+                            })
+                        }
+
                     })
                     responseData.sort((a, b) => a.year > b.year ? 1 : -1)
                     res.send(new ResponseSuccess(responseData))
