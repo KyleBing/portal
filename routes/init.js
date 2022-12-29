@@ -125,7 +125,7 @@ CREATE TABLE \`users\`  (
   INDEX \`group_id\`(\`group_id\`) USING BTREE,
   INDEX \`uid\`(\`uid\`) USING BTREE,
   CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 106 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
 
 -- ----------------------------
@@ -210,7 +210,7 @@ CREATE TABLE \`wubi_dict\`  (
   \`uid\` int(11) NULL DEFAULT NULL COMMENT '所属用户',
   PRIMARY KEY (\`id\`, \`title\`) USING BTREE,
   INDEX \`uid\`(\`uid\`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 52 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for wubi_category
