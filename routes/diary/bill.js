@@ -20,7 +20,7 @@ router.get('/', (req, res, next) => {
 
                     billDiaryList.forEach(diary => {
                         // decode unicode
-                        billResponse.push(utility.processBillOfDay(diary.content, diary.date))
+                        billResponse.push(utility.processBillOfDay(diary, []))
                     })
                     res.send(new ResponseSuccess(billResponse, '请求成功'))
                 })
@@ -44,7 +44,7 @@ router.get('/sorted', (req, res, next) => {
             for (let month = 1; month <= 12; month ++ ){
                 sqlArray.push(`
                         select *,
-                        date_format(date,'%Y%m') as id,
+                        date_format(date,'%Y%m') as month_id,
                         date_format(date,'%m') as month
                         from diaries 
                         where year(date) = ${req.query.year}
@@ -57,9 +57,9 @@ router.get('/sorted', (req, res, next) => {
             sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             Promise.all(sqlRequests)
-                .then(values => {
+                .then(yearDataArray => {
                     let responseData = []
-                    let afterValues = values[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
+                    let afterValues = yearDataArray[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
                     afterValues.forEach(daysArray => {
 
                         let daysData = []
@@ -75,7 +75,7 @@ router.get('/sorted', (req, res, next) => {
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
                         daysArray.forEach(item => {
-                            let processedDayData = utility.processBillOfDay(item.content, item.date, keywords)
+                            let processedDayData = utility.processBillOfDay(item, keywords)
                             // 当内容 items 的数量大于 0 时
                             if (processedDayData.items.length > 0){
                                 daysData.push(processedDayData)
@@ -91,6 +91,7 @@ router.get('/sorted', (req, res, next) => {
                         if (daysData.length > 0){
                             responseData.push({
                                 id: daysArray[0].id,
+                                month_id: daysArray[0].month_id,
                                 month: daysArray[0].month,
                                 count: daysArray.length,
                                 days: daysData,

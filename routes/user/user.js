@@ -239,6 +239,43 @@ function checkHashExist(username, email){
     return utility.getDataFromDB( 'diary', sqlArray)
 }
 
+
+// 设置用户资料：昵称，avatar，手机号
+router.put('/set-profile', (req, res, next) => {
+    // 1. 验证用户信息是否正确
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`
+                update users
+                set users.nickname = '${req.body.nickname}',
+                    users.phone    = '${req.body.phone}',
+                    users.avatar   = '${req.body.avatar}'
+                    WHERE uid = '${userInfo.uid}'
+            `)
+            utility
+                .getDataFromDB('diary', sqlArray, true)
+                .then(data => {
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    utility
+                        .verifyAuthorization(req)
+                        .then(newUserInfo => {
+                            res.send(new ResponseSuccess(newUserInfo, '修改成功'))
+                        })
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '修改失败'))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, '无权操作'))
+        })
+})
+
+
+
+
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
