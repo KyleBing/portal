@@ -97,6 +97,7 @@ INSERT INTO \`diary_category\` VALUES (2, 'study', '学习', 0, '#4CD964', '2022
 INSERT INTO \`diary_category\` VALUES (5, 'week', '周报', 0, '#5856D6', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-03-23 21:23:02');
 
+
 -- ----------------------------
 -- Table structure for users
 -- ----------------------------
@@ -121,6 +122,8 @@ CREATE TABLE \`users\`  (
   \`count_words\` int(8) NULL DEFAULT 0 COMMENT '数量 - 词条',
   \`sync_count\` int(6) NULL DEFAULT 0 COMMENT '同步次数',
   \`avatar\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT 'avatar图片地址',
+  \`city\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '城市',
+  \`geolocation\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '经纬度',
   PRIMARY KEY (\`uid\`, \`email\`) USING BTREE,
   INDEX \`group_id\`(\`group_id\`) USING BTREE,
   INDEX \`uid\`(\`uid\`) USING BTREE,
