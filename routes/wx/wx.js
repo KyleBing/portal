@@ -17,8 +17,8 @@ router.post('/login', (req, res, next) => {
         url: 'https://api.weixin.qq.com/sns/jscode2session',
         method: 'GET',
         params:{
-            appid: configProject.wxAppId,
-            secret: configProject.wxSecret,
+            appid: configProject.wxMiniAppId,
+            secret: configProject.wxMiniSecret,
             js_code: req.body.code, // code 是小程序里获取的
             grant_type: 'authorization_code'
         }
@@ -38,8 +38,8 @@ router.post('/login-with-token', (req, res, next) => {
                 url: 'https://api.weixin.qq.com/sns/jscode2session',
                 method: 'GET',
                 params:{
-                    appid: configProject.wxAppId,
-                    secret: configProject.wxSecret,
+                    appid: configProject.wxMiniAppId,
+                    secret: configProject.wxMiniSecret,
                     js_code: req.body.code, // code 是小程序里获取的
                     grant_type: 'authorization_code'
                 }
@@ -67,8 +67,8 @@ function getToken(){
                 url: 'https://api.weixin.qq.com/cgi-bin/token',
                 params: {
                     grant_type: 'client_credential',
-                    appid: configProject.wxAppId,
-                    secret: configProject.wxSecret
+                    appid: configProject.wxMiniAppId,
+                    secret: configProject.wxMiniSecret
                 }
             })
                 .then(res => {
