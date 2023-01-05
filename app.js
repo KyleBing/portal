@@ -22,11 +22,13 @@ let indexRouter          = require('./routes/index')
 let usersRouter          = require('./routes/user/user')
 let diaryStatisticRouter = require('./routes/statistic')
 let routerWx             = require('./routes/wx/wx')
+let routerWxPublic       = require('./routes/wx/wx-public')
 
 app.use('/'           , indexRouter)
 app.use('/init'       , init)
 app.use('/user'       , usersRouter)
 app.use('/wx'         , routerWx)
+app.use('/wx-public'  , routerWxPublic)
 app.use('/statistic'  , diaryStatisticRouter)
 
 // 日记相关
