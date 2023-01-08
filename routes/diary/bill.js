@@ -35,25 +35,32 @@ router.get('/', (req, res, next) => {
 
 
 router.get('/sorted', (req, res, next) => {
+    if (!req.query.years){
+        res.send(new ResponseError('', '未选择年份'))
+        return
+    }
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
             let yearNow = new Date().getFullYear()
             let sqlRequests = []
             let sqlArray = []
-            for (let month = 1; month <= 12; month ++ ){
-                sqlArray.push(`
+            req.query.years.split(',').forEach(year => {
+                for (let month = 1; month <= 12; month ++ ){
+                    sqlArray.push(`
                         select *,
                         date_format(date,'%Y%m') as month_id,
                         date_format(date,'%m') as month
                         from diaries 
-                        where year(date) = ${req.query.year}
+                        where year(date) = ${year}
                         and month(date) = ${month}
                         and category = 'bill'
                         and uid = ${userInfo.uid}
                         order by date asc;
                     `)
-            }
+                }
+            })
+
             sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             Promise.all(sqlRequests)
