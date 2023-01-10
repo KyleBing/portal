@@ -11,21 +11,42 @@ const bcrypt = require('bcrypt')
 /* GET users listing. */
 router.post('/register', (req, res, next) => {
     // TODO: 验证传过来的数据库必填项
-    // 判断邀请码是否正确
-    if (req.body.invitationCode && req.body.invitationCode === configProject.invitation){
-        checkEmailOrUserNameExist(req.body.email, req.body.username)
-            .then(dataEmailExistArray => {
-                // email 记录是否已经存在
-                if (dataEmailExistArray.length > 0){
-                    return res.send(new ResponseError('', '邮箱或用户名已被注册'))
+    if (req.body.invitationCode === configProject.invitation){ // 万能全局邀请码
+        registerUser(req, res)
+    } else {
+        utility
+            .getDataFromDB('diary', [`select * from invitations where id = '${req.body.invitationCode}'`], true)
+            .then(result => {
+                if (result){
+                    if (result.binding_uid){
+                        res.send(new ResponseError('', '邀请码已被使用'))
+                    } else {
+                        registerUser(req, res)
+                    }
                 } else {
-                    let sqlArray = []
-                    let timeNow = utility.dateFormatter(new Date())
-                    // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
-                    bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
-                        sqlArray.push(
-                            // 注册的用户默认为普通用户
-                            `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
+                    res.send(new ResponseError('', '邀请码无效'))
+                }
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, '数据库请求出错'))
+            })
+    }
+})
+
+function registerUser(req, res){
+    checkEmailOrUserNameExist(req.body.email, req.body.username)
+        .then(dataEmailExistArray => {
+            // email 记录是否已经存在
+            if (dataEmailExistArray.length > 0){
+                return res.send(new ResponseError('', '邮箱或用户名已被注册'))
+            } else {
+                let sqlArray = []
+                let timeNow = utility.dateFormatter(new Date())
+                // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
+                bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
+                    sqlArray.push(
+                        // 注册的用户默认为普通用户
+                        `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
                                                 wx, phone, homepage, gaode, group_id)
                                     VALUES (
                                     '${req.body.email}', 
@@ -41,30 +62,31 @@ router.post('/register', (req, res, next) => {
                                     '${req.body.gaode || ''}', 
                                     '2'
                                     )`
-                        )
-                        utility
-                            .getDataFromDB( 'diary', sqlArray)
-                            .then(data => {
-                                res.send(new ResponseSuccess('', '注册成功'))
-                            })
-                            .catch(err => {
-                                res.send(new ResponseError('', '注册失败'))
-                            })
-                    })
+                    )
+                    utility
+                        .getDataFromDB( 'diary', sqlArray)
+                        .then(data => {
+                            let lastInsertedUid = data.insertId
+                            utility.getDataFromDB('diary', [`update invitations set binding_uid = ${lastInsertedUid} where id = '${req.body.invitationCode}'`])
+                                .then(resInvitation => {
+                                    res.send(new ResponseSuccess('', '注册成功'))
+                                })
+                                .catch(err => {
+                                    res.send(new ResponseError('', '注册成功，邀请码信息更新失败'))
+                                })
+                        })
+                        .catch(err => {
+                            res.send(new ResponseError('', '注册失败'))
+                        })
+                })
 
-                }
-            })
-            .catch(errEmailExist => {
-                console.log(errEmailExist)
-                res.send(new ResponseError(errEmailExist, '查询出错'))
-            })
-
-    } else {
-        res.send(new ResponseError('', '邀请码错误'))
-    }
-
-
-})
+            }
+        })
+        .catch(errEmailExist => {
+            console.log(errEmailExist)
+            res.send(new ResponseError(errEmailExist, '查询出错'))
+        })
+}
 
 // 检查用户名或邮箱是否存在
 function checkEmailOrUserNameExist(email, username){
