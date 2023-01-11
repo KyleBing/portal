@@ -15,21 +15,11 @@ router.get('/list', (req, res, next) => {
         .then(userInfo => {
 
             let sqlArray = []
-            sqlArray.push(`SELECT * from ${TABLE_NAME} 
-                  where uid='${userInfo.uid}'`)
+            sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null`)
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(userInfo.uid)
-                    data.forEach(diary => {
-                        // decode unicode
-                        diary.title = utility.unicodeDecode(diary.title)
-                        diary.content = utility.unicodeDecode(diary.content)
-                        // 处理账单数据
-                        if (diary.category === 'bill'){
-                            diary.billData = utility.processBillOfDay(diary, [])
-                        }
-                    })
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
@@ -37,7 +27,7 @@ router.get('/list', (req, res, next) => {
                 })
         })
         .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+            res.send(new ResponseError(verified, '无权查看'))
         })
 })
 
@@ -76,12 +66,9 @@ router.delete('/delete', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.group_id === 1){
+            if (userInfo.email === configProject.adminCount){
                 let sqlArray = []
-                sqlArray.push(`
-                        DELETE from users
-                        WHERE uid='${req.body.uid}'
-                    `)
+                sqlArray.push(` DELETE from ${TABLE_NAME}WHERE id='${req.params.id}' `)
                 utility
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {

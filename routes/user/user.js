@@ -67,7 +67,7 @@ function registerUser(req, res){
                         .getDataFromDB( 'diary', sqlArray)
                         .then(data => {
                             let lastInsertedUid = data.insertId
-                            utility.getDataFromDB('diary', [`update invitations set binding_uid = ${lastInsertedUid} where id = '${req.body.invitationCode}'`])
+                            utility.getDataFromDB('diary', [`update invitations set binding_uid = ${lastInsertedUid}, date_register = '${timeNow}' where id = '${req.body.invitationCode}'`])
                                 .then(resInvitation => {
                                     res.send(new ResponseSuccess('', '注册成功'))
                                 })
