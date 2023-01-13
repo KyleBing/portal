@@ -92,6 +92,8 @@ INSERT INTO \`diary_category\` VALUES (10, 'bill', '账单', 0, '#8bc34a', '2022
 INSERT INTO \`diary_category\` VALUES (8, 'film', '电影', 0, '#FF2D70', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (7, 'game', '游戏', 0, '#5AC8FA', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (1, 'life', '生活', 0, '#FF9500', '2022-03-23 21:23:02');
+INSERT INTO \`diary_category\` VALUES (11, 'memo', '备忘', 0, '#BABABA', '2022-10-31 17:16:15');
+INSERT INTO \`diary_category\` VALUES (12, 'play', '剧本', 0, '#00AAFF', '2022-12-29 08:44:21');
 INSERT INTO \`diary_category\` VALUES (4, 'sport', '运动', 0, '#FFCC00', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (2, 'study', '学习', 0, '#4CD964', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (5, 'week', '周报', 0, '#5856D6', '2022-03-23 21:23:02');
@@ -147,6 +149,21 @@ CREATE TABLE \`user_group\`  (
 -- ----------------------------
 INSERT INTO \`user_group\` VALUES (1, 'admin', '管理员');
 INSERT INTO \`user_group\` VALUES (2, 'user', '普通成员');
+
+
+-- ----------------------------
+-- Table structure for invitations
+-- ----------------------------
+DROP TABLE IF EXISTS \`invitations\`;
+CREATE TABLE \`invitations\`  (
+  \`id\` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'hash',
+  \`date_create\` datetime(0) NOT NULL COMMENT '创建时间',
+  \`date_register\` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
+  \`binding_uid\` int(255) NULL DEFAULT NULL COMMENT '注册绑定的用户',
+  PRIMARY KEY (\`id\`) USING BTREE,
+  INDEX \`bind_uid\`(\`binding_uid\`) USING BTREE,
+  CONSTRAINT \`bind_uid\` FOREIGN KEY (\`binding_uid\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
 
 
 -- ----------------------------
