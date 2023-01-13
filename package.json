@@ -1,7 +1,7 @@
 {
   "name": "diary-portal-node",
-  "version": "1.1.7",
-  "date-modify": "2022-12-15",
+  "version": "1.1.8",
+  "date-modify": "2023-01-13",
   "date-init": "2022-03-21",
   "private": true,
   "scripts": {
