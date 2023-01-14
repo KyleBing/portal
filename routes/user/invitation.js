@@ -59,6 +59,31 @@ router.post('/generate', (req, res, next) => {
         })
 })
 
+// 标记邀请码为已分享状态
+router.post('/mark-shared', (req, res, next) => {
+    utility.verifyAuthorization(req)
+        .then(userInfo => {
+            if (userInfo.email === configProject.adminCount){ // admin
+                let sqlArray = []
+                sqlArray.push(`
+                        update ${TABLE_NAME} set is_shared = 1 where id = '${req.body.id}' `)
+                utility
+                    .getDataFromDB( 'diary', sqlArray)
+                    .then(data => {
+                        res.send(new ResponseSuccess('', '邀请码标记成功'))
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err, '邀请码标记失败'))
+                    })
+            } else {
+                res.send(new ResponseError('', '无权限操作'))
+            }
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, err))
+        })
+})
+
 router.delete('/delete', (req, res, next) => {
     if (!req.query.id){
         res.send(new ResponseError('', '参数错误，缺少 id'))

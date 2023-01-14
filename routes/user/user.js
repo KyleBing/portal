@@ -14,9 +14,8 @@ router.post('/register', (req, res, next) => {
     if (req.body.invitationCode === configProject.invitation){ // 万能全局邀请码
         registerUser(req, res)
     } else {
-        let invitationCode = decodeURIComponent(req.body.invitationCode) // 对应前端传过来的 encode 之后的字符串
         utility
-            .getDataFromDB('diary', [`select * from invitations where id = '${invitationCode}'`], true)
+            .getDataFromDB('diary', [`select * from invitations where id = '${req.body.invitationCode}'`], true)
             .then(result => {
                 if (result){
                     if (result.binding_uid){
