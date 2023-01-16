@@ -7,6 +7,7 @@ const router = express.Router()
 const axios = require("axios");
 
 const crypto = require('crypto')
+const xml2json = require('xml2json')
 
 
 // 临时 access token
@@ -20,15 +21,34 @@ let access_token = {
 // 微信公众号信息处理
 router.post('/', (req, res, next) => {
     if (checkWxAuthorization(req)){
-        console.log('[已验证] 微信')
-        console.log(req.body)
-        res.send(true)
-
-        // TODO 始终无法获取到用户发送的信息
+        // console.log('[ 已验证 ] 请求来自微信')
+        let xmlData = ''
+        req
+            .on('data', data => {
+                xmlData += data.toString()
+/*                xmlData =
+                    `<xml><ToUserName><![CDATA[gh_44543146fe48]]></ToUserName>
+                    <FromUserName><![CDATA[oU9gc6M5bCiuL5rSfsCRn5djrtm0]]></FromUserName>
+                    <CreateTime>1673838891</CreateTime>
+                    <MsgType><![CDATA[text]]></MsgType>
+                    <Content><![CDATA[这]]></Content>
+                    <MsgId>23963610449099327</MsgId>
+                    </xml>`*/
+            })
+            .on('end', () => {
+                let receiveMsg = JSON.parse(xml2json.toJson(xmlData))
+                let responseMsg = `<xml>
+                                        <ToUserName><![CDATA[${receiveMsg.xml.FromUserName}]]></ToUserName>
+                                        <FromUserName><![CDATA[${receiveMsg.xml.ToUserName}]]></FromUserName>
+                                        <CreateTime>${new Date().getTime()}</CreateTime>
+                                        <MsgType><![CDATA[text]]></MsgType>
+                                        <Content><![CDATA[这是后台回复的内容]]></Content>
+                                    </xml>`
+                res.send (responseMsg)
+            })
     } else {
-        console.log('[未验证] 未知来源请求')
+        // console.log('[未验证] 未知来源请求')
         res.send(false)
-
     }
 })
 
