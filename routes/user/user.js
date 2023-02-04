@@ -298,8 +298,6 @@ router.put('/set-profile', (req, res, next) => {
 })
 
 
-
-
 router.put('/modify', (req, res, next) => {
 
     // 1. 验证用户信息是否正确
@@ -335,7 +333,7 @@ function operateUserInfo(req, res, userInfo){
                             users.homepage = '${req.body.homepage}', 
                             users.gaode = '${req.body.gaode}', 
                             users.group_id = '${req.body.group_id}'
-                    WHERE uid='${userInfo.uid}'
+                    WHERE uid='${req.body.uid}'
             `)
 
     utility
