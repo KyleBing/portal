@@ -26,6 +26,7 @@ router.get('/list', (req, res, next) => {
                                    qrs.date_init,
                                    qrs.visit_count,
                                    qrs.imgs,
+                                   qrs.car_type,
                                    users.phone,
                                    users.wx,
                                    users.uid,
@@ -152,7 +153,7 @@ router.post('/add', (req, res, next) => {
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
                            insert into qrs(hash, is_public, is_show_phone, message, description, car_name, car_plate, car_desc, is_show_car, wx_code_img, is_show_wx,
-                           is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid, imgs)
+                           is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid, imgs, car_type)
                             values(
                                 '${req.body.hash.toLowerCase()}',
                                 '${req.body.is_public}',
@@ -171,7 +172,8 @@ router.post('/add', (req, res, next) => {
                                 '${timeNow}',
                                 '${req.body.visit_count || 0}',
                                 '${userInfo.uid}',
-                                '${req.body.imgs}'
+                                '${req.body.imgs}',
+                                '${req.body.car_type}'
                                 )
                         `)
                         utility
@@ -233,7 +235,8 @@ router.put('/modify', (req, res, next) => {
                                 qrs.date_modify = '${timeNow}',
                                 qrs.visit_count = '${req.body.visit_count}',
                                 qrs.uid = '${req.body.uid}',
-                                qrs.imgs = '${req.body.imgs}'
+                                qrs.imgs = '${req.body.imgs}',
+                                qrs.car_type = '${req.body.car_type}'
                             WHERE hash='${req.body.hash}'
                     `)
 

@@ -190,28 +190,30 @@ CREATE TABLE \`diaries\`  (
 -- Table structure for qrs
 -- ----------------------------
 DROP TABLE IF EXISTS \`qrs\`;
-CREATE TABLE \`qrs\` (
+CREATE TABLE \`qrs\`  (
   \`hash\` varchar(200) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT 'hash',
   \`is_public\` int(11) NOT NULL DEFAULT 0 COMMENT '是否启用',
-  \`message\` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '挪车说明',
-  \`description\` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '简介',
-  \`switch_phone\` int(11) NOT NULL DEFAULT 0 COMMENT '手机号 - 显示开关',
-  \`car\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '车辆标题',
-  \`car_plate\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '车牌号',
-  \`switch_car\` int(11) NOT NULL DEFAULT 0 COMMENT '车辆 - 显示开关',
-  \`car_desc\` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '车辆描述',
-  \`switch_wx\` int(11) NOT NULL DEFAULT 0 COMMENT '微信二维码 - 显示开关',
-  \`switch_homepage\` int(11) NOT NULL DEFAULT 0 COMMENT '个人主页 - 显示开关',
-  \`switch_gaode\` int(11) NOT NULL DEFAULT 0 COMMENT '高德组队邀请码 - 显示开关',
-  \`date_modify\` datetime DEFAULT NULL COMMENT '最后编辑日期',
-  \`date_init\` datetime DEFAULT NULL COMMENT '注册时间',
+  \`message\` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '挪车说明',
+  \`description\` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '简介',
+  \`is_show_phone\` int(11) NOT NULL DEFAULT 0 COMMENT '手机号 - 显示开关',
+  \`is_show_car\` int(11) NOT NULL DEFAULT 0 COMMENT '车辆 - 显示开关',
+  \`car_name\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '车辆标题',
+  \`car_plate\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '车牌号',
+  \`car_desc\` varchar(1000) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '车辆描述',
+  \`wx_code_img\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '微信二维码图片地址',
+  \`is_show_wx\` int(11) NOT NULL DEFAULT 0 COMMENT '微信二维码 - 显示开关',
+  \`is_show_homepage\` int(11) NOT NULL DEFAULT 0 COMMENT '个人主页 - 显示开关',
+  \`is_show_gaode\` int(11) NOT NULL DEFAULT 0 COMMENT '高德组队邀请码 - 显示开关',
+  \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '最后编辑日期',
+  \`date_init\` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
   \`visit_count\` int(11) NOT NULL DEFAULT 0 COMMENT '被访问次数',
   \`uid\` int(6) NOT NULL COMMENT '所属用户 uid',
-  \`imgs\` varchar(255) DEFAULT NULL COMMENT '图片地址',
+  \`imgs\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '图片地址',
+  \`car_type\` int(2) NOT NULL DEFAULT 0 COMMENT '车辆类型： 0汽车，1摩托车',
   PRIMARY KEY (\`hash\`) USING BTREE,
-  KEY \`username\` (\`uid\`) USING BTREE,
-  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=COMPACT;
+  INDEX \`username\`(\`uid\`) USING BTREE,
+  CONSTRAINT \`code_ibfk_1\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
 
 -- ----------------------------

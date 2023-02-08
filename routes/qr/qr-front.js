@@ -25,6 +25,7 @@ router.get('/', (req, res, next) => {
                    qrs.date_init,
                    qrs.visit_count,
                    qrs.imgs,
+                   qrs.car_type,
                    users.phone,
                    users.wx,
                    users.homepage,
