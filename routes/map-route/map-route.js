@@ -51,7 +51,7 @@ router.get('/list', (req, res, next) => {
                 }
             }
 
-            let startPoint = (req.query.pageNo - 1) * req.query.pageSize //  QR 起点
+            let startPoint = (req.query.pageNo - 1) * req.query.pageSize //  路线 起点
             sqlArray.push(` order by date_init desc
                   limit ${startPoint}, ${req.query.pageSize}`)
 
@@ -71,55 +71,40 @@ router.get('/list', (req, res, next) => {
                 })
         })
         .catch(verified => {
-            res.send(new ResponseError('无权查看 QR 列表：用户信息错误'))
+            res.send(new ResponseError('无权查看 路线 列表：用户信息错误'))
         })
 })
 
 router.get('/detail', (req, res, next) => {
     let sqlArray = []
-    sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
+    sqlArray.push(`select * from ${CURRENT_DATABASE} where id = '${req.query.id}'`)
     utility
         .getDataFromDB( 'diary', sqlArray, true)
-        .then(dataQr => {
+        .then(dataRoute => {
             // decode unicode
-            dataQr.message = utility.unicodeDecode(dataQr.message)
-            dataQr.description = utility.unicodeDecode(dataQr.description)
+            dataRoute.message = utility.unicodeDecode(dataRoute.message)
+            dataRoute.description = utility.unicodeDecode(dataRoute.description)
 
-            // 2. 判断是否为共享 QR
-            if (dataQr.is_public === 1){
+            // 2. 判断是否为共享 路线
+            if (dataRoute.is_public === 1){
                 // 2.1 如果是，直接返回结果，不需要判断任何东西
-                res.send(new ResponseSuccess(dataQr))
+                res.send(new ResponseSuccess(dataRoute))
             } else {
                 // 2.2 如果不是，需要判断：当前 email 和 token 是否吻合
                 utility
                     .verifyAuthorization(req)
                     .then(userInfo => {
-                        // 3. 判断 QR 是否属于当前请求用户
-                        if (Number(userInfo.uid) === dataQr.uid){
+                        // 3. 判断 路线 是否属于当前请求用户
+                        if (Number(userInfo.uid) === dataRoute.uid){
                             // 记录最后访问时间
                             utility.updateUserLastLoginTime(userInfo.uid)
-/*                            // TODO:过滤可见信息 自己看，管理员看，其它用户看
-                            if (data.is_show_wx){
-                                data.wx = ''
-                            }
-                            if (data.is_show_car){
-                                data.car = ''
-                                data.car_desc = ''
-                                data.car_plate = ''
-                            }
-                            if (data.is_show_gaode){
-                                data.gaode = ''
-                            }
-                            if (data.is_show_homepage){
-                                data.homepage = ''
-                            }*/
-                            res.send(new ResponseSuccess(dataQr))
+                            res.send(new ResponseSuccess(dataRoute))
                         } else {
-                            res.send(new ResponseError('','当前用户无权查看该 QR ：请求用户 ID 与 QR 归属不匹配'))
+                            res.send(new ResponseError('','当前用户无权查看该 路线 ：请求用户 ID 与 路线 归属不匹配'))
                         }
                     })
                     .catch(unverified => {
-                        res.send(new ResponseError('','当前用户无权查看该 QR ：用户信息错误'))
+                        res.send(new ResponseError('','当前用户无权查看该 路线 ：用户信息错误'))
                     })
             }
         })
@@ -166,7 +151,7 @@ router.post('/add', (req, res, next) => {
                             .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 utility.updateUserLastLoginTime(userInfo.uid)
-                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
+                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 路线  id
                             })
                             .catch(err => {
                                 console.log(err)
@@ -223,7 +208,7 @@ router.put('/modify', (req, res, next) => {
                                 qrs.uid = '${req.body.uid}',
                                 qrs.imgs = '${req.body.imgs}',
                                 qrs.car_type = '${req.body.car_type}'
-                            WHERE hash='${req.body.hash}'
+                            WHERE hash='${req.body.id}'
                     `)
 
             utility
@@ -284,12 +269,12 @@ router.post('/clear-visit-count', (req, res, next) => {
             if(userInfo.group_id === 1) {
                 let sqlArray = []
                 let timeNow = utility.dateFormatter(new Date())
-                sqlArray.push(` update qrs set visit_count = 0 where hash = '${req.body.hash}' `)
+                sqlArray.push(` update qrs set visit_count = 0 where hash = '${req.body.id}' `)
                 utility
                     .getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         utility.updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 QR  id
+                        res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 路线  id
                     })
                     .catch(err => {
                         console.log(err)
