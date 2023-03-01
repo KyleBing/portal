@@ -3,6 +3,7 @@ const router = express.Router()
 const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
+const CURRENT_DATABASE = 'map_route'
 
 
 router.get('/list', (req, res, next) => {
@@ -10,30 +11,25 @@ router.get('/list', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            sqlArray.push(`select  qrs.hash,
-                                   qrs.is_public,
-                                   qrs.is_show_phone,
-                                   qrs.message,
-                                   qrs.car_name,
-                                   qrs.car_plate,
-                                   qrs.car_desc,
-                                   qrs.is_show_car,
-                                   qrs.is_show_wx,
-                                   qrs.wx_code_img,
-                                   qrs.description,
-                                   qrs.is_show_homepage,
-                                   qrs.is_show_gaode,
-                                   qrs.date_init,
-                                   qrs.visit_count,
-                                   qrs.imgs,
-                                   qrs.car_type,
-                                   users.phone,
-                                   users.wx,
-                                   users.uid,
-                                   users.nickname,
-                                   users.username
-                                        from qrs
-                                            left join users on qrs.uid = users.uid
+            sqlArray.push(`select  
+                                ${CURRENT_DATABASE}.name, 
+                                ${CURRENT_DATABASE}.area, 
+                                ${CURRENT_DATABASE}.road_type, 
+                                ${CURRENT_DATABASE}.seasons, 
+                                ${CURRENT_DATABASE}.video_link, 
+                                ${CURRENT_DATABASE}.paths, 
+                                ${CURRENT_DATABASE}.note, 
+                                ${CURRENT_DATABASE}.date_init, 
+                                ${CURRENT_DATABASE}.date_modify, 
+                                ${CURRENT_DATABASE}.thumb_up, 
+                                ${CURRENT_DATABASE}.uid,
+                               users.phone,
+                               users.wx,
+                               users.uid,
+                               users.nickname,
+                               users.username
+                                    from ${CURRENT_DATABASE}
+                                        left join users on ${CURRENT_DATABASE}.uid = users.uid
                             `)
 
 
@@ -50,7 +46,7 @@ router.get('/list', (req, res, next) => {
                 let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( message like '%${keyword}%' ESCAPE '/'  or description like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray = keywords.map(keyword => `( name like '%${keyword}%' ESCAPE '/'  or note like '%${keyword}%' ESCAPE '/')` )
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
@@ -134,17 +130,16 @@ router.get('/detail', (req, res, next) => {
 
 router.post('/add', (req, res, next) => {
     // 1. 验证用户信息是否正确
-    console.log(req.query)
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            // 2. 检查 Hash 是否存在
-            checkHashExist(req.body.hash)
+            // 2. 检查路线名是否已存在
+            checkRouteExist(req.body.name)
                 .then(existLogs => {
                     console.log(existLogs)
                     if (existLogs.length > 0) {
                         // 2.1 已存在名为 hash 的记录
-                        res.send(new ResponseError('', `已存在名为 ${req.body.hash} 的记录`))
+                        res.send(new ResponseError('', `已存在名为 ${req.body.name} 的路线`))
                     } else {
                         // 2.2 不存在名为 hash 的记录
                         let sqlArray = []
@@ -152,28 +147,19 @@ router.post('/add', (req, res, next) => {
                         let parsedDescription = utility.unicodeEncode(req.body.description) || ''
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
-                           insert into qrs(hash, is_public, is_show_phone, message, description, car_name, car_plate, car_desc, is_show_car, wx_code_img, is_show_wx,
-                           is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid, imgs, car_type)
+                           insert into ${CURRENT_DATABASE}(name, area, road_type, seasons, video_link, paths, note, date_init, date_modify, thumb_up, uid)
                             values(
-                                '${req.body.hash.toLowerCase()}',
-                                '${req.body.is_public}',
-                                '${req.body.is_show_phone}',
-                                '${parsedMessage}',
-                                '${parsedDescription}',
-                                '${req.body.car_name}',
-                                '${req.body.car_plate}',
-                                '${req.body.car_desc}',
-                                '${req.body.is_show_car}',
-                                '${req.body.wx_code_img}',
-                                '${req.body.is_show_wx}',
-                                '${req.body.is_show_homepage}',
-                                '${req.body.is_show_gaode}',
+                                '${req.body.name}',
+                                '${req.body.area || ""}',
+                                '${req.body.road_type || ""}',
+                                '${req.body.seasons || ""}',
+                                '${req.body.video_link || ""}',
+                                '${req.body.paths}',
+                                '${req.body.note || ""}',
                                 '${timeNow}',
                                 '${timeNow}',
-                                '${req.body.visit_count || 0}',
-                                '${userInfo.uid}',
-                                '${req.body.imgs}',
-                                '${req.body.car_type}'
+                                '${req.body.thumb_up}',
+                                '${userInfo.uid}'
                                 )
                         `)
                         utility
@@ -189,7 +175,7 @@ router.post('/add', (req, res, next) => {
                     }
                 })
                 .catch(err => {
-                    res.send(new ResponseError(err, '查询 hash 记录出错'))
+                    res.send(new ResponseError(err, '查询路径记录出错'))
             })
 
         })
@@ -199,9 +185,9 @@ router.post('/add', (req, res, next) => {
 })
 
 // 检查用户名或邮箱是否存在
-function checkHashExist(hash){
+function checkRouteExist(routeName){
     let sqlArray = []
-    sqlArray.push(`select * from qrs where hash='${hash.toLowerCase()}'`)
+    sqlArray.push(`select * from map_route where name='${routeName}'`)
     return utility.getDataFromDB( 'diary', sqlArray)
 }
 
@@ -263,8 +249,8 @@ router.delete('/delete', (req, res, next) => {
 
             let sqlArray = []
             sqlArray.push(`
-                        DELETE from qrs
-                        WHERE hash='${req.body.hash}'
+                        DELETE from ${CURRENT_DATABASE}
+                        WHERE id='${req.body.id}'
                     `)
             if (userInfo.group_id !== 1){
                 sqlArray.push(` and uid='${userInfo.uid}'`) // 当为1管理员时，可以随意操作任意对象

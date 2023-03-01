@@ -46,7 +46,7 @@ app.use('/qr-manager'     , routerQrManager)     // QR 二维码
 
 // 路线管理
 let routerMapRoute      = require('./routes/map-route/map-route')
-app.use('/qr-manager'     , routerMapRoute)
+app.use('/map-route'     , routerMapRoute)
 
 // 统计
 let diaryStatisticRouter = require('./routes/statistic')
