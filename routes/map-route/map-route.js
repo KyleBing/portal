@@ -76,7 +76,8 @@ router.post('/list', (req, res, next) => {
                 .all(promisesAll)
                 .then(([dataList, dataSum]) => {
                     dataList.forEach(item => {
-                        item.word = utility.unicodeDecode(item.word)
+                        item.name = utility.unicodeDecode(item.name)
+                        item.note = utility.unicodeDecode(item.note)
                         return item
                     })
                     utility.updateUserLastLoginTime(userInfo.uid)
@@ -123,6 +124,8 @@ router.get('/detail', (req, res, next) => {
                         if (Number(userInfo.uid) === dataRoute.uid){
                             // 记录最后访问时间
                             utility.updateUserLastLoginTime(userInfo.uid)
+                            dataRoute.name = utility.unicodeDecode(dataRoute.name)
+                            dataRoute.note = utility.unicodeDecode(dataRoute.note)
                             res.send(new ResponseSuccess(dataRoute))
                         } else {
                             res.send(new ResponseError('','当前用户无权查看该 路线 ：请求用户 ID 与 路线 归属不匹配'))
@@ -144,7 +147,8 @@ router.post('/add', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查路线名是否已存在
-            checkRouteExist(req.body.name)
+            let encodedName = utility.unicodeEncode(req.body.name)
+            checkRouteExist(encodedName)
                 .then(existLogs => {
                     console.log(existLogs)
                     if (existLogs.length > 0) {
@@ -153,19 +157,19 @@ router.post('/add', (req, res, next) => {
                     } else {
                         // 2.2 不存在名为 hash 的记录
                         let sqlArray = []
-                        let parsedMessage = utility.unicodeEncode(req.body.message) // !
-                        let parsedDescription = utility.unicodeEncode(req.body.description) || ''
+                        let parsedName = utility.unicodeEncode(req.body.name) // !
+                        let parsedNote = utility.unicodeEncode(req.body.note) || ''
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
                            insert into ${CURRENT_DATABASE}(name, area, road_type, seasons, video_link, paths, note, date_init, date_modify, thumb_up, uid)
                             values(
-                                '${req.body.name}',
+                                '${parsedName}',
                                 '${req.body.area || ""}',
                                 '${req.body.road_type || ""}',
                                 '${req.body.seasons || ""}',
                                 '${req.body.video_link || ""}',
                                 '${req.body.paths}',
-                                '${req.body.note || ""}',
+                                '${parsedNote|| ""}',
                                 '${timeNow}',
                                 '${timeNow}',
                                 '${req.body.thumb_up || 0}',
