@@ -6,12 +6,12 @@ const ResponseError = require('../../response/ResponseError')
 const CURRENT_DATABASE = 'map_route'
 
 
-router.get('/list', (req, res, next) => {
+router.post('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let sqlArray = []
-            sqlArray.push(`select  
+            let sqlBase = `select  
+                                ${CURRENT_DATABASE}.id, 
                                 ${CURRENT_DATABASE}.name, 
                                 ${CURRENT_DATABASE}.area, 
                                 ${CURRENT_DATABASE}.road_type, 
@@ -30,48 +30,73 @@ router.get('/list', (req, res, next) => {
                                users.username
                                     from ${CURRENT_DATABASE}
                                         left join users on ${CURRENT_DATABASE}.uid = users.uid
-                            `)
+                            `
 
-
-
-            if (userInfo.group_id === 1){
-
-            } else {
-                sqlArray.push([`where qrs.uid = ${userInfo.uid}`])
-            }
-
+            let filterArray = []
 
             // keywords
-            if (req.query.keywords){
-                let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
-                console.log(keywords)
+            if (req.body.keyword){
+                let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( name like '%${keyword}%' ESCAPE '/'  or note like '%${keyword}%' ESCAPE '/')` )
-                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+                    let keywordStrArray = keywords.map(keyword => `( ${CURRENT_DATABASE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_DATABASE}.note like '%${keyword}%' ESCAPE '/' ` )
+                    filterArray.push( keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
+            // date range
+            if (req.body.dateRange && req.body.dateRange.length === 2){
+                if (filterArray.length > 0){
+                    filterArray.push(`and`)
+                }
+                filterArray.push(`date_init between '${req.body.dateRange[0]}' AND '${req.body.dateRange[1]}'`)
+            }
+            // category
+            if (req.body.category_id){
+                if (filterArray.length > 0){
+                    filterArray.push(`and`)
+                }
+                filterArray.push(`category_id = ${req.body.category_id}`)
+            }
 
-            let startPoint = (req.query.pageNo - 1) * req.query.pageSize //  路线 起点
-            sqlArray.push(` order by date_init desc
-                  limit ${startPoint}, ${req.query.pageSize}`)
+            if (filterArray.length > 0){
+                filterArray.unshift('where')
+            }
 
-            utility
-                .getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
-                    data.forEach(diary => {
-                        // decode unicode
-                        diary.message = utility.unicodeDecode(diary.message)
-                        diary.description = utility.unicodeDecode(diary.description)
+            let promisesAll = []
+            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+            promisesAll.push(utility.getDataFromDB(
+                'diary',
+                [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`])
+            )
+            promisesAll.push(utility.getDataFromDB(
+                'diary',
+                [`select count(*) as sum from ${CURRENT_DATABASE} ${filterArray.join(' ')}`], true)
+            )
+
+            Promise
+                .all(promisesAll)
+                .then(([dataList, dataSum]) => {
+                    dataList.forEach(item => {
+                        item.word = utility.unicodeDecode(item.word)
+                        return item
                     })
-                    res.send(new ResponseSuccess(data, '请求成功'))
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    res.send(new ResponseSuccess({
+                        list: dataList,
+                        pager: {
+                            pageSize: Number(req.body.pageSize),
+                            pageNo: Number(req.body.pageNo),
+                            total: dataSum.sum
+                        }
+                    }, '请求成功'))
+
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))
                 })
+
         })
         .catch(verified => {
-            res.send(new ResponseError('无权查看 路线 列表：用户信息错误'))
+            res.send(new ResponseError(verified, '无权查看路线列表：用户信息错误'))
         })
 })
 
@@ -143,7 +168,7 @@ router.post('/add', (req, res, next) => {
                                 '${req.body.note || ""}',
                                 '${timeNow}',
                                 '${timeNow}',
-                                '${req.body.thumb_up}',
+                                '${req.body.thumb_up || 0}',
                                 '${userInfo.uid}'
                                 )
                         `)
