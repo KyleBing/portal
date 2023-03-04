@@ -108,9 +108,8 @@ router.get('/detail', (req, res, next) => {
         .getDataFromDB( 'diary', sqlArray, true)
         .then(dataRoute => {
             // decode unicode
-            dataRoute.message = utility.unicodeDecode(dataRoute.message)
-            dataRoute.description = utility.unicodeDecode(dataRoute.description)
-
+            dataRoute.name = utility.unicodeDecode(dataRoute.name)
+            dataRoute.note = utility.unicodeDecode(dataRoute.note)
             // 2. 判断是否为共享 路线
             if (dataRoute.is_public === 1){
                 // 2.1 如果是，直接返回结果，不需要判断任何东西
@@ -180,7 +179,10 @@ router.post('/add', (req, res, next) => {
                             .getDataFromDB( 'diary', sqlArray)
                             .then(data => {
                                 utility.updateUserLastLoginTime(userInfo.uid)
-                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 路线  id
+                                res.send(new ResponseSuccess( // 添加成功之后，返回添加后的 路线  id
+                                    {id: data.insertId},
+                                    '添加成功'
+                                ))
                             })
                             .catch(err => {
                                 console.log(err)
@@ -212,34 +214,24 @@ router.put('/modify', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let parsedMessage = utility.unicodeEncode(req.body.message) // !
-            let parsedDescription = utility.unicodeEncode(req.body.description) || ''
+            let parsedName = utility.unicodeEncode(req.body.name) // !
+            let parsedNote = utility.unicodeEncode(req.body.note) || ''
             let timeNow = utility.dateFormatter(new Date())
-
             let sqlArray = []
             sqlArray.push(`
-                        update qrs
+                        update ${CURRENT_DATABASE}
                             set
-                                qrs.is_public = '${req.body.is_public}',
-                                qrs.is_show_phone = '${req.body.is_show_phone}',
-                                qrs.message = '${parsedMessage}',
-                                qrs.description = '${parsedDescription}',
-                                qrs.car_name = '${req.body.car_name}',
-                                qrs.car_plate = '${req.body.car_plate}',
-                                qrs.car_desc = '${req.body.car_desc}',
-                                qrs.is_show_car = '${req.body.is_show_car}',
-                                qrs.is_show_wx = '${req.body.is_show_wx}',
-                                qrs.wx_code_img = '${req.body.wx_code_img}',
-                                qrs.is_show_homepage = '${req.body.is_show_homepage}',
-                                qrs.is_show_gaode = '${req.body.is_show_gaode}',
-                                qrs.date_modify = '${timeNow}',
-                                qrs.visit_count = '${req.body.visit_count}',
-                                qrs.uid = '${req.body.uid}',
-                                qrs.imgs = '${req.body.imgs}',
-                                qrs.car_type = '${req.body.car_type}'
-                            WHERE hash='${req.body.id}'
+                             name = '${parsedName}',
+                                area = '${req.body.area || ""}',
+                                road_type = '${req.body.road_type || ""}',
+                                seasons = '${req.body.seasons || ""}',
+                                video_link = '${req.body.video_link || ""}',
+                                paths = '${req.body.paths}',
+                                note = '${parsedNote|| ""}',
+                                date_modify = '${timeNow}',
+                                thumb_up = '${req.body.thumb_up || 0}'
+                            WHERE id='${req.body.id}'
                     `)
-
             utility
                 .getDataFromDB( 'diary', sqlArray, true)
                 .then(data => {
