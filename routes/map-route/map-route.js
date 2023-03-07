@@ -22,6 +22,7 @@ router.post('/list', (req, res, next) => {
                                 ${CURRENT_DATABASE}.date_init, 
                                 ${CURRENT_DATABASE}.date_modify, 
                                 ${CURRENT_DATABASE}.thumb_up, 
+                                ${CURRENT_DATABASE}.is_public, 
                                 ${CURRENT_DATABASE}.uid,
                                users.phone,
                                users.wx,
