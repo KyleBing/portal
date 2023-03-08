@@ -3,14 +3,26 @@ const router = express.Router()
 const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
+const {get} = require("axios");
 const CURRENT_DATABASE = 'map_route'
 
 
 router.post('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
+        // 已经登录
         .then(userInfo => {
-            let sqlBase = `select  
+            getRouteLineList(userInfo, req, res)
+        })
+        // 未登录
+        .catch(verified => {
+            getRouteLineList(null, req, res)
+            // res.send(new ResponseError(verified, '无权查看路线列表：用户信息错误'))
+        })
+})
+
+function getRouteLineList(userInfo, req, res){
+    let sqlBase = `select  
                                 ${CURRENT_DATABASE}.id, 
                                 ${CURRENT_DATABASE}.name, 
                                 ${CURRENT_DATABASE}.area, 
@@ -32,88 +44,84 @@ router.post('/list', (req, res, next) => {
                                     from ${CURRENT_DATABASE}
                                         left join users on ${CURRENT_DATABASE}.uid = users.uid
                             `
+    let filterArray = []
 
-            let filterArray = []
+    // PUBLIC
+    if (userInfo){ // 已登录
+        filterArray.push(`is_public = 1 or ${CURRENT_DATABASE}.uid = ${userInfo.uid}`)
+    } else { // 未登录
+        filterArray.push(`is_public = 1`)
+    }
 
-            // PUBLIC
-            filterArray.push(`is_public = 1 or ${CURRENT_DATABASE}.uid = ${userInfo.uid}`)
+    // keywords
+    if (req.body.keyword) {
+        let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
+        if (keywords.length > 0) {
+            let keywordStrArray = keywords.map(keyword => `( ${CURRENT_DATABASE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_DATABASE}.note like '%${keyword}%' ESCAPE '/') `)
+            filterArray.push(keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+        }
+    }
+    // date range
+    if (req.body.dateRange && req.body.dateRange.length === 2) {
+        if (filterArray.length > 0) {
+            filterArray.push(`and`)
+        }
+        filterArray.push(`date_init between '${req.body.dateRange[0]}' AND '${req.body.dateRange[1]}'`)
+    }
 
-            // keywords
-            if (req.body.keyword) {
-                let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
-                if (keywords.length > 0) {
-                    let keywordStrArray = keywords.map(keyword => `( ${CURRENT_DATABASE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_DATABASE}.note like '%${keyword}%' ESCAPE '/') `)
-                    filterArray.push(keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+    if (filterArray.length > 0) {
+        filterArray.unshift('where')
+    }
+
+    let promisesAll = []
+    let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+    let sql = `${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`
+    promisesAll.push(utility.getDataFromDB(
+        'diary',
+        [sql])
+    )
+    promisesAll.push(utility.getDataFromDB(
+        'diary',
+        [`select count(*) as sum from ${CURRENT_DATABASE} ${filterArray.join(' ')}`], true)
+    )
+
+    Promise
+        .all(promisesAll)
+        .then(([dataList, dataSum]) => {
+            dataList.forEach(item => {
+                item.name = utility.unicodeDecode(item.name)
+                item.note = utility.unicodeDecode(item.note)
+                return item
+            })
+            res.send(new ResponseSuccess({
+                list: dataList,
+                pager: {
+                    pageSize: Number(req.body.pageSize),
+                    pageNo: Number(req.body.pageNo),
+                    total: dataSum.sum
                 }
-            }
-            // date range
-            if (req.body.dateRange && req.body.dateRange.length === 2) {
-                if (filterArray.length > 0) {
-                    filterArray.push(`and`)
-                }
-                filterArray.push(`date_init between '${req.body.dateRange[0]}' AND '${req.body.dateRange[1]}'`)
-            }
-
-            if (filterArray.length > 0) {
-                filterArray.unshift('where')
-            }
-
-            let promisesAll = []
-            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
-            let sql = `${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`
-            promisesAll.push(utility.getDataFromDB(
-                'diary',
-                [sql])
-            )
-            promisesAll.push(utility.getDataFromDB(
-                'diary',
-                [`select count(*) as sum from ${CURRENT_DATABASE} ${filterArray.join(' ')}`], true)
-            )
-
-            Promise
-                .all(promisesAll)
-                .then(([dataList, dataSum]) => {
-                    dataList.forEach(item => {
-                        item.name = utility.unicodeDecode(item.name)
-                        item.note = utility.unicodeDecode(item.note)
-                        return item
-                    })
-                    utility.updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess({
-                        list: dataList,
-                        pager: {
-                            pageSize: Number(req.body.pageSize),
-                            pageNo: Number(req.body.pageNo),
-                            total: dataSum.sum
-                        }
-                    }, '请求成功'))
-
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, err.message))
-                })
+            }, '请求成功'))
 
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看路线列表：用户信息错误'))
+        .catch(err => {
+            res.send(new ResponseError(err, err.message))
         })
-})
+}
 
 router.get('/detail', (req, res, next) => {
-    Promise.all([
-        utility.verifyAuthorization(req),
-        utility.getDataFromDB('diary', [`select * from ${CURRENT_DATABASE} where id = ${req.query.id}`], true)
-    ])
-        .then(response => {
-            let userInfo = response[0]
-            let lineInfoData = response[1]
-            if (lineInfoData.uid === userInfo.uid
-                || userInfo.group_id === 1
-                || lineInfoData.is_public === 1
-            ){
+    utility.getDataFromDB('diary', [`select * from ${CURRENT_DATABASE} where id = ${req.query.id}`], true)
+        .then(lineInfoData => {
+            if (lineInfoData.is_public === 1){
                 res.send(new ResponseSuccess(lineInfoData))
             } else {
-                res.send(new ResponseError('', '该路线信息不属于您，无权操作'))
+                utility.verifyAuthorization(req)
+                    .then(userInfo => {
+                        if (lineInfoData.uid === userInfo.uid || userInfo.group_id === 1){
+                            res.send(new ResponseSuccess(lineInfoData))
+                        } else {
+                            res.send(new ResponseError('', '该路线信息不属于您，无权操作'))
+                        }
+                    })
             }
         })
         .catch(err => {
