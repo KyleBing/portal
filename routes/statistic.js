@@ -175,6 +175,27 @@ router.get('/users', (req, res, next) => {
         })
 })
 
+// 年份月份数据
+router.get('/weather', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = [`select temperature, temperature_outside, date from diaries where category = 'life' and uid = '${userInfo.uid}'`]
+            utility
+                .getDataFromDB('diary', sqlArray)
+                .then(weatherData => {
+                    res.send(new ResponseSuccess(weatherData, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '数据库请求错误'))
+                })
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, '权限错误'))
+        })
+
+})
+
 // 更新所有用户统计数据
 function updateUsersInfo() {
     return new Promise((resolve, reject) => {
