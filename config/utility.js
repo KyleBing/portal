@@ -116,7 +116,7 @@ function updateUserLastLoginTime(uid){
 
 
 // 处理账单文本内容，转成格式化的账单数据
-function processBillOfDay(diaryObj, filterKeywords){
+function processBillOfDay(diaryObj, filterKeywords = []){
     let str = diaryObj.content.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
     let strArray =
         str

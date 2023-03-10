@@ -127,5 +127,112 @@ router.get('/sorted', (req, res, next) => {
         })
 })
 
+router.get('/day-sum', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            utility
+                .getDataFromDB('diary', [`select content, date  from diaries where category = 'bill' and uid = '${userInfo.uid}'`])
+                .then(billData => {
+                    let finalData = billData.map(item => {
+                        let originalData = utility.processBillOfDay(item)
+                        delete originalData.items
+                        delete originalData.sum
+                        return originalData
+                    })
+                    res.send(new ResponseSuccess(finalData, '获取成功'))
+                })
+
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
+
+router.get('/month-sum', (req, res, next) => {
+
+    let yearNow = new Date().getFullYear()
+    let yearStart = 2018
+    let years = []
+    for (let i=yearStart; i<=yearNow; i++){
+        years.push(i)
+    }
+
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let yearNow = new Date().getFullYear()
+            let sqlRequests = []
+            let sqlArray = []
+            years.forEach(year => {
+                for (let month = 1; month <= 12; month ++ ){
+                    sqlArray.push(`
+                        select content, date,
+                        date_format(date,'%Y%m') as month_id,
+                        date_format(date,'%m') as month
+                        from diaries 
+                        where year(date) = ${year}
+                        and month(date) = ${month}
+                        and category = 'bill'
+                        and uid = ${userInfo.uid}
+                        order by date asc;
+                    `)
+                }
+            })
+
+            sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
+            // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
+            Promise.all(sqlRequests)
+                .then(yearDataArray => {
+                    let responseData = []
+                    let afterValues = yearDataArray[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
+                    afterValues.forEach(daysArray => {
+
+                        let daysData = []
+                        let monthSum = 0
+                        let monthSumIncome = 0
+                        let monthSumOutput = 0
+
+                        // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
+                        let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
+                        daysArray.forEach(item => {
+                            let processedDayData = utility.processBillOfDay(item, keywords)
+                            // 当内容 items 的数量大于 0 时
+                            if (processedDayData.items.length > 0){
+                                daysData.push(processedDayData)
+                                monthSum = monthSum + processedDayData.sum
+                                monthSumIncome = monthSumIncome + processedDayData.sumIncome
+                                monthSumOutput = monthSumOutput + processedDayData.sumOutput
+                            }
+                        })
+
+                        if (daysData.length > 0){
+                            responseData.push({
+                                id: daysArray[0].id,
+                                month_id: daysArray[0].month_id,
+                                month: daysArray[0].month,
+                                count: daysArray.length,
+                                sum: utility.formatMoney(monthSum),
+                                sumIncome: utility.formatMoney(monthSumIncome),
+                                sumOutput: utility.formatMoney(monthSumOutput),
+                            })
+                        }
+
+                    })
+                    responseData.sort((a, b) => a.year > b.year ? 1 : -1)
+                    res.send(new ResponseSuccess(responseData))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(err => {
+            console.log(err)
+            res.send(new ResponseError(err, '无权查看日记列表：用户信息错误'))
+        })
+})
+
+
 
 module.exports = router
