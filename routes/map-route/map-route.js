@@ -224,6 +224,7 @@ router.put('/modify', (req, res, next) => {
                                 paths = '${req.body.paths}',
                                 note = '${parsedNote|| ""}',
                                 date_modify = '${timeNow}',
+                                is_public = ${Number(req.body.is_public)},
                                 thumb_up = '${req.body.thumb_up || 0}'
                             WHERE id='${req.body.id}'
                     `)
