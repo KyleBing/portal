@@ -47,11 +47,25 @@
 - /diary-category/delete
 
 
-# 5. 码表项目 `2022-04-24`
+# 5. 邀请码管理
+- /invitation/generate # 生成新的
+- /invitation/mark-shared # 标记邀请码为已用
+- /invitation/list # 可用的邀请码列表
+- /invitation/delete # 删除邀请码
+
+# 6. 统计
+- /statistic/ # 统计日记、用户数据
+- /statistic/category # 类别日记数量统计
+- /statistic/year # 年份日记统计
+- /statistic/users # 用户的日记、码表、qr 等数量
+- /statistic/weather # 所有日记的气温信息
+
+
+# 7. 码表项目 `2022-04-24`
 - /dict/pull
 - /dict/push
 
-# 6. 二维码项目 `2022-05-18`
+# 8. 二维码项目 `2022-05-18`
 - /qr-manager/list
 - /qr-manager/detail
 - /qr-manager/add
@@ -59,13 +73,13 @@
 - /qr-manager/delete
 - /qr-manager/clear-visit-count
 
-# 7. 二维码前端信息
+# 9. 二维码前端信息
 - /qr/ # 码的信息 `2022-05-18`
 
-# 8. VPS主机信息接口
+# 10. VPS主机信息接口
 - /vps/ # vps 信息
 
-# 9. 饥荒数据
+# 11. 饥荒数据
 - /dont-starve/{tablename}/list # 列表数据
 - /dont-starve/{tablename}/info # 详情数据
 
