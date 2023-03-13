@@ -134,6 +134,29 @@ CREATE TABLE \`users\`  (
 
 
 -- ----------------------------
+-- Table structure for map_route
+-- ----------------------------
+DROP TABLE IF EXISTS \`map_route\`;
+CREATE TABLE \`map_route\`  (
+  \`id\` int(11) NOT NULL AUTO_INCREMENT,
+  \`name\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '路线名称',
+  \`area\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '地址位置',
+  \`road_type\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '路面类型',
+  \`seasons\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '骑行季节',
+  \`video_link\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '视频链接',
+  \`paths\` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '路线节点',
+  \`note\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '备注',
+  \`date_init\` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+  \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '编辑时间',
+  \`thumb_up\` int(10) NULL DEFAULT 0 COMMENT '点赞数',
+  \`uid\` int(11) NULL DEFAULT NULL COMMENT 'user',
+  \`is_public\` int(1) NOT NULL DEFAULT 0 COMMENT '是否共享 0否 1是',
+  PRIMARY KEY (\`id\`) USING BTREE,
+  INDEX \`map_uid\`(\`uid\`) USING BTREE,
+  CONSTRAINT \`map_uid\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for user_group
 -- ----------------------------
 DROP TABLE IF EXISTS \`user_group\`;
@@ -183,6 +206,7 @@ CREATE TABLE \`diaries\`  (
   \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '编辑日期',
   \`uid\` int(11) NOT NULL COMMENT '用户id',
   \`is_public\` int(1) NOT NULL DEFAULT 0 COMMENT '是否共享',
+  \`is_markdown\` int(1) NOT NULL DEFAULT 0 COMMENT '是否为 Markdown',
   PRIMARY KEY (\`id\`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET utf8 COLLATE utf8_general_ci ROW_FORMAT = Compact;
 

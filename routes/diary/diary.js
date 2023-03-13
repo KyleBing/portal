@@ -178,10 +178,10 @@ router.post('/add', (req, res, next) => {
             parsedContent = parsedContent.replaceAll(`'`, `''`)
             let timeNow = utility.dateFormatter(new Date())
             sqlArray.push(`
-                    INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public )
+                    INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public, is_markdown )
                     VALUES(
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${userInfo.uid}','${req.body.isPublic || 0}')`
+                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${userInfo.uid}','${req.body.isPublic || 0}', '${req.body.isMarkdown || 0}')`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
@@ -220,7 +220,8 @@ router.put('/modify', (req, res, next) => {
                                 diaries.weather='${req.body.weather}',
                                 diaries.temperature='${req.body.temperature}',
                                 diaries.temperature_outside='${req.body.temperatureOutside}',
-                                diaries.is_public='${req.body.isPublic}'
+                                diaries.is_public='${req.body.isPublic}',
+                                diaries.is_markdown='${req.body.isMarkdown}'
                             WHERE id='${req.body.id}' and uid='${userInfo.uid}'
                     `]
             utility

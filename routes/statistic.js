@@ -175,7 +175,7 @@ router.get('/users', (req, res, next) => {
         })
 })
 
-// 年份月份数据
+// 气温统计
 router.get('/weather', (req, res, next) => {
     utility
         .verifyAuthorization(req)
