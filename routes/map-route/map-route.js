@@ -35,6 +35,7 @@ function getRouteLineList(userInfo, req, res){
                                 ${CURRENT_DATABASE}.date_modify, 
                                 ${CURRENT_DATABASE}.thumb_up, 
                                 ${CURRENT_DATABASE}.is_public, 
+                                ${CURRENT_DATABASE}.policy, 
                                 ${CURRENT_DATABASE}.uid,
                                users.phone,
                                users.wx,
@@ -152,11 +153,13 @@ router.post('/add', (req, res, next) => {
                         let parsedNote = utility.unicodeEncode(req.body.note) || ''
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
-                           insert into ${CURRENT_DATABASE}(name, area, road_type, seasons, video_link, paths, note, date_init, date_modify, thumb_up, uid)
+                           insert into ${CURRENT_DATABASE}(
+                           name, area, road_type, policy, seasons, video_link, paths, note, date_init, date_modify, thumb_up, uid)
                             values(
                                 '${parsedName}',
                                 '${req.body.area || ""}',
                                 '${req.body.road_type || ""}',
+                                '${req.body.policy}',
                                 '${req.body.seasons || ""}',
                                 '${req.body.video_link || ""}',
                                 '${req.body.paths}',
@@ -219,6 +222,7 @@ router.put('/modify', (req, res, next) => {
                             set name = '${parsedName}',
                                 area = '${req.body.area || ""}',
                                 road_type = '${req.body.road_type || ""}',
+                                policy = '${req.body.policy}',
                                 seasons = '${req.body.seasons || ""}',
                                 video_link = '${req.body.video_link || ""}',
                                 paths = '${req.body.paths}',
