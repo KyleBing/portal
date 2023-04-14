@@ -151,6 +151,7 @@ CREATE TABLE \`map_route\`  (
   \`thumb_up\` int(10) NULL DEFAULT 0 COMMENT '点赞数',
   \`uid\` int(11) NULL DEFAULT NULL COMMENT 'user',
   \`is_public\` int(1) NOT NULL DEFAULT 0 COMMENT '是否共享 0否 1是',
+  \`policy\` int(1) NULL DEFAULT NULL COMMENT '路线规划策略',
   PRIMARY KEY (\`id\`) USING BTREE,
   INDEX \`map_uid\`(\`uid\`) USING BTREE,
   CONSTRAINT \`map_uid\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`) ON DELETE RESTRICT ON UPDATE RESTRICT
