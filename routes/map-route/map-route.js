@@ -110,7 +110,27 @@ function getRouteLineList(userInfo, req, res){
 }
 
 router.get('/detail', (req, res, next) => {
-    utility.getDataFromDB('diary', [`select * from ${CURRENT_DATABASE} where id = ${req.query.id}`], true)
+    let sql = `select  
+                                ${CURRENT_DATABASE}.id, 
+                                ${CURRENT_DATABASE}.name, 
+                                ${CURRENT_DATABASE}.area, 
+                                ${CURRENT_DATABASE}.road_type, 
+                                ${CURRENT_DATABASE}.seasons, 
+                                ${CURRENT_DATABASE}.video_link, 
+                                ${CURRENT_DATABASE}.paths, 
+                                ${CURRENT_DATABASE}.note, 
+                                ${CURRENT_DATABASE}.date_init, 
+                                ${CURRENT_DATABASE}.date_modify, 
+                                ${CURRENT_DATABASE}.thumb_up, 
+                                ${CURRENT_DATABASE}.is_public, 
+                                ${CURRENT_DATABASE}.policy, 
+                                ${CURRENT_DATABASE}.uid,
+                               users.uid,
+                               users.nickname,
+                               users.username
+                                    from ${CURRENT_DATABASE}
+                                        left join users on ${CURRENT_DATABASE}.uid = users.uid where id = ${req.query.id}`
+    utility.getDataFromDB('diary', [sql], true)
         .then(lineInfoData => {
             if (lineInfoData.is_public === 1){
                 res.send(new ResponseSuccess(lineInfoData))
