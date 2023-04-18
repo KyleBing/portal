@@ -126,14 +126,11 @@ router.get('/detail', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err, '服务器错误'))
+            res.send(new ResponseError(err, '查无此路线'))
         })
 })
 
 router.post('/add', (req, res, next) => {
-
-
-
     // 1. 验证用户信息是否正确
     utility
         .verifyAuthorization(req)
@@ -247,7 +244,7 @@ router.put('/modify', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err, '服务器错误'))
+            res.send(new ResponseError(err, '查无此路线'))
         })
 })
 
@@ -284,7 +281,7 @@ router.delete('/delete', (req, res, next) => {
             }
         })
         .catch(err => {
-            res.send(new ResponseError(err, '服务器错误'))
+            res.send(new ResponseError(err, '查无此路线'))
         })
 })
 
