@@ -153,7 +153,7 @@ router.get('/users', (req, res, next) => {
                     if (userInfo.email === configProject.adminCount) {
                         let sqlArray = []
                         sqlArray.push(`
-                                select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict, sync_count
+                                select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict, count_map_route, sync_count
                                 from users
                             `)
                         utility
@@ -205,6 +205,7 @@ function updateUsersInfo() {
                 let sqlArray = []
                 data.forEach(user => {
                     sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
+                    sqlArray.push(`update users set count_map_route = (SELECT count(*) from map_route where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_qr    = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
                     sqlArray.push(`update users set count_words = (SELECT count(*) from wubi_words where user_init = ${user.uid}) where uid = ${user.uid};`)
