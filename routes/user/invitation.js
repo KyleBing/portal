@@ -25,7 +25,17 @@ router.get('/list', (req, res, next) => {
                 })
         })
         .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看'))
+            let sqlArray = []
+            // 获取未分享的可用邀请码
+            sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null and is_shared = 0 order by date_create desc ;`)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
+                .then(data => {
+                    res.send(new ResponseSuccess(data, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
         })
 })
 
