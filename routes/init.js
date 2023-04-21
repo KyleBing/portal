@@ -36,7 +36,7 @@ router.get('/', (req, res, next) => {
                                     res.send(
                                         '数据库初始化成功：<br>' +
                                         '数据库名： diary<br>' +
-                                        '创建四张表：users、user_group、diaries、qrs <br>' +
+                                        '创建 6 张表：users、user_group、diaries、diary_category、qrs、invitations <br>' +
                                         '已创建数据库锁定文件： ' + LOCK_FILE_NAME
                                     )
                                 }
@@ -51,7 +51,7 @@ router.get('/', (req, res, next) => {
             connection.end()
         } else {
             // 如果已经初始化过了
-            res.send(`数据库初始化：请先删除项目中 <b>DATABASE_LOCK</b> 文件`)
+            res.send('该数据库已被初始化过，如果想重新初始化，请先删除项目中 <b>DATABASE_LOCK</b> 文件')
         }
     }))
 
