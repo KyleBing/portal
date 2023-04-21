@@ -13,7 +13,11 @@ router.get('/list', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null order by date_create desc ;`)
+            if (userInfo.email === configProject.adminCount ) { //
+                sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null order by date_create desc ;`)
+            } else {
+                sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null and is_shared = 0 order by date_create desc  ;`)
+            }
             utility
                 .getDataFromDB( 'diary', sqlArray)
                 .then(data => {

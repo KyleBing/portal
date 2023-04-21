@@ -122,6 +122,7 @@ CREATE TABLE \`users\`  (
   \`count_dict\` int(8) NULL DEFAULT 0 COMMENT '数量 - 码表',
   \`count_qr\` int(8) NULL DEFAULT 0 COMMENT '数量 - 二维码',
   \`count_words\` int(8) NULL DEFAULT 0 COMMENT '数量 - 词条',
+  \`count_map_route\` int(8) NULL DEFAULT 0 COMMENT '数量 - 路线规划',
   \`sync_count\` int(6) NULL DEFAULT 0 COMMENT '同步次数',
   \`avatar\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT 'avatar图片地址',
   \`city\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '城市',
