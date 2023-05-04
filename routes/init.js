@@ -146,7 +146,7 @@ CREATE TABLE \`map_route\`  (
   \`seasons\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '骑行季节',
   \`video_link\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '视频链接',
   \`paths\` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '路线节点',
-  \`note\` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '备注',
+  \`note\` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL COMMENT '备注',
   \`date_init\` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
   \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '编辑时间',
   \`thumb_up\` int(10) NULL DEFAULT 0 COMMENT '点赞数',
