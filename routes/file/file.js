@@ -52,9 +52,7 @@ router.get('/list', (req, res, next) => {
             let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 文件起点
 
             let sqlArray = []
-            sqlArray.push(`SELECT *
-                  from ${TABLE_NAME} 
-                 `)
+            sqlArray.push(`SELECT * from ${TABLE_NAME} `)
 
             // keywords
             if (req.query.keywords){
@@ -65,6 +63,7 @@ router.get('/list', (req, res, next) => {
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
+            sqlArray.push(`order by date_create desc`)
 
             utility
                 .getDataFromDB( 'diary', sqlArray)
