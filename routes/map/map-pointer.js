@@ -12,33 +12,33 @@ router.post('/list', (req, res, next) => {
         .verifyAuthorization(req)
         // 已经登录
         .then(userInfo => {
-            getRouteLineList(userInfo, req, res)
+            getPointerList(userInfo, req, res)
         })
         // 未登录
         .catch(verified => {
-            getRouteLineList(null, req, res)
+            getPointerList(null, req, res)
             // res.send(new ResponseError(verified, '无权查看路线列表：用户信息错误'))
         })
 })
 
-function getRouteLineList(userInfo, req, res){
+function getPointerList(userInfo, req, res){
     let sqlBase = `select  
-                                ${CURRENT_TABLE}.id, 
-                                ${CURRENT_TABLE}.title, 
-                                ${CURRENT_TABLE}.pointers, 
-                                ${CURRENT_TABLE}.note, 
-                                ${CURRENT_TABLE}.area, 
-                                ${CURRENT_TABLE}.date_create, 
-                                ${CURRENT_TABLE}.date_modify, 
-                                ${CURRENT_TABLE}.thumb_up, 
-                                ${CURRENT_TABLE}.is_public, 
-                                ${CURRENT_TABLE}.uid,
-                               users.wx,
-                               users.uid,
-                               users.nickname,
-                               users.username
-                                    from ${CURRENT_TABLE}
-                                        left join users on ${CURRENT_TABLE}.uid = users.uid
+                        ${CURRENT_TABLE}.id, 
+                        ${CURRENT_TABLE}.name, 
+                        ${CURRENT_TABLE}.pointers, 
+                        ${CURRENT_TABLE}.note, 
+                        ${CURRENT_TABLE}.area, 
+                        ${CURRENT_TABLE}.date_create, 
+                        ${CURRENT_TABLE}.date_modify, 
+                        ${CURRENT_TABLE}.thumb_up, 
+                        ${CURRENT_TABLE}.is_public, 
+                        ${CURRENT_TABLE}.uid,
+                       users.wx,
+                       users.uid,
+                       users.nickname,
+                       users.username
+                            from ${CURRENT_TABLE}
+                                left join users on ${CURRENT_TABLE}.uid = users.uid
                             `
     let filterArray = []
 
@@ -53,7 +53,7 @@ function getRouteLineList(userInfo, req, res){
     if (req.body.keyword) {
         let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
         if (keywords.length > 0) {
-            let keywordStrArray = keywords.map(keyword => `( ${CURRENT_TABLE}.title like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_TABLE}.note like '%${keyword}%' ESCAPE '/') `)
+            let keywordStrArray = keywords.map(keyword => `( ${CURRENT_TABLE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_TABLE}.note like '%${keyword}%' ESCAPE '/') `)
             filterArray.push(keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
         }
     }
@@ -72,6 +72,7 @@ function getRouteLineList(userInfo, req, res){
     let promisesAll = []
     let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
     let sql = `${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`
+    console.log(sql)
     promisesAll.push(utility.getDataFromDB(
         'diary',
         [sql])
@@ -85,7 +86,7 @@ function getRouteLineList(userInfo, req, res){
         .all(promisesAll)
         .then(([dataList, dataSum]) => {
             dataList.forEach(item => {
-                item.title = utility.unicodeDecode(item.title)
+                item.name = utility.unicodeDecode(item.name)
                 item.note = utility.unicodeDecode(item.note)
                 return item
             })
@@ -107,7 +108,7 @@ function getRouteLineList(userInfo, req, res){
 router.get('/detail', (req, res, next) => {
     let sql = `select  
                                 ${CURRENT_TABLE}.id, 
-                                ${CURRENT_TABLE}.title, 
+                                ${CURRENT_TABLE}.name, 
                                 ${CURRENT_TABLE}.pointers, 
                                 ${CURRENT_TABLE}.note, 
                                 ${CURRENT_TABLE}.area, 
@@ -147,24 +148,24 @@ router.post('/add', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查路线名是否已存在
-            let encodedTitle = utility.unicodeEncode(req.body.title)
-            checkPointerExist(encodedTitle)
+            let encodedName = utility.unicodeEncode(req.body.name)
+            checkPointerExist(encodedName)
                 .then(existLogs => {
                     console.log(existLogs)
                     if (existLogs.length > 0) {
                         // 2.1 已存在名为 hash 的记录
-                        res.send(new ResponseError('', `已存在名为 ${req.body.title} 的地域信息`))
+                        res.send(new ResponseError('', `已存在名为 ${req.body.name} 的地域信息`))
                     } else {
                         // 2.2 不存在名为 hash 的记录
                         let sqlArray = []
-                        let parsedTitle = utility.unicodeEncode(req.body.title) // !
+                        let parsedName = utility.unicodeEncode(req.body.name) // !
                         let parsedNote = utility.unicodeEncode(req.body.note) || ''
                         let timeNow = utility.dateFormatter(new Date())
                         sqlArray.push(`
                            insert into ${CURRENT_TABLE}(
-                           title, pointers, note, uid, date_create, date_modify, area, thumb_up, is_public)
+                           name, pointers, note, uid, date_create, date_modify, area, thumb_up, is_public)
                             values(
-                                '${parsedTitle}',
+                                '${parsedName}',
                                 '${req.body.pointers}',
                                 '${parsedNote || ""}',
                                 '${userInfo.uid}',
@@ -219,13 +220,13 @@ router.put('/modify', (req, res, next) => {
             let userInfo = response[0]
             let lineInfoData = response[1]
             if (lineInfoData.uid === userInfo.uid || userInfo.group_id === 1){
-                let parsedTitle = utility.unicodeEncode(req.body.title) // !
+                let parsedName = utility.unicodeEncode(req.body.name) // !
                 let parsedNote = utility.unicodeEncode(req.body.note) || ''
                 let timeNow = utility.dateFormatter(new Date())
                 let sqlArray = []
                 sqlArray.push(`
                         update ${CURRENT_TABLE}
-                            set title = '${parsedTitle}',
+                            set name = '${parsedName}',
                                 pointers = '${req.body.pointers}',
                                 note = '${parsedNote|| ""}',
                                 date_modify = '${timeNow}',
