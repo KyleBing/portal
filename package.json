@@ -1,7 +1,7 @@
 {
   "name": "diary-portal-private",
-  "version": "1.2.0",
-  "date-modify": "2023-02-08",
+  "version": "1.2.1",
+  "date-modify": "2023-06-01",
   "date-init": "2022-03-21",
   "private": true,
   "scripts": {
