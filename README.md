@@ -192,7 +192,7 @@ npm run start
    ```
    然后添加以下内容到打开的窗口中，意思就是说第小时的 17 分统计并更新用户数据，下面的 js 路径改成自己系统中的 JS 路径。
    ```bash
-   17 * * * * node /var/www/html/portal/routes/statistics/updateUserInfo.js
+   17 * * * * node /var/www/html/portal/routes/statistic/updateUserInfo.js
    ```
    然后重启 cron 服务
    ```bash

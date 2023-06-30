@@ -2,7 +2,7 @@
  * cron 任务，每个小时更新用户统计数据
  * ## 使用方法
  * ubuntu 使用 crontab -e 命令进入 crontab 的编辑页，添加如下命令。
- * 17 * * * * node /var/www/html/portal/routes/statistics/updateUserInfo.js
+ * 17 * * * * node /var/www/html/portal/routes/statistic/updateUserInfo.js
  * 意思就是每个小时的 17 分刷新用户数据
  */
 const utility = require("../../config/utility");
