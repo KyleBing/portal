@@ -51,7 +51,7 @@ app.use('/map-route'       , routerMapRoute)
 app.use('/map-pointer'     , routerMapPointer)
 
 // 统计
-let diaryStatisticRouter = require('./routes/statistic')
+let diaryStatisticRouter = require('./routes/statistics/statistic')
 app.use('/statistic'  , diaryStatisticRouter)
 
 // 搬瓦工 VPS
