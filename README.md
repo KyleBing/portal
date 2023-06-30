@@ -13,7 +13,7 @@
 ### 
 ```bash
 # 1. 统计信息
-- /statistics # 统计信息 `2022-05-12`
+- /statistic # 统计信息 `2022-05-12`
 
 # 2. 日记管理
 - /diary/list
@@ -183,6 +183,21 @@ npm run start
     ```bash
     systemctl restart nginx
     ```
+7. 添加 cron 定时任务
+   用户数据里有对用户的日记和其它信息的统计，这个统计过程耗时稍长，所以将其设成定时任务，每小时执行一次。
+   以 Ubuntu 为例
+   执行
+   ```bash
+   crontab -e
+   ```
+   然后添加以下内容到打开的窗口中，意思就是说第小时的 17 分统计并更新用户数据，下面的 js 路径改成自己系统中的 JS 路径。
+   ```bash
+   17 * * * * node /var/www/html/portal/routes/statistics/updateUserInfo.js
+   ```
+   然后重启 cron 服务
+   ```bash
+   systemctl restart cron
+   ```
 
 ### 6. 配置前端项目
 1. 下载 [https://github.com/KyleBing/diary-vue](https://github.com/KyleBing/diary-vue)
