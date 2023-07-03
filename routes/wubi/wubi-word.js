@@ -14,6 +14,7 @@ const uploadStorage = multer({ storage: storage })
 const TABLE_NAME = 'wubi_words'
 
 // used for dict init
+// 废弃
 router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility
