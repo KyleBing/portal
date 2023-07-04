@@ -4,6 +4,7 @@ const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 const {get} = require("axios");
+const {adminCount} = require("../../config/configProject");
 const CURRENT_TABLE = 'map_route'
 
 
@@ -49,7 +50,10 @@ function getRouteLineList(userInfo, req, res){
 
     // PUBLIC
     if (userInfo){ // 已登录
-        filterArray.push(`is_public = 1 or ${CURRENT_TABLE}.uid = ${userInfo.uid}`)
+        if (userInfo.email === adminCount){
+        } else {
+            filterArray.push(`is_public = 1 or ${CURRENT_TABLE}.uid = ${userInfo.uid}`)
+        }
     } else { // 未登录
         filterArray.push(`is_public = 1`)
     }
