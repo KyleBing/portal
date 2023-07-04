@@ -268,12 +268,13 @@ router.put('/set-profile', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
+            let avatar = req.body.avatar || ''
             let sqlArray = []
             sqlArray.push(`
                 update users
                 set users.nickname       = '${req.body.nickname}',
                     users.phone          = '${req.body.phone}',
-                    users.avatar         = '${req.body.avatar}',
+                    users.avatar         = '${avatar}',
                     users.city           = '${req.body.city}',
                     users.geolocation    = '${req.body.geolocation}'
                     WHERE uid = '${userInfo.uid}'
