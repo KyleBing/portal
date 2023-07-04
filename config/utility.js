@@ -42,6 +42,8 @@ function verifyAuthorization(req){
     return new Promise((resolve, reject) => {
         if (!token){
             reject ('无 token')
+        } else if (!uid){
+            reject ('请求中没有 uid，请退出登录，刷新页面重试')
         } else {
             let sqlArray = []
             sqlArray.push(`select * from users where password = '${token}' and uid = ${uid}`)
