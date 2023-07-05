@@ -75,6 +75,40 @@ router.get('/list', (req, res, next) => {
         })
 })
 
+
+router.get('/export', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`SELECT *
+                  from diaries 
+                  where uid='${userInfo.uid}'`)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
+                .then(data => {
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    data.forEach(diary => {
+                        // decode unicode
+                        diary.title = utility.unicodeDecode(diary.title)
+                        diary.content = utility.unicodeDecode(diary.content)
+                        // 处理账单数据
+                        if (diary.category === 'bill'){
+                            diary.billData = utility.processBillOfDay(diary, [])
+                        }
+                    })
+                    res.send(new ResponseSuccess(data, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
+
 router.get('/temperature', (req, res, next) => {
     utility
         .verifyAuthorization(req)
