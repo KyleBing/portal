@@ -34,7 +34,7 @@ router.get('/', (req, res, next) => {
                    users.username
             from qrs
                      left join users on qrs.uid = users.uid
-                        where qrs.hash = '${req.query.hash}'`)
+                        where qrs.hash = '${req.query.hash}' and is_public = 1`)
     // 1. 先查询出 QR 结果
     utility
         .getDataFromDB( 'diary', sqlArray, true)
@@ -44,14 +44,23 @@ router.get('/', (req, res, next) => {
                 dataQr.message = utility.unicodeDecode(dataQr.message)
                 dataQr.description = utility.unicodeDecode(dataQr.description)
 
-                // 2. 判断是否为共享 QR
-                if (dataQr.is_public === 1){
-                    // 2.1 如果是，直接返回结果，不需要判断任何东西
-                    res.send(new ResponseSuccess(dataQr))
-                    countPlusOne(req.query.hash)
-                } else{
-                    res.send(new ResponseError('', '该码未启用'))
-                }
+                utility
+                    .getDataFromDB(
+                        'diary',
+                        [`select hash, car_name,car_plate,imgs from qrs 
+where 
+uid = ${dataQr.uid} and is_public = 1 and hash != '${req.query.hash}'` ], false)
+                    .then(dataHasList => {
+                        res.send(new ResponseSuccess({
+                            dataQr: dataQr,
+                            hashList: dataHasList
+                        }, '获取成功'))
+                        countPlusOne(req.query.hash)
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        res.send(new ResponseError('', '获取同用户其它码失败'))
+                    })
             } else {
                 res.send(new ResponseError('', '查无此码'))
             }
