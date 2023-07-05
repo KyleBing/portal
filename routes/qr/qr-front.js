@@ -47,9 +47,13 @@ router.get('/', (req, res, next) => {
                 utility
                     .getDataFromDB(
                         'diary',
-                        [`select hash, car_name,car_plate,imgs from qrs 
-where 
-uid = ${dataQr.uid} and is_public = 1 and hash != '${req.query.hash}'` ], false)
+                        [`select hash, car_name, car_plate, imgs from qrs 
+                                  where 
+                                     uid = ${dataQr.uid} 
+                                     and is_public = 1 
+                                     and hash != '${req.query.hash}'` ],
+                        false
+                    )
                     .then(dataHasList => {
                         res.send(new ResponseSuccess({
                             dataQr: dataQr,
