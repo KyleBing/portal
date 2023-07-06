@@ -43,7 +43,7 @@ function verifyAuthorization(req){
         if (!token){
             reject ('无 token')
         } else if (!uid){
-            reject ('请求中没有 uid，请退出登录，刷新页面重试')
+            reject ('程序已升级，请关闭所有相关窗口，再重新访问该网站')
         } else {
             let sqlArray = []
             sqlArray.push(`select * from users where password = '${token}' and uid = ${uid}`)

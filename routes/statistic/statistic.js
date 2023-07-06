@@ -45,8 +45,8 @@ router.get('/', (req, res, next) => {
                     res.send(new ResponseError('', err.message))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError('', '用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -89,8 +89,8 @@ router.get('/category', (req, res, next) => {
                     res.send(new ResponseError(err,))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '权限错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -136,8 +136,8 @@ router.get('/year', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '权限错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 
 })
@@ -165,8 +165,8 @@ router.get('/users', (req, res, next) => {utility
         }
 
     })
-    .catch(err => {
-        res.send(new ResponseError(err, err.message))
+    .catch(errInfo => {
+        res.send(new ResponseError(null, errInfo))
     })
 })
 
@@ -185,8 +185,8 @@ router.get('/weather', (req, res, next) => {
                     res.send(new ResponseError(err, '数据库请求错误'))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '权限错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 
 })
