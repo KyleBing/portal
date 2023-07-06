@@ -4,7 +4,6 @@ const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
 const ResponseError = require('../../response/ResponseError')
 
-
 router.get('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -75,7 +74,6 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-
 router.get('/export', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -107,7 +105,6 @@ router.get('/export', (req, res, next) => {
             res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
         })
 })
-
 
 router.get('/temperature', (req, res, next) => {
     utility
@@ -324,5 +321,31 @@ router.get('/latest-recommend', (req, res, next) => {
             res.send(new ResponseError(err, '查询错误'))
         })
 })
+
+router.post('/clear', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            if (userInfo.email === 'test@163.com'){
+                res.send(new ResponseError('', '演示账户不允许执行此操作'))
+                return
+            }
+            let sqlArray = []
+            sqlArray.push(`delete from diaries where uid=${userInfo.uid}`)
+            utility
+                .getDataFromDB( 'diary', sqlArray)
+                .then(data => {
+                    utility.updateUserLastLoginTime(userInfo.uid)
+                    res.send(new ResponseSuccess(data, `清空成功：${data.affectedRows} 条日记`))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(verified => {
+            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        })
+})
+
 
 module.exports = router
