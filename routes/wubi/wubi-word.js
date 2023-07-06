@@ -149,8 +149,8 @@ router.post('/list', (req, res, next) => {
                 })
 
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看词条列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 router.post('/export-extra', (req, res, next) => {
@@ -188,8 +188,8 @@ router.post('/export-extra', (req, res, next) => {
                 })
 
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看词条列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 router.post('/check-exist', (req, res, next) => {

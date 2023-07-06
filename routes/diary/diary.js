@@ -70,8 +70,8 @@ router.get('/list', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -115,8 +115,8 @@ router.get('/temperature', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -156,8 +156,8 @@ router.get('/detail', (req, res, next) => {
                             res.send(new ResponseError('','无权查看该日记：请求用户 ID 与日记归属不匹配'))
                         }
                     })
-                    .catch(unverified => {
-                        res.send(new ResponseError('','无权查看该日记：用户信息错误'))
+                    .catch(errInfo => {
+                        res.send(new ResponseError(null, errInfo))
                     })
             }
         })
@@ -193,8 +193,8 @@ router.post('/add', (req, res, next) => {
                     res.send(new ResponseError(err, '添加失败'))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '无权操作'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -234,8 +234,8 @@ router.put('/modify', (req, res, next) => {
                     res.send(new ResponseError(err, '修改失败'))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '无权操作'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -264,8 +264,8 @@ router.delete('/delete', (req, res, next) => {
                     res.send(new ResponseError(err,))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '无权操作'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 

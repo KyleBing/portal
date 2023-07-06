@@ -135,6 +135,9 @@ router.get('/detail', (req, res, next) => {
                             res.send(new ResponseError('', '该路线信息不属于您，无权操作'))
                         }
                     })
+                    .catch(errInfo => {
+                        res.send(new ResponseError(null, errInfo))
+                    })
             }
         })
         .catch(err => {
@@ -197,8 +200,8 @@ router.post('/add', (req, res, next) => {
                 })
 
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '无权操作'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 

@@ -31,8 +31,8 @@ router.get('/pull', (req, res, next) => {
                     res.send(new ResponseError(err,))
                 })
         })
-        .catch(unverified => {
-            res.send(new ResponseError('', '当前用户无权查看该码表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -99,8 +99,8 @@ router.put('/push', (req, res, next) => {
 
                 })
         })
-        .catch(unverified => {
-            res.send(new ResponseError('','当前用户无权查看该码表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -121,8 +121,8 @@ router.post('/check-backup-exist', (req, res, next) => {
                     res.send(new ResponseError(err,))
                 })
         })
-        .catch(unverified => {
-            res.send(new ResponseError('', '当前用户无权查看该码表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 

@@ -61,8 +61,8 @@ router.post('/add', (req, res, next) => {
                         }
 
                     })
-                    .catch(err => {
-                        res.send(new ResponseError('', err.message))
+                    .catch(errInfo => {
+                        res.send(new ResponseError(null, errInfo))
                     })
 
             }
@@ -136,8 +136,8 @@ router.delete('/delete', (req, res, next) => {
             }
 
         })
-        .catch(err => {
-            res.send(new ResponseError('', err.message))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 

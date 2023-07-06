@@ -149,8 +149,8 @@ router.post('/list', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看用户列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -197,8 +197,8 @@ router.get('/detail', (req, res, next) => {
                             res.send(new ResponseError('','当前用户无权查看该 QR ：请求用户 ID 与 QR 归属不匹配'))
                         }
                     })
-                    .catch(unverified => {
-                        res.send(new ResponseError('','当前用户无权查看该 QR ：用户信息错误'))
+                    .catch(errInfo => {
+                        res.send(new ResponseError(null, errInfo))
                     })
             }
         })

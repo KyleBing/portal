@@ -53,7 +53,7 @@ function verifyAuthorization(req){
                 })
                 .catch(err => {
                     console.log('验证权限失败', err, err.message)
-                    reject('验证权限失败')
+                    reject('无权查看')
                 })
         }
     })
