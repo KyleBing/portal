@@ -150,7 +150,7 @@ router.post('/list', (req, res, next) => {
 
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 router.post('/export-extra', (req, res, next) => {
@@ -189,7 +189,7 @@ router.post('/export-extra', (req, res, next) => {
 
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 router.post('/check-exist', (req, res, next) => {

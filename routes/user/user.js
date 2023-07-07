@@ -150,7 +150,7 @@ router.post('/list', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -198,7 +198,7 @@ router.get('/detail', (req, res, next) => {
                         }
                     })
                     .catch(errInfo => {
-                        res.send(new ResponseError(null, errInfo))
+                        res.send(new ResponseError('', errInfo))
                     })
             }
         })
@@ -418,7 +418,7 @@ router.put('/change-password', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === 'test@163.com'){
-                res.send(new ResponseError('', '演示账户密码不允许修改'))
+                res.send(new ResponseError('', '演示帐户密码不允许修改'))
                 return
             }
             bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
@@ -445,6 +445,11 @@ router.delete('/destroy-account', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
+            // 演示帐户时不允许执行注销操作
+            if (userInfo.email === 'test@163.com'){
+                res.send(new ResponseError('', '演示帐户不允许执行此操作'))
+                return
+            }
             let connection = utility.getMysqlConnection('diary')
             connection.beginTransaction(transactionError => {
                 if (transactionError){
@@ -486,7 +491,7 @@ router.delete('/destroy-account', (req, res, next) => {
             })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('null', errInfo))
         })
 })
 

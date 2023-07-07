@@ -70,7 +70,7 @@ router.get('/list', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -147,7 +147,7 @@ router.get('/temperature', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -188,7 +188,7 @@ router.get('/detail', (req, res, next) => {
                         }
                     })
                     .catch(errInfo => {
-                        res.send(new ResponseError(null, errInfo))
+                        res.send(new ResponseError('', errInfo))
                     })
             }
         })
@@ -225,7 +225,7 @@ router.post('/add', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -266,7 +266,7 @@ router.put('/modify', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -296,7 +296,7 @@ router.delete('/delete', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -327,7 +327,7 @@ router.post('/clear', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === 'test@163.com'){
-                res.send(new ResponseError('', '演示账户不允许执行此操作'))
+                res.send(new ResponseError('', '演示帐户不允许执行此操作'))
                 return
             }
             let sqlArray = []

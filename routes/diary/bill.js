@@ -29,7 +29,7 @@ router.get('/', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -123,7 +123,7 @@ router.get('/sorted', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -145,7 +145,7 @@ router.get('/day-sum', (req, res, next) => {
 
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -228,7 +228,7 @@ router.get('/month-sum', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 

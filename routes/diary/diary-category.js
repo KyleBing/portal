@@ -62,7 +62,7 @@ router.post('/add', (req, res, next) => {
 
                     })
                     .catch(errInfo => {
-                        res.send(new ResponseError(null, errInfo))
+                        res.send(new ResponseError('', errInfo))
                     })
 
             }
@@ -104,7 +104,7 @@ router.put('/modify', (req, res, next) => {
 
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 router.delete('/delete', (req, res, next) => {
@@ -137,7 +137,7 @@ router.delete('/delete', (req, res, next) => {
 
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 

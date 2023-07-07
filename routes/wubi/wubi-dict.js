@@ -32,7 +32,7 @@ router.get('/pull', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -100,7 +100,7 @@ router.put('/push', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -122,7 +122,7 @@ router.post('/check-backup-exist', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 

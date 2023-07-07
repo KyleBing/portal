@@ -33,7 +33,7 @@ router.get('/', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 

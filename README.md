@@ -115,7 +115,7 @@ module.exports = {
 ```js
 module.exports = {
    invitation: '----', // 万能邀请码，用于注册时使用
-   adminCount: 'kylebing@163.com', // 管理员账户，该用户可以在统计页面中查看所有用户统计数据
+   adminCount: 'kylebing@163.com', // 管理员帐户，该用户可以在统计页面中查看所有用户统计数据
    TOKEN_NAME: 'Diary-Token', // header 中的 token 字段，跟前端约定的 token 名字，不需要刻意修改
 }
 ```

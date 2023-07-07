@@ -46,7 +46,7 @@ router.get('/', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -90,7 +90,7 @@ router.get('/category', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 })
 
@@ -137,7 +137,7 @@ router.get('/year', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 
 })
@@ -166,7 +166,7 @@ router.get('/users', (req, res, next) => {utility
 
     })
     .catch(errInfo => {
-        res.send(new ResponseError(null, errInfo))
+        res.send(new ResponseError('', errInfo))
     })
 })
 
@@ -186,7 +186,7 @@ router.get('/weather', (req, res, next) => {
                 })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(null, errInfo))
+            res.send(new ResponseError('', errInfo))
         })
 
 })
