@@ -48,10 +48,9 @@ router.get('/list', (req, res, next) => {
                     res.send(new ResponseError(err,))
                 })
         })
-        .catch(err => {
-            res.send(new ResponseError(err, '权限错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
-
 })
 router.post('/add', (req, res, next) => {
 

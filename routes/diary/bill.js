@@ -28,8 +28,8 @@ router.get('/', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -122,8 +122,8 @@ router.get('/sorted', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -144,8 +144,8 @@ router.get('/day-sum', (req, res, next) => {
                 })
 
         })
-        .catch(verified => {
-            res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 
@@ -227,9 +227,8 @@ router.get('/month-sum', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(err => {
-            console.log(err)
-            res.send(new ResponseError(err, '无权查看日记列表：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
 })
 

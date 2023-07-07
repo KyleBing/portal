@@ -32,11 +32,9 @@ router.get('/', (req, res, next) => {
                     res.send(new ResponseError(err, err.message))
                 })
         })
-        .catch(unverified => {
-            res.send(new ResponseError('','无权查看该日记：用户信息错误'))
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
         })
-
-
 })
 
 
