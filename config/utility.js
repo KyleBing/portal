@@ -49,14 +49,31 @@ function verifyAuthorization(req){
             sqlArray.push(`select * from users where password = '${token}' and uid = ${uid}`)
             getDataFromDB( 'diary', sqlArray, true)
                 .then(userInfo => {
-                    resolve(userInfo) // 如果查询成功，返回 用户id
+                    if (userInfo){
+                        resolve(userInfo) // 如果查询成功，返回 用户id
+                    } else {
+                        reject('身份验证失败：查无此人')
+                    }
                 })
                 .catch(err => {
-                    console.log('验证权限失败', err, err.message)
-                    reject('无权查看')
+                    reject('mysql: 获取身份信息错误')
                 })
         }
     })
+}
+
+function getMysqlConnection(dbName){
+    let connection = mysql.createConnection({
+        host:       configDatabase.host,
+        user:       configDatabase.user,
+        password:   configDatabase.password,
+        port:       configDatabase.port,
+        multipleStatements: configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
+        timezone: configDatabase.timezone,
+        database: dbName
+    })
+    connection.connect()
+    return connection
 }
 
 
@@ -165,6 +182,7 @@ function formatMoney(number){
 
 module.exports = {
     getDataFromDB,
+    getMysqlConnection,
     dateFormatter, updateUserLastLoginTime,
     unicodeEncode, unicodeDecode,
     verifyAuthorization,

@@ -440,5 +440,55 @@ router.put('/change-password', (req, res, next) => {
 
 })
 
+// 注销帐号
+router.delete('/destroy-account', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let connection = utility.getMysqlConnection('diary')
+            connection.beginTransaction(transactionError => {
+                if (transactionError){
+                    connection.end()
+                    connection.rollback(err => {
+                        res.send(new ResponseError('', 'beginTransaction: 事务执行失败，已回滚'))
+                    })
+                } else {
+                    let sql = `
+                                delete from diaries where uid = ${userInfo.uid}; 
+                                delete from invitations where binding_uid = ${userInfo.uid}; 
+                                delete from map_pointer where uid = ${userInfo.uid}; 
+                                delete from map_route where uid = ${userInfo.uid}; 
+                                delete from map_route where uid = ${userInfo.uid}; 
+                                delete from qrs where uid = ${userInfo.uid}; 
+                                delete from users where uid = ${userInfo.uid}; 
+                                `
+                    connection.query(sql, [], (queryErr,result) => {
+                        if (queryErr){
+                            connection.rollback(err => {
+                                res.send(new ResponseError(queryErr, 'query: 事务执行失败，已回滚'))
+                            })
+                            // res.send(new ResponseError(err, '数据库请求错误'))
+                        } else {
+                            connection.commit(commitError => {
+                                if (commitError){
+                                    connection.rollback(err => {
+                                        res.send(new ResponseError(err, 'transaction.commit: 事务执行失败，已回滚'))
+                                    })
+                                } else {
+                                    res.send(new ResponseSuccess(result, '事务执行成功'))
+                                }
+                            })
+                        }
+                        connection.end()
+                    })
+                }
+
+            })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError(null, errInfo))
+        })
+})
+
 
 module.exports = router
