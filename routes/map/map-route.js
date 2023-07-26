@@ -68,32 +68,30 @@ function getRouteLineList(userInfo, req, res){
     if (req.body.keyword) {
         let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
         if (keywords.length > 0) {
-            let keywordStrArray = keywords.map(keyword => `( ${CURRENT_TABLE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_TABLE}.note like '%${keyword}%' ESCAPE '/') `)
+            let keywordStrArray = keywords.map(keyword => ` (${CURRENT_TABLE}.name like '%${keyword}%' ESCAPE '/')`)
             filterArray.push(keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
         }
     }
     // date range
     if (req.body.dateRange && req.body.dateRange.length === 2) {
-        if (filterArray.length > 0) {
-            filterArray.push(`and`)
-        }
         filterArray.push(`date_init between '${req.body.dateRange[0]}' AND '${req.body.dateRange[1]}'`)
     }
 
+    let filterSql = ''
     if (filterArray.length > 0) {
-        filterArray.unshift('where')
+        filterSql = `where ${filterArray.join(' and ')}`
     }
 
     let promisesAll = []
     let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
-    let sql = `${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`
+    let sql = `${sqlBase} ${filterSql}  limit ${pointStart} , ${req.body.pageSize}`
     promisesAll.push(utility.getDataFromDB(
         'diary',
         [sql])
     )
     promisesAll.push(utility.getDataFromDB(
         'diary',
-        [`select count(*) as sum from ${CURRENT_TABLE} ${filterArray.join(' ')}`], true)
+        [`select count(*) as sum from ${CURRENT_TABLE} ${filterSql}`], true)
     )
 
     Promise
