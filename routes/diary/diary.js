@@ -324,7 +324,7 @@ router.get('/latest-recommend', (req, res, next) => {
 
 router.get('/get-latest-public-diary-with-keyword', (req, res, next) => {
     let sqlArray = []
-    sqlArray.push(`select * from diaries where title like '%${req.params.keyword}%' and is_public = 1 and uid = 3 order by id desc`)
+    sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`)
     // 1. 先查询出日记结果
     utility
         .getDataFromDB('diary', sqlArray, false)
