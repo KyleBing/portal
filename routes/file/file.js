@@ -43,8 +43,6 @@ function getQiniuToken(bucket){
     return putPolicy.uploadToken(mac)
 }
 
-
-
 router.get('/list', (req, res, next) => {
     utility
         .verifyAuthorization(req)
@@ -79,8 +77,6 @@ router.get('/list', (req, res, next) => {
             res.send(new ResponseError(verified, '无权查看文件列表：用户信息错误'))
         })
 })
-
-
 
 router.post('/add', (req, res, next) => {
     utility

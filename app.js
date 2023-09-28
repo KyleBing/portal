@@ -78,7 +78,9 @@ app.use('/mail'           , routerMail)
 
 // 图片、文件操作
 let routerFile           = require('./routes/file/file')
-app.use('/file'           , routerFile)
+let routerFileManager    = require('./routes/file/fileManager')
+app.use('/file'          , routerFile)
+app.use('/file-manager'  , routerFileManager)
 
 
 // 五笔相关
