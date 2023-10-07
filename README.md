@@ -199,7 +199,12 @@ npm run start
    systemctl restart cron
    ```
 
-### 6. 配置前端项目
+### 6. 设置管理员账户
+1. 用上面设置的通用邀请码注册之后
+2. 从数据库中直接修改对应用户的 `users.group_id`  改为 `1` (管理员)
+3. 网页上重新登录该用户，就能看到 **邀请码** 菜单了。
+
+### 7. 配置前端项目
 1. 下载 [https://github.com/KyleBing/diary-vue](https://github.com/KyleBing/diary-vue)
 2. 安装依赖，执行 `npm i` 或者 `yarn`
 3. 如果你需要修改前端请求后台的路径，修改 `/src/request.js` 中的 `BASE_URL` 即可
