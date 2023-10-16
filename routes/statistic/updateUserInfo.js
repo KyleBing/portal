@@ -15,7 +15,7 @@ utility
             sqlArray.push(`update users set count_map_route = (SELECT count(*) from map_route where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_qr    = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
-            sqlArray.push(`update users set count_words = (SELECT count(*) from wubi_words where user_init = ${user.uid}) where uid = ${user.uid};`)
+            sqlArray.push(`update users set count_words = (SELECT count(*) from wubi_words where user_init = ${user.uid} and category_id != 1) where uid = ${user.uid};`)
         })
         utility
             .getDataFromDB('diary', sqlArray, true)

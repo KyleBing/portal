@@ -21,7 +21,9 @@ router.get('/', (req, res, next) => {
                           (SELECT COUNT(*) FROM diaries where category = 'bill') as count_bill,
                           (SELECT COUNT(*) FROM wubi_dict) as count_dict,
                           (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words,
-                          (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved
+                          (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved,
+                          (SELECT COUNT(*) FROM wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
+
                     `)
             } else {
                 sqlArray.push(`
@@ -33,11 +35,54 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM diaries where uid = ${userInfo.uid} and category = 'bill') as count_bill,
                               (SELECT COUNT(*) FROM wubi_dict where uid = ${userInfo.uid}) as count_dict,
                               (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words,
-                              (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved
+                              (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved,
+                              (SELECT COUNT(*) FROM wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
                         `)
             }
             utility
                 .getDataFromDB('diary', sqlArray, true)
+                .then(data => {
+                    res.send(new ResponseSuccess(data))
+                })
+                .catch(err => {
+                    res.send(new ResponseError('', err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 用户统计 - 日记
+router.get('/user-data-diary', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`SELECT nickname, count_diary FROM users where count_diary > 3 order by count_diary desc`)
+            utility
+                .getDataFromDB('diary', sqlArray)
+                .then(data => {
+                    res.send(new ResponseSuccess(data))
+                })
+                .catch(err => {
+                    res.send(new ResponseError('', err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 用户统计 - 词条
+router.get('/user-data-words', (req, res, next) => {
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`SELECT nickname, count_words FROM users where count_words != 0 order by count_words desc`)
+            utility
+                .getDataFromDB('diary', sqlArray)
                 .then(data => {
                     res.send(new ResponseSuccess(data))
                 })
