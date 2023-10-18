@@ -327,17 +327,11 @@ router.get('/get-latest-public-diary-with-keyword', (req, res, next) => {
     sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`)
     // 1. 先查询出日记结果
     utility
-        .getDataFromDB('diary', sqlArray, false)
-        .then(diaryList => {
-            if (diaryList.length > 0) {
-                let dataDiary = diaryList[0]
-                // decode unicode
-                dataDiary.title = utility.unicodeDecode(dataDiary.title)
-                dataDiary.content = utility.unicodeDecode(dataDiary.content)
-                res.send(new ResponseSuccess(dataDiary))
-            } else {
-                res.send(new ResponseSuccess(''))
-            }
+        .getDataFromDB('diary', sqlArray, true)
+        .then(dataDiary => {
+            dataDiary.title = utility.unicodeDecode(dataDiary.title)
+            dataDiary.content = utility.unicodeDecode(dataDiary.content)
+            res.send(new ResponseSuccess(dataDiary))
         })
         .catch(err => {
             res.send(new ResponseError(err, '查询错误'))
