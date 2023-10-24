@@ -12,7 +12,7 @@ const qiniu = require("qiniu")
  */
 
 const TABLE_NAME = 'files' // 文件存储
-const DATA_NAME = '文件'          // 操作的数据名
+const DATA_NAME = '文件'    // 操作的数据名
 
 // 生成 token 根据 bucket
 router.get('/', (req, res, next) => {
