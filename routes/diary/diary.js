@@ -302,7 +302,7 @@ router.delete('/delete', (req, res, next) => {
 
 router.get('/latest-recommend', (req, res, next) => {
     let sqlArray = []
-    sqlArray.push(`select * from diaries where title like '%首页推荐%' and is_public = 1 and uid = 3 order by id desc`)
+    sqlArray.push(`select * from diaries where title like '%首页推荐%' and is_public = 1 and uid = 3 order by date desc`)
     // 1. 先查询出日记结果
     utility
         .getDataFromDB('diary', sqlArray, false)
