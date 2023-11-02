@@ -179,6 +179,25 @@ CREATE TABLE \`map_pointer\` (
 
 
 -- ----------------------------
+-- Table structure for file_manager
+-- ----------------------------
+DROP TABLE IF EXISTS \`file_manager\`;
+CREATE TABLE \`file_manager\` (
+  \`id\` int(100) NOT NULL AUTO_INCREMENT COMMENT 'hash',
+  \`name_original\` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '原文件名',
+  \`name\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '文件名',
+  \`description\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '描述',
+  \`date_create\` datetime NOT NULL COMMENT '创建时间',
+  \`type\` varchar(255) COLLATE utf8mb4_bin NOT NULL DEFAULT 'image' COMMENT 'image, file',
+  \`uid\` int(11) NOT NULL COMMENT 'uid',
+  \`size\` int(10) NOT NULL COMMENT '文件大小',
+  PRIMARY KEY (\`id\`) USING BTREE,
+  KEY \`uid link\` (\`uid\`),
+  CONSTRAINT \`uid link\` FOREIGN KEY (\`uid\`) REFERENCES \`users\` (\`uid\`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
+
+
+-- ----------------------------
 -- Table structure for user_group
 -- ----------------------------
 DROP TABLE IF EXISTS \`user_group\`;
