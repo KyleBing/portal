@@ -185,7 +185,7 @@ DROP TABLE IF EXISTS \`file_manager\`;
 CREATE TABLE \`file_manager\` (
   \`id\` int(100) NOT NULL AUTO_INCREMENT COMMENT 'hash',
   \`name_original\` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '原文件名',
-  \`name\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '文件名',
+  \`path\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '文件路径',
   \`description\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '描述',
   \`date_create\` datetime NOT NULL COMMENT '创建时间',
   \`type\` varchar(255) COLLATE utf8mb4_bin NOT NULL DEFAULT 'image' COMMENT 'image, file',
