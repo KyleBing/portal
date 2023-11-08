@@ -14,6 +14,7 @@ const DEST_FOLDER = 'upload' // 临时文件存放文件夹
 const uploadLocal = multer({dest: TEMP_FOLDER}) // 文件存储在服务器的什么位置
 const storage = multer.memoryStorage()
 
+// TODO: 使用事务，根据条件回滚
 router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility
@@ -41,7 +42,7 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
                             } else {
                                 let timeNow = utility.dateFormatter(new Date())
                                 let sql = `insert into
-                                 ${TABLE_NAME}(name, name_original, description, date_create, type, size, uid) 
+                                 ${TABLE_NAME}(path, name_original, description, date_create, type, size, uid) 
                                 values ('${destPath}', '${req.file.originalname}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
                                 utility
                                     .getDataFromDB(DB_NAME, [sql])
@@ -66,25 +67,31 @@ router.delete('/delete', (req, res, next) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            let sqlArray = []
-            sqlArray.push(`
-                        DELETE from ${TABLE_NAME}
-                        WHERE id='${req.body.fileId}'
-                        and uid='${userInfo.uid}'
-                    `)
-            utility
-                .getDataFromDB( DB_NAME, sqlArray)
-                .then(data => {
-                    if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '删除成功'))
-                    } else {
-                        res.send(new ResponseError('', '删除失败'))
-                    }
+            utility.getDataFromDB(DB_NAME, [`select * from ${TABLE_NAME} where id='${req.body.fileId}'`], true)
+                .then(fileInfo => {
+                    utility.getDataFromDB( DB_NAME, [` DELETE from ${TABLE_NAME} WHERE id='${req.body.fileId}' and uid='${userInfo.uid}' `])
+                        .then(data => {
+                            if (data.affectedRows > 0) {
+                                utility.updateUserLastLoginTime(userInfo.uid)
+                                fs.rm(`../${fileInfo.path}`, {force: true}, errDeleteFile => {
+                                    if (errDeleteFile){
+                                        res.send(new ResponseError(errDeleteFile, '删除失败'))
+                                    } else {
+                                        res.send(new ResponseSuccess('', '删除成功'))
+                                    }
+                                })
+                            } else {
+                                res.send(new ResponseError('', '删除失败'))
+                            }
+                        })
+                        .catch(err => {
+                            res.send(new ResponseError(err,))
+                        })
                 })
-                .catch(err => {
-                    res.send(new ResponseError(err,))
+                .catch(errQuery => {
+                    res.send(new ResponseError('', errQuery))
                 })
+
         })
         .catch(errInfo => {
             res.send(new ResponseError('', errInfo))
@@ -96,12 +103,8 @@ router.get('/list', (req, res, next) => {
         .verifyAuthorization(req)
         .then(userInfo => {
             let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 文件记录起点
-
             let sqlArray = []
-            sqlArray.push(`SELECT *
-                  from ${TABLE_NAME} 
-                  where uid='${userInfo.uid}'`)
-
+            sqlArray.push(`SELECT *from ${TABLE_NAME} where uid='${userInfo.uid}'`)
             // keywords
             if (req.query.keywords){
                 let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
