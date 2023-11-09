@@ -62,6 +62,30 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
         })
 })
 
+router.post('/modify', (req, res, next) => {
+    // 1. 验证用户信息是否正确
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            utility
+                .getDataFromDB( DB_NAME, [` update ${TABLE_NAME} set description = '${req.body.description}' WHERE id='${req.body.fileId}' and uid='${userInfo.uid}'`])
+                .then(data => {
+                    if (data.affectedRows > 0) {
+                        utility.updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess('', '修改成功'))
+                    } else {
+                        res.send(new ResponseError('', '修改失败'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err,))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility
