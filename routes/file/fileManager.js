@@ -22,7 +22,9 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
         .then(userInfo => {
             console.log(req.file)
             console.log(req.body)
-            const destPath = `${DEST_FOLDER}/${req.file.originalname}`
+            let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
+            const destPath = `${DEST_FOLDER}/${fileOriginalName}`
+            debugger
             fs.copyFile(
                 req.file.path,
                 `../${destPath}`,
@@ -43,7 +45,7 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
                                 let timeNow = utility.dateFormatter(new Date())
                                 let sql = `insert into
                                  ${TABLE_NAME}(path, name_original, description, date_create, type, size, uid) 
-                                values ('${destPath}', '${req.file.originalname}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
+                                values ('${destPath}', '${fileOriginalName}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
                                 utility
                                     .getDataFromDB(DB_NAME, [sql])
                                     .then(data => {
