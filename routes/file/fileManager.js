@@ -14,52 +14,72 @@ const DEST_FOLDER = 'upload' // 临时文件存放文件夹
 const uploadLocal = multer({dest: TEMP_FOLDER}) // 文件存储在服务器的什么位置
 const storage = multer.memoryStorage()
 
-// TODO: 使用事务，根据条件回滚
 router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
-    // 1. 验证用户信息是否正确
+    let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
+    const destPath = `${DEST_FOLDER}/${fileOriginalName}`
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
-            console.log(req.file)
-            console.log(req.body)
-            let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
-            const destPath = `${DEST_FOLDER}/${fileOriginalName}`
-            debugger
-            fs.copyFile(
-                req.file.path,
-                `../${destPath}`,
-                fs.constants.COPYFILE_EXCL,
-                (err => {
-                    if (err) {
-                        fs.rm(req.file.path, deleteErr => {})
-                        if (err.code === 'EEXIST'){
-                            res.send(new ResponseError('', '文件已存在'))
-                        } else {
-                            res.send(new ResponseError(err, '上传失败'))
-                        }
-                    } else {
-                        fs.rm(req.file.path, deleteErr => {
-                            if (deleteErr){
-                                res.send(new ResponseError(deleteErr, '服务器临时文件删除失败'))
-                            } else {
-                                let timeNow = utility.dateFormatter(new Date())
-                                let sql = `insert into
+            let connection = utility.getMysqlConnection(DB_NAME)
+            connection.beginTransaction(transactionError => {
+                if (transactionError){
+                    connection.end()
+                    connection.rollback(err => {
+                        res.send(new ResponseError('', 'beginTransaction: 事务执行失败，已回滚'))
+                    })
+                } else {
+                    let timeNow = utility.dateFormatter(new Date())
+                    let sql = `insert into
                                  ${TABLE_NAME}(path, name_original, description, date_create, type, size, uid) 
                                 values ('${destPath}', '${fileOriginalName}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
-                                utility
-                                    .getDataFromDB(DB_NAME, [sql])
-                                    .then(data => {
-                                        res.send(new ResponseSuccess('', '上传成功'))
-                                    })
-                                    .catch(sqlErr => {
-                                        res.send(new ResponseError(sqlErr, '数据库保存错误'))
-                                    })
-                            }
-                        })
-                    }
-                }))
+
+                    connection.query(sql, [], (queryErr,result) => {
+                        if (queryErr){
+                            connection.rollback(err => {
+                                res.send(new ResponseError(queryErr, 'query: sql 事务执行失败，已回滚'))
+                            })
+                        } else {
+                            fs.copyFile(
+                                req.file.path,
+                                `../${destPath}`,
+                                fs.constants.COPYFILE_EXCL,
+                                (copyFileError => {
+                                    if (copyFileError) {
+                                        connection.rollback(rollbackError => {
+                                            fs.rm(req.file.path, deleteErr => {})
+                                            if (copyFileError.code === 'EEXIST'){
+                                                res.send(new ResponseError('', '文件已存在'))
+                                            } else {
+                                                res.send(new ResponseError(err, '上传失败'))
+                                            }
+                                        })
+
+                                    } else {
+                                        fs.rm(req.file.path, deleteErr => {
+                                            if (deleteErr){
+                                                res.send(new ResponseError(deleteErr, '服务器临时文件删除失败'))
+                                            } else {
+                                                connection.commit(commitError => {
+                                                    if (commitError){
+                                                        connection.rollback(rollbackError => {
+                                                            res.send(new ResponseError(rollbackError, 'transaction.commit: 事务执行失败，已回滚'))
+                                                        })
+                                                    } else {
+                                                        res.send(new ResponseSuccess('', '上传成功'))
+                                                    }
+                                                })
+                                            }
+                                        })
+                                    }
+                                }))
+                        }
+                        connection.end()
+                    })
+                }
+
+            })
         })
-        .catch(err => {
+        .catch(errInfo => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
