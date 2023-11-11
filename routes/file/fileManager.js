@@ -23,10 +23,10 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
             let connection = utility.getMysqlConnection(DB_NAME)
             connection.beginTransaction(transactionError => {
                 if (transactionError){
-                    connection.end()
-                    connection.rollback(err => {
-                        res.send(new ResponseError('', 'beginTransaction: 事务执行失败，已回滚'))
+                    connection.rollback(rollbackError => {
+                        res.send(new ResponseError(rollbackError, 'beginTransaction: 事务执行失败，已回滚'))
                     })
+                    connection.end()
                 } else {
                     let timeNow = utility.dateFormatter(new Date())
                     let sql = `insert into
@@ -37,6 +37,7 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
                         if (queryErr){
                             connection.rollback(err => {
                                 res.send(new ResponseError(queryErr, 'query: sql 事务执行失败，已回滚'))
+                                connection.end()
                             })
                         } else {
                             fs.copyFile(
@@ -50,21 +51,25 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
                                             if (copyFileError.code === 'EEXIST'){
                                                 res.send(new ResponseError('', '文件已存在'))
                                             } else {
-                                                res.send(new ResponseError(err, '上传失败'))
+                                                res.send(new ResponseError(copyFileError, '上传失败'))
                                             }
+                                            connection.end()
                                         })
 
                                     } else {
                                         fs.rm(req.file.path, deleteErr => {
                                             if (deleteErr){
                                                 res.send(new ResponseError(deleteErr, '服务器临时文件删除失败'))
+                                                connection.end()
                                             } else {
                                                 connection.commit(commitError => {
                                                     if (commitError){
                                                         connection.rollback(rollbackError => {
                                                             res.send(new ResponseError(rollbackError, 'transaction.commit: 事务执行失败，已回滚'))
+                                                            connection.end()
                                                         })
                                                     } else {
+                                                        connection.end()
                                                         res.send(new ResponseSuccess('', '上传成功'))
                                                     }
                                                 })
@@ -73,14 +78,14 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
                                     }
                                 }))
                         }
-                        connection.end()
                     })
+
                 }
 
             })
         })
         .catch(errInfo => {
-            res.send(new ResponseError(err, '无权操作'))
+            res.send(new ResponseError(errInfo, '无权操作'))
         })
 })
 
@@ -108,6 +113,7 @@ router.post('/modify', (req, res, next) => {
         })
 })
 
+// TODO: 用事务处理
 router.delete('/delete', (req, res, next) => {
     // 1. 验证用户信息是否正确
     utility

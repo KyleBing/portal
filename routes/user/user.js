@@ -453,10 +453,10 @@ router.delete('/destroy-account', (req, res, next) => {
             let connection = utility.getMysqlConnection('diary')
             connection.beginTransaction(transactionError => {
                 if (transactionError){
-                    connection.end()
                     connection.rollback(err => {
                         res.send(new ResponseError('', 'beginTransaction: 事务执行失败，已回滚'))
                     })
+                    connection.end()
                 } else {
                     let sql = `
                                 delete from diaries where uid = ${userInfo.uid}; 
