@@ -8,11 +8,11 @@ const ResponseError = require('../../response/ResponseError')
 const qiniu = require("qiniu")
 
 /**
- * 七牛云 图片处理
+ * 七牛云图片 处理
  */
-
-const TABLE_NAME = 'files' // 文件存储
-const DATA_NAME = '文件'    // 操作的数据名
+const DB_NAME = 'diary' // 数据库名
+const TABLE_NAME = 'image_qiniu' // 文件存储
+const DATA_NAME = '七牛云图片'    // 操作的数据名
 
 // 生成 token 根据 bucket
 router.get('/', (req, res, next) => {
@@ -52,19 +52,31 @@ router.get('/list', (req, res, next) => {
             let sqlArray = []
             sqlArray.push(`SELECT * from ${TABLE_NAME} `)
 
+            let tempQueryArray = []
             // keywords
             if (req.query.keywords){
-                let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
+                let keywords = JSON.parse(req.query.keywords)
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
-                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+                    let keywordStrArray = keywords.map(keyword => ` description like '%${keyword}%' ESCAPE '/' ` )
+                    tempQueryArray.push(keywordStrArray.join(' or ')) // 在每个 keywords 中间添加 'or'
                 }
             }
+
+            // bucket
+            if (req.query.bucket){
+                tempQueryArray.push(` bucket = '${req.query.bucket}'`) // 在每个 categoryString 中间添加 'or'
+            }
+
+            if (tempQueryArray.length > 0){
+                sqlArray.push(' where ')
+                sqlArray.push(tempQueryArray.join(' and '))
+            }
+
             sqlArray.push(`order by date_create desc`)
 
             utility
-                .getDataFromDB( 'diary', sqlArray)
+                .getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
                     utility.updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '请求成功'))
@@ -86,11 +98,11 @@ router.post('/add', (req, res, next) => {
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(`
-                                insert into ${TABLE_NAME}(id, description, date_create, type) 
-                                values('${req.body.id}', '${req.body.description || ''}', '${timeNow}', '${req.body.type}')`
+                                insert into ${TABLE_NAME}(id, description, date_create, type, bucket, base_url) 
+                                values('${req.body.id}', '${req.body.description || ''}', '${timeNow}', '${req.body.type}', '${req.body.bucket}', '${req.body.base_url}')`
                 )
                 utility
-                    .getDataFromDB( 'diary', sqlArray)
+                    .getDataFromDB( DB_NAME, sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
                             utility.updateUserLastLoginTime(userInfo.uid)
@@ -123,7 +135,7 @@ router.delete('/delete', (req, res, next) => {
                                where id = '${req.body.id}'
                     `)
                 utility
-                    .getDataFromDB( 'diary', sqlArray)
+                    .getDataFromDB( DB_NAME, sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
                             utility.updateUserLastLoginTime(userInfo.uid)

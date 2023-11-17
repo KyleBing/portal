@@ -69,18 +69,20 @@ app.use('/bank-card'      , routerBankCard)      // 银行卡列表
 app.use('/bill'           , routerBill)          // 账单
 
 // 点赞管理
-let routerThumbsUp       = require('./routes/thumbs-up/thumbs-up')
-app.use('/thumbs-up'      , routerThumbsUp)
+let routerThumbsUp = require('./routes/thumbs-up/thumbs-up')
+app.use('/thumbs-up', routerThumbsUp)
 
 // 邮件操作
-let routerMail           = require('./routes/mail/mail')
-app.use('/mail'           , routerMail)
+let routerMail = require('./routes/mail/mail')
+app.use('/mail', routerMail)
 
 // 图片、文件操作
-let routerFile           = require('./routes/file/file')
-let routerFileManager    = require('./routes/file/fileManager')
-app.use('/file'          , routerFile)
-app.use('/file-manager'  , routerFileManager)
+let routerFileManager = require('./routes/file/fileManager')
+app.use('/file-manager', routerFileManager)
+
+// 七牛云图片
+let routerImageQiniu = require('./routes/image-qiniu/image-qiniu')
+app.use('/image-qiniu', routerImageQiniu)
 
 
 // 五笔相关
