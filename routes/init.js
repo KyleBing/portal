@@ -184,11 +184,11 @@ CREATE TABLE \`map_pointer\` (
 DROP TABLE IF EXISTS \`file_manager\`;
 CREATE TABLE \`file_manager\` (
   \`id\` int(100) NOT NULL AUTO_INCREMENT COMMENT 'hash',
-  \`name_original\` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '原文件名',
-  \`path\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '文件路径',
-  \`description\` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '描述',
+  \`name_original\` varchar(255) NOT NULL COMMENT '原文件名',
+  \`path\` varchar(255) DEFAULT NULL COMMENT '文件路径',
+  \`description\` varchar(255) DEFAULT NULL COMMENT '描述',
   \`date_create\` datetime NOT NULL COMMENT '创建时间',
-  \`type\` varchar(255) COLLATE utf8mb4_bin NOT NULL DEFAULT 'image' COMMENT 'image, file',
+  \`type\` varchar(255) NOT NULL DEFAULT 'image' COMMENT 'image, file',
   \`uid\` int(11) NOT NULL COMMENT 'uid',
   \`size\` int(10) NOT NULL COMMENT '文件大小',
   PRIMARY KEY (\`id\`) USING BTREE,
@@ -350,6 +350,21 @@ CREATE TABLE \`thumbs_up\` (
   \`date_init\` datetime NOT NULL COMMENT '添加地址',
   PRIMARY KEY (\`name\`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=DYNAMIC;
+
+
+-- ----------------------------
+-- Table structure for image_qiniu
+-- ----------------------------
+DROP TABLE IF EXISTS \`image_qiniu\`;
+CREATE TABLE \`image_qiniu\` (
+  \`id\` varchar(100) NOT NULL COMMENT 'hash',
+  \`description\` varchar(255) DEFAULT NULL COMMENT '描述',
+  \`date_create\` datetime NOT NULL COMMENT '创建时间',
+  \`type\` varchar(255) NOT NULL DEFAULT 'image' COMMENT 'image, file',
+  \`bucket\` varchar(255) NOT NULL COMMENT 'Bucket name',
+  \`base_url\` varchar(255) NOT NULL COMMENT 'base url',
+  PRIMARY KEY (\`id\`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 
 SET FOREIGN_KEY_CHECKS = 1;
