@@ -94,8 +94,10 @@ INSERT INTO \`diary_category\` VALUES (7, 'game', '游戏', 0, '#5AC8FA', '2022-
 INSERT INTO \`diary_category\` VALUES (1, 'life', '生活', 0, '#FF9500', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (11, 'memo', '备忘', 0, '#BABABA', '2022-10-31 17:16:15');
 INSERT INTO \`diary_category\` VALUES (12, 'play', '剧本', 0, '#00AAFF', '2022-12-29 08:44:21');
+INSERT INTO \`diary_category\` VALUES (13, 'sentiment', '情感', 0, '#00C975', '2023-01-16 15:21:12');
 INSERT INTO \`diary_category\` VALUES (4, 'sport', '运动', 0, '#FFCC00', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (2, 'study', '学习', 0, '#4CD964', '2022-03-23 21:23:02');
+INSERT INTO \`diary_category\` VALUES (4, 'todo', '待办', 0, '#24C5FF', '2023-12-12 10:17:35');
 INSERT INTO \`diary_category\` VALUES (5, 'week', '周报', 0, '#5856D6', '2022-03-23 21:23:02');
 INSERT INTO \`diary_category\` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-03-23 21:23:02');
 
