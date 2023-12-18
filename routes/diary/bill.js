@@ -63,6 +63,8 @@ router.get('/sorted', (req, res, next) => {
 
             sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
+            let BillKeyMap = new Map()
+
             Promise.all(sqlRequests)
                 .then(yearDataArray => {
                     let responseData = []
@@ -81,10 +83,19 @@ router.get('/sorted', (req, res, next) => {
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
+
                         daysArray.forEach(item => {
                             let processedDayData = utility.processBillOfDay(item, keywords)
                             // 当内容 items 的数量大于 0 时
                             if (processedDayData.items.length > 0){
+                                processedDayData.items.forEach(billItem => {
+                                    if (BillKeyMap.has(billItem.item)){ // 如果已存在账单项
+                                        let count = BillKeyMap.get(billItem.item)
+                                        BillKeyMap.set(billItem.item, count + 1)
+                                    } else {
+                                        BillKeyMap.set(billItem.item, 1) // 初始化为1
+                                    }
+                                })
                                 daysData.push(processedDayData)
                                 monthSum = monthSum + processedDayData.sum
                                 monthSumIncome = monthSumIncome + processedDayData.sumIncome
@@ -116,7 +127,83 @@ router.get('/sorted', (req, res, next) => {
 
                     })
                     responseData.sort((a, b) => a.year > b.year ? 1 : -1)
+                    console.log(BillKeyMap)
                     res.send(new ResponseSuccess(responseData))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+
+
+router.get('/keys', (req, res, next) => {
+    let currentYear = new Date().getFullYear()
+    let years = []
+    for(let i=0;i<5;i++){
+        years.push( currentYear - i)
+    }
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlRequests = []
+            let sqlArray = []
+            years.forEach(year => {
+                for (let month = 1; month <= 12; month ++ ){
+                    sqlArray.push(`
+                        select *,
+                        date_format(date,'%Y%m') as month_id,
+                        date_format(date,'%m') as month
+                        from diaries 
+                        where year(date) = ${year}
+                        and month(date) = ${month}
+                        and category = 'bill'
+                        and uid = ${userInfo.uid}
+                        order by date asc;
+                    `)
+                }
+            })
+
+            sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
+            // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
+            let BillKeyMap = new Map()
+
+            Promise
+                .all(sqlRequests)
+                .then(yearDataArray => {
+                    let responseData = []
+                    let afterValues = yearDataArray[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
+                    afterValues.forEach(daysArray => {
+                        daysArray.forEach(item => {
+                            let processedDayData = utility.processBillOfDay(item, [])
+                            // 当内容 items 的数量大于 0 时
+                            if (processedDayData.items.length > 0){
+                                processedDayData.items.forEach(billItem => {
+                                    if (BillKeyMap.has(billItem.item)){ // 如果已存在账单项
+                                        let count = BillKeyMap.get(billItem.item)
+                                        BillKeyMap.set(billItem.item, count + 1)
+                                    } else {
+                                        BillKeyMap.set(billItem.item, 1) // 初始化为1
+                                    }
+                                })
+                            }
+                        })
+
+                    })
+                    let billKeyArray = []
+                    BillKeyMap.forEach((value,key,map) => {
+                        billKeyArray.push({
+                            item: key,
+                            value: BillKeyMap.get(key)
+                        })
+                    })
+                    billKeyArray.sort((a,b) => b.value - a.value)
+                    billKeyArray = billKeyArray.filter(item => item.value > 2)
+                    res.send(new ResponseSuccess(billKeyArray))
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))
