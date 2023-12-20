@@ -27,7 +27,8 @@
     
     # 2.2 账单统计信息
     - /bill/ # 日记中的账单类别统计信息 `2022-05-24`
-
+    - /bill/keys # 所有账单条目列表 `2023-12-20`
+    - /bill/sorted # 所有账单展示
 
 # 3. 用户管理
 - /user/
@@ -45,7 +46,6 @@
 - /diary-category/modify # 类别修改 `2022-07-22`
 - /diary-category/list # 类别管理 `2022-05-24`
 - /diary-category/delete
-
 
 # 5. 邀请码管理
 - /invitation/generate # 生成新的
@@ -74,7 +74,7 @@
 - /qr-manager/clear-visit-count
 
 # 9. 二维码前端信息
-- /qr/ # 码的信息 `2022-05-18`
+- /qr-front/ # 码的信息 `2022-05-18`
 
 # 10. VPS主机信息接口
 - /vps/ # vps 信息
@@ -82,6 +82,21 @@
 # 11. 饥荒数据
 - /dont-starve/{tablename}/list # 列表数据
 - /dont-starve/{tablename}/info # 详情数据
+
+# 12. 路书数据
+地图路线
+- /map-route/list
+- /map-route/detail
+- /map-route/add
+- /map-route/modify
+- /map-route/delete
+
+地图信息
+- /map-pointer/list
+- /map-pointer/detail
+- /map-pointer/add
+- /map-pointer/modify
+- /map-pointer/delete
 
 ```
 
