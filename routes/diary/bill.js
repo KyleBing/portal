@@ -196,13 +196,14 @@ router.get('/keys', (req, res, next) => {
                     })
                     let billKeyArray = []
                     BillKeyMap.forEach((value,key,map) => {
-                        billKeyArray.push({
-                            item: key,
-                            value: BillKeyMap.get(key)
-                        })
+                        if (BillKeyMap.get(key) >= 1){
+                            billKeyArray.push({
+                                item: key,
+                                value: BillKeyMap.get(key)
+                            })
+                        }
                     })
                     billKeyArray.sort((a,b) => b.value - a.value)
-                    billKeyArray = billKeyArray.filter(item => item.value > 2)
                     res.send(new ResponseSuccess(billKeyArray))
                 })
                 .catch(err => {
