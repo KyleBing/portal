@@ -63,8 +63,6 @@ router.get('/sorted', (req, res, next) => {
 
             sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
-            let BillKeyMap = new Map()
-
             Promise.all(sqlRequests)
                 .then(yearDataArray => {
                     let responseData = []
@@ -83,19 +81,10 @@ router.get('/sorted', (req, res, next) => {
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
-
                         daysArray.forEach(item => {
                             let processedDayData = utility.processBillOfDay(item, keywords)
                             // 当内容 items 的数量大于 0 时
                             if (processedDayData.items.length > 0){
-                                processedDayData.items.forEach(billItem => {
-                                    if (BillKeyMap.has(billItem.item)){ // 如果已存在账单项
-                                        let count = BillKeyMap.get(billItem.item)
-                                        BillKeyMap.set(billItem.item, count + 1)
-                                    } else {
-                                        BillKeyMap.set(billItem.item, 1) // 初始化为1
-                                    }
-                                })
                                 daysData.push(processedDayData)
                                 monthSum = monthSum + processedDayData.sum
                                 monthSumIncome = monthSumIncome + processedDayData.sumIncome
@@ -127,7 +116,6 @@ router.get('/sorted', (req, res, next) => {
 
                     })
                     responseData.sort((a, b) => a.year > b.year ? 1 : -1)
-                    console.log(BillKeyMap)
                     res.send(new ResponseSuccess(responseData))
                 })
                 .catch(err => {
