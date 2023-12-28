@@ -191,24 +191,19 @@ router.get('/year', (req, res, next) => {
 router.get('/users', (req, res, next) => {utility
     .verifyAuthorization(req)
     .then(userInfo => {
-        if (userInfo.email === configProject.adminCount) {
-            let sqlArray = []
-            sqlArray.push(`
-                                select uid, email, last_visit_time, nickname, register_time, count_diary, count_dict, count_map_route, sync_count
-                                from users where count_diary >= 5 or sync_count >= 5 or count_map_route >=1
-                            `)
-            utility
-                .getDataFromDB('diary', sqlArray)
-                .then(data => {
-                    res.send(new ResponseSuccess(data))
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, err.message))
-                })
-        } else {
-            res.send(new ResponseError('', '没有权限查看此信息'))
-        }
-
+        let sqlArray = []
+        sqlArray.push(`
+                            select uid, last_visit_time, nickname, register_time, count_diary, count_dict, count_map_route, sync_count
+                            from users where count_diary >= 5 or sync_count >= 5 or count_map_route >=1
+                        `)
+        utility
+            .getDataFromDB('diary', sqlArray)
+            .then(data => {
+                res.send(new ResponseSuccess(data))
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, err.message))
+            })
     })
     .catch(errInfo => {
         res.send(new ResponseError('', errInfo))
