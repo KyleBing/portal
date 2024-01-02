@@ -41,9 +41,9 @@ router.get('/list', (req, res, next) => {
             }
 
             // date range
-            if (req.query.dateFilter){
-                let year = req.query.dateFilter.substring(0,4)
-                let month = req.query.dateFilter.substring(4,6)
+            if (req.query.dateFilterString){
+                let year = req.query.dateFilterString.substring(0,4)
+                let month = req.query.dateFilterString.substring(4,6)
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
 
@@ -126,9 +126,9 @@ router.get('/temperature', (req, res, next) => {
                                LIMIT 100 `)
 
             // date range
-            if (req.query.dateFilter){
-                let year = req.query.dateFilter.substring(0,4)
-                let month = req.query.dateFilter.substring(4,6)
+            if (req.query.dateFilterString){
+                let year = req.query.dateFilterString.substring(0,4)
+                let month = req.query.dateFilterString.substring(4,6)
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
             utility
