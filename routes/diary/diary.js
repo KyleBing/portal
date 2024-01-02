@@ -211,8 +211,8 @@ router.post('/add', (req, res, next) => {
             sqlArray.push(`
                     INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public, is_markdown )
                     VALUES(
-                        '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}','${req.body.temperature || 18}',
-                        '${req.body.temperatureOutside || 18}', '${timeNow}','${timeNow}','${req.body.date}','${userInfo.uid}','${req.body.isPublic || 0}', '${req.body.isMarkdown || 0}')`
+                        '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}',${req.body.temperature},
+                        ${req.body.temperature_outside}, '${timeNow}','${timeNow}','${req.body.date}','${userInfo.uid}','${req.body.is_public || 0}', '${req.body.is_markdown || 0}')`
             )
             utility
                 .getDataFromDB( 'diary', sqlArray)
@@ -249,10 +249,10 @@ router.put('/modify', (req, res, next) => {
                                 diaries.title='${parsedTitle}',
                                 diaries.content='${parsedContent}',
                                 diaries.weather='${req.body.weather}',
-                                diaries.temperature='${req.body.temperature}',
-                                diaries.temperature_outside='${req.body.temperatureOutside}',
-                                diaries.is_public='${req.body.isPublic}',
-                                diaries.is_markdown='${req.body.isMarkdown}'
+                                diaries.temperature=${req.body.temperature},
+                                diaries.temperature_outside=${req.body.temperature_outside},
+                                diaries.is_public='${req.body.is_public}',
+                                diaries.is_markdown='${req.body.is_markdown}'
                             WHERE id='${req.body.id}' and uid='${userInfo.uid}'
                     `]
             utility
