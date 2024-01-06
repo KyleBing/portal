@@ -117,10 +117,9 @@
 ```js
 module.exports = {
     host:       'localhost',
-    user:       'root',
+    user:       '----',
     password:   '----',
     port:       '3306',
-    database:   'diary',
     multipleStatements: true
 }
 ```
@@ -222,7 +221,7 @@ npm run start
 1. 下载 [https://github.com/KyleBing/diary-vue](https://github.com/KyleBing/diary-vue)
 2. 安装依赖，执行 `npm i` 或者 `yarn`
 3. 如果你需要修改前端请求后台的路径，修改 `/src/request.js` 中的 `BASE_URL` 即可
-4. 执行 `npm build` 会生成前端项目的生产环境的文件，就这个项目而言，它会在生成在 `../diary/` 目录，也会在 `./archive` 目录下生成一个名为 `diary-2023-06-xx.zip` 的压缩包，这个压缩包的内容就是 `../diary` 的内容，但不包含外层 `diary` 目录。
+4. 执行 `npm build` 会生成前端项目的生产环境的文件，就这个项目而言，它会在生成在 `./dist/` 目录，也会在 `./archive` 目录下生成一个名为 `diary-2023-06-xx.zip` 的压缩包，这个压缩包的内容就是 `../diary` 的内容，但不包含外层 `diary` 目录。
 5. 将项目文件放置于服务器 nginx 主目录的 `/diary/` 下
 6. 此时后台项目在 `/portal/` 目录下，前端项目在 `/dairy/` 下，这样就能直接使用了
 
