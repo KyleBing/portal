@@ -1,17 +1,17 @@
-const mysql = require("mysql");
-const configDatabase = require('./configDatabase')
-const configProject = require('./configProject')
+import mysql from "mysql"
+import {CONFIG_DATABASE, CONFIG_PROJECT} from "./config";
+import {DiaryEntity} from "../routes/diary/DiaryEntity";
 
 // 运行 SQL 并返回 DB 结果
-function getDataFromDB(dbName, sqlArray, isSingleValue) {
+function getDataFromDB(dbName: string, sqlArray: string[], isSingleValue: boolean = false) {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection({
-            host:       configDatabase.host,
-            user:       configDatabase.user,
-            password:   configDatabase.password,
-            port:       configDatabase.port,
-            multipleStatements: configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
-            timezone: configDatabase.timezone,
+            host:       CONFIG_DATABASE.host,
+            user:       CONFIG_DATABASE.user,
+            password:   CONFIG_DATABASE.password,
+            port:       CONFIG_DATABASE.port,
+            multipleStatements: CONFIG_DATABASE.multipleStatements, // 允许同时请求多条 sql 语句
+            timezone: CONFIG_DATABASE.timezone,
             database: dbName
         })
         connection.connect()
@@ -62,14 +62,14 @@ function verifyAuthorization(req){
     })
 }
 
-function getMysqlConnection(dbName){
+function getMysqlConnection(dbName: string){
     let connection = mysql.createConnection({
-        host:       configDatabase.host,
-        user:       configDatabase.user,
-        password:   configDatabase.password,
-        port:       configDatabase.port,
-        multipleStatements: configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
-        timezone: configDatabase.timezone,
+        host:       CONFIG_DATABASE.host,
+        user:       CONFIG_DATABASE.user,
+        password:   CONFIG_DATABASE.password,
+        port:       CONFIG_DATABASE.port,
+        multipleStatements: CONFIG_DATABASE.multipleStatements, // 允许同时请求多条 sql 语句
+        timezone: CONFIG_DATABASE.timezone,
         database: dbName
     })
     connection.connect()
@@ -79,8 +79,7 @@ function getMysqlConnection(dbName){
 
 
 // 格式化时间，输出字符串
-function dateFormatter(date, formatString) {
-    formatString = formatString || 'yyyy-MM-dd hh:mm:ss'
+function dateFormatter(date: Date, formatString: string = 'yyyy-MM-dd hh:mm:ss') {
     let dateRegArray = {
         "M+": date.getMonth() + 1,                      // 月份
         "d+": date.getDate(),                           // 日
@@ -102,11 +101,11 @@ function dateFormatter(date, formatString) {
 }
 
 // unicode -> text
-function unicodeEncode(str){
+function unicodeEncode(str: string){
     if(!str)return '';
     if(typeof str !== 'string') return str
     let text = escape(str);
-    text = text.replaceAll(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
+    text = text.replace(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
         console.log('source: ',source)
         return source.replace('%', '\\\\')
     })
@@ -114,16 +113,16 @@ function unicodeEncode(str){
 }
 
 // text -> unicode
-function  unicodeDecode(str)
+function  unicodeDecode(str: string)
 {
     let text = escape(str);
-    text = text.replaceAll(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
+    text = text.replace(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
         return source.replace('%5C', '%')
     })
     return unescape(text);
 }
 
-function updateUserLastLoginTime(uid){
+function updateUserLastLoginTime(uid: number){
     let timeNow = dateFormatter(new Date())
     getDataFromDB( 'diary', [`update users set last_visit_time='${timeNow}' where uid='${uid}'`])
         .then(data => {
@@ -136,7 +135,7 @@ function updateUserLastLoginTime(uid){
 
 
 // 处理账单文本内容，转成格式化的账单数据
-function processBillOfDay(diaryObj, filterKeywords = []){
+function processBillOfDay(diaryObj: DiaryEntity, filterKeywords: string[] = []){
     let str = diaryObj.content.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
     let strArray =
         str
@@ -175,12 +174,12 @@ function processBillOfDay(diaryObj, filterKeywords = []){
     return response
 }
 
-function formatMoney(number){
+function formatMoney(number: number){
     return Number(number.toFixed(2))
 }
 
 
-module.exports = {
+export {
     getDataFromDB,
     getMysqlConnection,
     dateFormatter, updateUserLastLoginTime,

@@ -1,11 +1,23 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
-const multer = require('multer')
-const {adminCount} = require("../../config/configProject");
-const fs = require('fs')
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB, getMysqlConnection,
+    processBillOfDay,
+    unicodeDecode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerFileManager = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config"
+
+
+import multer from "multer"
+import fs from "fs"
 
 const DB_NAME = 'diary' // 数据库名
 const TABLE_NAME = 'file_manager' // 数据库名
@@ -14,13 +26,12 @@ const DEST_FOLDER = 'upload' // 临时文件存放文件夹
 const uploadLocal = multer({dest: TEMP_FOLDER}) // 文件存储在服务器的什么位置
 const storage = multer.memoryStorage()
 
-router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
+routerFileManager.post('/upload', uploadLocal.single('file'), (req: Request, res: Response, next) => {
     let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
     const destPath = `${DEST_FOLDER}/${fileOriginalName}`
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
-            let connection = utility.getMysqlConnection(DB_NAME)
+            let connection = getMysqlConnection(DB_NAME)
             connection.beginTransaction(transactionError => {
                 if (transactionError){
                     connection.rollback(rollbackError => {
@@ -28,7 +39,7 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
                     })
                     connection.end()
                 } else {
-                    let timeNow = utility.dateFormatter(new Date())
+                    let timeNow = dateFormatter(new Date())
                     let sql = `insert into
                                  ${TABLE_NAME}(path, name_original, description, date_create, type, size, uid) 
                                 values ('${destPath}', '${fileOriginalName}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
@@ -89,16 +100,14 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
         })
 })
 
-router.post('/modify', (req, res, next) => {
+routerFileManager.post('/modify', (req: Request, res: Response, next) => {
     // 1. 验证用户信息是否正确
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
-            utility
-                .getDataFromDB( DB_NAME, [` update ${TABLE_NAME} set description = '${req.body.description}' WHERE id='${req.body.fileId}' and uid='${userInfo.uid}'`])
+            getDataFromDB( DB_NAME, [` update ${TABLE_NAME} set description = '${req.body.description}' WHERE id='${req.body.fileId}' and uid='${userInfo.uid}'`])
                 .then(data => {
                     if (data.affectedRows > 0) {
-                        utility.updateUserLastLoginTime(userInfo.uid)
+                        updateUserLastLoginTime(userInfo.uid)
                         res.send(new ResponseSuccess('', '修改成功'))
                     } else {
                         res.send(new ResponseError('', '修改失败'))
@@ -114,17 +123,16 @@ router.post('/modify', (req, res, next) => {
 })
 
 // TODO: 用事务处理
-router.delete('/delete', (req, res, next) => {
+routerFileManager.delete('/delete', (req: Request, res: Response, next) => {
     // 1. 验证用户信息是否正确
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
-            utility.getDataFromDB(DB_NAME, [`select * from ${TABLE_NAME} where id='${req.body.fileId}'`], true)
+            getDataFromDB(DB_NAME, [`select * from ${TABLE_NAME} where id='${req.body.fileId}'`], true)
                 .then(fileInfo => {
-                    utility.getDataFromDB( DB_NAME, [` DELETE from ${TABLE_NAME} WHERE id='${req.body.fileId}' and uid='${userInfo.uid}' `])
+                    getDataFromDB( DB_NAME, [` DELETE from ${TABLE_NAME} WHERE id='${req.body.fileId}' and uid='${userInfo.uid}' `])
                         .then(data => {
                             if (data.affectedRows > 0) {
-                                utility.updateUserLastLoginTime(userInfo.uid)
+                                updateUserLastLoginTime(userInfo.uid)
                                 fs.rm(`../${fileInfo.path}`, {force: true}, errDeleteFile => {
                                     if (errDeleteFile){
                                         res.send(new ResponseError(errDeleteFile, '删除失败'))
@@ -150,16 +158,15 @@ router.delete('/delete', (req, res, next) => {
         })
 })
 
-router.get('/list', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerFileManager.get('/list', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 文件记录起点
             let sqlArray = []
             sqlArray.push(`SELECT *from ${TABLE_NAME} where uid='${userInfo.uid}'`)
             // keywords
             if (req.query.keywords){
-                let keywords = JSON.parse(req.query.keywords).map(item => utility.unicodeEncode(item))
+                let keywords = JSON.parse(req.query.keywords).map(item => unicodeEncode(item))
                 console.log(keywords)
                 if (keywords.length > 0){
                     let keywordStrArray = keywords.map(keyword => `( description like '%${keyword}%' ESCAPE '/' ` )
@@ -178,10 +185,9 @@ router.get('/list', (req, res, next) => {
             sqlArray.push(` order by date_create desc
                   limit ${startPoint}, ${req.query.pageSize}`)
 
-            utility
-                .getDataFromDB( DB_NAME, sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
+                    updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
@@ -193,4 +199,4 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-module.exports = router
+export {routerFileManager}

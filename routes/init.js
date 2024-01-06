@@ -1,22 +1,33 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../config/utility')
-const ResponseSuccess = require("../response/ResponseSuccess");
-const ResponseError = require("../response/ResponseError");
-const mysql = require("mysql");
-const configDatabase = require("../config/configDatabase");
-const { stat, writeFile } = require("fs");
+import {dateFormatter} from "../config/utility";
+import express = require("express")
+const routerInit = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../response/ResponseError";
+
+import mysql from "mysql"
+
+import {CONFIG_DATABASE, ConfigDatabase} from "../config/config";
+
+
+import { stat, writeFile } from "fs"
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
 
-router.get('/', (req, res, next) => {
+routerInit.get('/', (req: Request, res: Response, next) => {
 
     stat(LOCK_FILE_NAME, ((err, stats) => {
         if (err){
             // 如果没有该文件，说明数据库没有初始化过
-            let tempConfigDatabase = {}
-            Object.assign(tempConfigDatabase, configDatabase)
-            delete tempConfigDatabase.database
+            let tempConfigDatabase: ConfigDatabase = {
+                host: '',
+                user: '',
+                password: '',
+                port: '',
+                multipleStatements: false, // 允许同时请求多条 sql 语句
+                timezone: ''
+            }
+            Object.assign(tempConfigDatabase, CONFIG_DATABASE)
             let connection = mysql.createConnection(tempConfigDatabase)
             connection.connect()
             const sqlCreation = 'CREATE DATABASE IF NOT EXISTS diary'
@@ -29,7 +40,7 @@ router.get('/', (req, res, next) => {
                     createTables()
                         .then(msg => {
 
-                            writeFile(LOCK_FILE_NAME, 'Database has been locked, file add in ' + utility.dateFormatter(new Date()),err => {
+                            writeFile(LOCK_FILE_NAME, 'Database has been locked, file add in ' + dateFormatter(new Date()),err => {
                                 if (err){
                                     res.send('初始化失败')
                                 } else {
@@ -60,8 +71,8 @@ router.get('/', (req, res, next) => {
 
 function createTables(){
     return new Promise((resolve, reject) => {
-        let connection = mysql.createConnection(configDatabase)
-        console.log(configDatabase)
+        let connection = mysql.createConnection(CONFIG_DATABASE)
+        console.log(CONFIG_DATABASE)
         connection.connect()
         const sqlCreateTables = `
 SET NAMES utf8mb4;
@@ -236,24 +247,24 @@ CREATE TABLE \`invitations\`  (
 -- Table structure for diaries
 -- ----------------------------
 DROP TABLE IF EXISTS \`diaries\`;
-CREATE TABLE \`diaries\` (
+CREATE TABLE \`diaries\`  (
   \`id\` int(11) NOT NULL AUTO_INCREMENT,
-  \`date\` datetime NOT NULL COMMENT '日记日期',
-  \`title\` text NOT NULL COMMENT '标题',
-  \`content\` longtext DEFAULT NULL COMMENT '内容',
-  \`temperature\` float(6,2) DEFAULT -273 COMMENT '室内温度',
-  \`temperature_outside\` float(6,2) DEFAULT -273 COMMENT '室外温度',
-  \`weather\` enum('sunny','cloudy','overcast','sprinkle','rain','thunderstorm','fog','snow','tornado','smog','sandstorm') NOT NULL DEFAULT 'sunny' COMMENT '天气',
-  \`category\` varchar(20) NOT NULL DEFAULT 'life' COMMENT '类别',
-  \`date_create\` datetime NOT NULL COMMENT '创建日期',
-  \`date_modify\` datetime DEFAULT NULL COMMENT '编辑日期',
+  \`date\` datetime(0) NOT NULL COMMENT '日记日期',
+  \`title\` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '标题',
+  \`content\` longtext CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL COMMENT '内容',
+  \`temperature\` int(3) NULL DEFAULT -273 COMMENT '室内温度',
+  \`temperature_outside\` int(3) NULL DEFAULT -273 COMMENT '室外温度',
+  \`weather\` enum('sunny','cloudy','overcast','sprinkle','rain','thunderstorm','fog','snow','tornado','smog','sandstorm') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'sunny' COMMENT '天气',
+  \`category\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'life' COMMENT '类别',
+  \`date_create\` datetime(0) NOT NULL COMMENT '创建日期',
+  \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '编辑日期',
   \`uid\` int(11) NOT NULL COMMENT '用户id',
   \`is_public\` int(1) NOT NULL DEFAULT 0 COMMENT '是否共享',
   \`is_markdown\` int(1) NOT NULL DEFAULT 0 COMMENT '是否为 Markdown',
   PRIMARY KEY (\`id\`) USING BTREE,
-  KEY \`category_link\` (\`category\`) USING BTREE,
-  CONSTRAINT \`category_link\` FOREIGN KEY (\`category\`) REFERENCES \`diary_category\` (\`name_en\`)
-) ENGINE=InnoDB AUTO_INCREMENT=13160 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=COMPACT;
+  INDEX \`category_link\`(\`category\`) USING BTREE,
+  CONSTRAINT \`category_link\` FOREIGN KEY (\`category\`) REFERENCES \`diary_category\` (\`name_en\`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for qrs
@@ -385,4 +396,4 @@ SET FOREIGN_KEY_CHECKS = 1;
     })
 }
 
-module.exports = router
+export {routerInit}

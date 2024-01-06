@@ -1,7 +1,7 @@
-const createError = require('http-errors')
-const express = require('express')
-const path = require('path')
-const logger = require('morgan')
+import createError from "http-errors"
+import express from "express"
+import logger from "morgan"
+import path from "path"
 
 
 const app = express()
@@ -17,78 +17,78 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 
 // 基础相关
-let init                 = require('./routes/init')
-let indexRouter          = require('./routes/index')
-let usersRouter          = require('./routes/user/user')
-app.use('/'           , indexRouter)
-app.use('/init'       , init)
-app.use('/user'       , usersRouter)
+import {routerIndex} from './routes'
+import {routerInit} from './routes/init'
+import {routerUser} from './routes/user/user'
+app.use('/'           , routerIndex)
+app.use('/init'       , routerInit)
+app.use('/user'       , routerUser)
 
 // 邀请码
-let invitationRouter     = require('./routes/user/invitation')
-app.use('/invitation'       , invitationRouter)
+import {routerInvitation} from './routes/user/invitation'
+app.use('/invitation'       , routerInvitation)
 
 // 微信小程序
-let routerWx             = require('./routes/wx/wx')
-app.use('/wx'         , routerWx)
+import {routerWX} from './routes/wx/wx'
+app.use('/wx'         , routerWX)
 
 // 微信公众号
-let routerWxPublic       = require('./routes/wx/wx-public')
-app.use('/wx-public'  , routerWxPublic)
+import {routerWXPublic} from './routes/wx/wx-public'
+app.use('/wx-public'  , routerWXPublic)
 
 // 二维码-前端
-let routerQr             = require('./routes/qr/qr-front')
-app.use('/qr-front'       , routerQr)            // QR 二维码
+import {routerQrFront} from './routes/qr/qr-front'
+app.use('/qr-front'       , routerQrFront)            // QR 二维码
 
 // 二维码-后台
-let routerQrManager      = require('./routes/qr/qr-manager')
-app.use('/qr-manager'     , routerQrManager)     // QR 二维码
+import {routerQrBack} from './routes/qr/qr-manager'
+app.use('/qr-manager'     , routerQrBack)     // QR 二维码
 
 // 地图管理
-let routerMapRoute        = require('./routes/map/map-route')
-let routerMapPointer      = require('./routes/map/map-pointer')
+import {routerMapRoute} from './routes/map/map-route'
+import {routerMapPointer} from './routes/map/map-pointer'
 app.use('/map-route'       , routerMapRoute)
 app.use('/map-pointer'     , routerMapPointer)
 
 // 统计
-let diaryStatisticRouter = require('./routes/statistic/statistic')
-app.use('/statistic'  , diaryStatisticRouter)
+import {routerDiaryStatistic} from './routes/statistic/statistic'
+app.use('/statistic'  , routerDiaryStatistic)
 
 // 搬瓦工 VPS
-let routerVPS            = require('./routes/vps/vps')
-app.use('/vps'            , routerVPS)
+import {routerVPSBandwagonHost} from './routes/vps/vps'
+app.use('/vps'            , routerVPSBandwagonHost)
 
 // 日记相关
-let routerDiary          = require('./routes/diary/diary')
-let routerDiaryCategory  = require('./routes/diary/diary-category')
-let routerBankCard       = require('./routes/diary/bankCard')
-let routerBill           = require('./routes/diary/bill')
+import {routerDiary} from './routes/diary/diary'
+import {routerDiaryCategory} from './routes/diary/diary-category'
+import {routerDiaryBankCard} from './routes/diary/bankCard'
+import {routerDiaryBill} from './routes/diary/bill'
 app.use('/diary'          , routerDiary)
 app.use('/diary-category' , routerDiaryCategory)
-app.use('/bank-card'      , routerBankCard)      // 银行卡列表
-app.use('/bill'           , routerBill)          // 账单
+app.use('/bank-card'      , routerDiaryBankCard)      // 银行卡列表
+app.use('/bill'           , routerDiaryBill)          // 账单
 
 // 点赞管理
-let routerThumbsUp = require('./routes/thumbs-up/thumbs-up')
-app.use('/thumbs-up', routerThumbsUp)
+import {routerThumbUp} from './routes/thumbs-up/thumbs-up'
+app.use('/thumbs-up', routerThumbUp)
 
 // 邮件操作
-let routerMail = require('./routes/mail/mail')
+import {routerMail} from './routes/mail/mail'
 app.use('/mail', routerMail)
 
 // 图片、文件操作
-let routerFileManager = require('./routes/file/fileManager')
+import {routerFileManager} from './routes/file/fileManager'
 app.use('/file-manager', routerFileManager)
 
 // 七牛云图片
-let routerImageQiniu = require('./routes/image-qiniu/image-qiniu')
+import {routerImageQiniu} from './routes/image-qiniu/image-qiniu'
 app.use('/image-qiniu', routerImageQiniu)
 
 
 // 五笔相关
-let routerWubiDict       = require('./routes/wubi/wubi-dict')
-let routerWubiWord       = require('./routes/wubi/wubi-word')
-let routerWubiCategory   = require('./routes/wubi/wubi-category')
+import {routerWubiDict} from './routes/wubi/wubi-dict'
+import {routerWubiWord} from './routes/wubi/wubi-word'
+import {routerWubiCategory} from './routes/wubi/wubi-category'
 
 app.use('/dict'           , routerWubiDict)      // 词库保存 // 保留是因为之前助手需要这个接口路径
 app.use('/wubi/dict'      , routerWubiDict)     // 词条操作
@@ -97,8 +97,8 @@ app.use('/wubi/category'  , routerWubiCategory)  // 词条类别
 
 
 // don't starve
-let routerStarve       = require('./routes/dontstarve/dont-starve')
-app.use('/dont-starve'      , routerStarve)      // 饥荒
+import {routerDontStarve} from './routes/dontstarve/dont-starve'
+app.use('/dont-starve'      , routerDontStarve)      // 饥荒
 
 
 
@@ -120,4 +120,6 @@ app.use((err, req, res, next) => {
   res.render('error')
 })
 
-module.exports = app
+export {
+  app
+}

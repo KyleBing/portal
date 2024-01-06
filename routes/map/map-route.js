@@ -1,16 +1,25 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
-const {get} = require("axios");
-const {adminCount} = require("../../config/configProject");
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode, unicodeEncode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerMapRoute = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config";
+
 const CURRENT_TABLE = 'map_route'
 
 
-router.post('/list', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerMapRoute.post('/list', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         // 已经登录
         .then(userInfo => {
             getRouteLineList(userInfo, req, res)
@@ -53,7 +62,7 @@ function getRouteLineList(userInfo, req, res){
         if (req.body.isMine === "1"){
             filterArray.push(`${CURRENT_TABLE}.uid = ${userInfo.uid}`)
         } else {
-            if (userInfo.email === adminCount){
+            if (userInfo.email === CONFIG_PROJECT.adminCount){
                 filterArray.push(`${CURRENT_TABLE}.uid != ${userInfo.uid}`)
             } else {
                 filterArray.push(`is_public = 1 and ${CURRENT_TABLE}.uid != ${userInfo.uid}`)
@@ -66,7 +75,7 @@ function getRouteLineList(userInfo, req, res){
 
     // keywords
     if (req.body.keyword) {
-        let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
+        let keywords = req.body.keyword.split(' ').map(item => unicodeEncode(item))
         if (keywords.length > 0) {
             let keywordStrArray = keywords.map(keyword => ` (${CURRENT_TABLE}.name like '%${keyword}%' ESCAPE '/')`)
             filterArray.push(keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
@@ -85,11 +94,11 @@ function getRouteLineList(userInfo, req, res){
     let promisesAll = []
     let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
     let sql = `${sqlBase} ${filterSql}  limit ${pointStart} , ${req.body.pageSize}`
-    promisesAll.push(utility.getDataFromDB(
+    promisesAll.push(getDataFromDB(
         'diary',
         [sql])
     )
-    promisesAll.push(utility.getDataFromDB(
+    promisesAll.push(getDataFromDB(
         'diary',
         [`select count(*) as sum from ${CURRENT_TABLE} ${filterSql}`], true)
     )
@@ -98,8 +107,8 @@ function getRouteLineList(userInfo, req, res){
         .all(promisesAll)
         .then(([dataList, dataSum]) => {
             dataList.forEach(item => {
-                item.name = utility.unicodeDecode(item.name)
-                item.note = utility.unicodeDecode(item.note)
+                item.name = unicodeDecode(item.name)
+                item.note = unicodeDecode(item.note)
                 return item
             })
             res.send(new ResponseSuccess({
@@ -117,7 +126,7 @@ function getRouteLineList(userInfo, req, res){
         })
 }
 
-router.get('/detail', (req, res, next) => {
+routerMapRoute.get('/detail', (req: Request, res: Response, next) => {
     let sql = `select  
                                 ${CURRENT_TABLE}.id, 
                                 ${CURRENT_TABLE}.name, 
@@ -138,12 +147,12 @@ router.get('/detail', (req, res, next) => {
                                users.username
                                     from ${CURRENT_TABLE}
                                         left join users on ${CURRENT_TABLE}.uid = users.uid where id = ${req.query.id}`
-    utility.getDataFromDB('diary', [sql], true)
+    getDataFromDB('diary', [sql], true)
         .then(lineInfoData => {
             if (lineInfoData.is_public === 1){
                 res.send(new ResponseSuccess(lineInfoData))
             } else {
-                utility.verifyAuthorization(req)
+                verifyAuthorization(req)
                     .then(userInfo => {
                         if (lineInfoData.uid === userInfo.uid || userInfo.group_id === 1){
                             res.send(new ResponseSuccess(lineInfoData))
@@ -158,13 +167,12 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
-router.post('/add', (req, res, next) => {
+routerMapRoute.post('/add', (req: Request, res: Response, next) => {
     // 1. 验证用户信息是否正确
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查路线名是否已存在
-            let encodedName = utility.unicodeEncode(req.body.name)
+            let encodedName = unicodeEncode(req.body.name)
             checkRouteExist(encodedName)
                 .then(existLogs => {
                     console.log(existLogs)
@@ -174,9 +182,9 @@ router.post('/add', (req, res, next) => {
                     } else {
                         // 2.2 不存在名为 hash 的记录
                         let sqlArray = []
-                        let parsedName = utility.unicodeEncode(req.body.name) // !
-                        let parsedNote = utility.unicodeEncode(req.body.note) || ''
-                        let timeNow = utility.dateFormatter(new Date())
+                        let parsedName = unicodeEncode(req.body.name) // !
+                        let parsedNote = unicodeEncode(req.body.note) || ''
+                        let timeNow = dateFormatter(new Date())
                         sqlArray.push(`
                            insert into ${CURRENT_TABLE}(
                            name, area, road_type, policy, seasons, video_link, paths, note, date_init, date_modify, thumb_up, uid)
@@ -195,10 +203,9 @@ router.post('/add', (req, res, next) => {
                                 '${userInfo.uid}'
                                 )
                         `)
-                        utility
-                            .getDataFromDB('diary', sqlArray)
+                        getDataFromDB('diary', sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(userInfo.uid)
+                                updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess( // 添加成功之后，返回添加后的 路线  id
                                     {id: data.insertId},
                                     '添加成功'
@@ -224,23 +231,23 @@ router.post('/add', (req, res, next) => {
 function checkRouteExist(routeName) {
     let sqlArray = []
     sqlArray.push(`select * from map_route where name='${routeName}'`)
-    return utility.getDataFromDB('diary', sqlArray)
+    return getDataFromDB('diary', sqlArray)
 }
 
 
-router.put('/modify', (req, res, next) => {
+routerMapRoute.put('/modify', (req: Request, res: Response, next) => {
 
     Promise.all([
-        utility.verifyAuthorization(req),
-        utility.getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
+        verifyAuthorization(req),
+        getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
     ])
         .then(response => {
             let userInfo = response[0]
             let lineInfoData = response[1]
             if (lineInfoData.uid === userInfo.uid || userInfo.group_id === 1){
-                let parsedName = utility.unicodeEncode(req.body.name) // !
-                let parsedNote = utility.unicodeEncode(req.body.note) || ''
-                let timeNow = utility.dateFormatter(new Date())
+                let parsedName = unicodeEncode(req.body.name) // !
+                let parsedNote = unicodeEncode(req.body.note) || ''
+                let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 sqlArray.push(`
                         update ${CURRENT_TABLE}
@@ -257,10 +264,9 @@ router.put('/modify', (req, res, next) => {
                                 thumb_up = '${req.body.thumb_up || 0}'
                             WHERE id='${req.body.id}'
                     `)
-                utility
-                    .getDataFromDB('diary', sqlArray, true)
+                getDataFromDB('diary', sqlArray, true)
                     .then(data => {
-                        utility.updateUserLastLoginTime(req.body.email)
+                        updateUserLastLoginTime(req.body.email)
                         res.send(new ResponseSuccess(data, '修改成功'))
                     })
                     .catch(err => {
@@ -276,10 +282,10 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
-router.delete('/delete', (req, res, next) => {
+routerMapRoute.delete('/delete', (req: Request, res: Response, next) => {
     Promise.all([
-        utility.verifyAuthorization(req),
-        utility.getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
+        verifyAuthorization(req),
+        getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
     ])
         .then(response => {
             let userInfo = response[0]
@@ -290,11 +296,10 @@ router.delete('/delete', (req, res, next) => {
                         DELETE from ${CURRENT_TABLE}
                         WHERE id='${req.body.id}'
                     `)
-                utility
-                    .getDataFromDB('diary', sqlArray)
+                getDataFromDB('diary', sqlArray)
                     .then(data => {
                         if (data.affectedRows > 0) {
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess('', '删除成功'))
                         } else {
                             res.send(new ResponseError('', '删除失败'))
@@ -314,4 +319,4 @@ router.delete('/delete', (req, res, next) => {
 })
 
 
-module.exports = router
+export {routerMapRoute}

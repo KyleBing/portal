@@ -1,9 +1,19 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
-const configProject = require("../../config/configProject");
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode, unicodeEncode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerThumbUp = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config";
 
 
 /**
@@ -11,15 +21,14 @@ const configProject = require("../../config/configProject");
  * req.query.key
  */
 
-router.get('/', (req, res, next) => {
+routerThumbUp.get('/', (req: Request, res: Response, next) => {
     if (req.query.key) {
         let sqlArray = [
             `SELECT *
              from thumbs_up
              where name = '${req.query.key}'`
         ]
-        utility
-            .getDataFromDB( 'diary', sqlArray, true)
+        getDataFromDB( 'diary', sqlArray, true)
             .then(thumbsUpResult => {
                 res.send(new ResponseSuccess(thumbsUpResult.count, '请求成功'))
             })
@@ -31,13 +40,12 @@ router.get('/', (req, res, next) => {
     }
 })
 
-router.get('/all', (req, res, next) => {
+routerThumbUp.get('/all', (req: Request, res: Response, next) => {
     let sqlArray = [
         `SELECT *
              from thumbs_up`
     ]
-    utility
-        .getDataFromDB( 'diary', sqlArray)
+    getDataFromDB( 'diary', sqlArray)
         .then(thumbsUpResult => {
             res.send(new ResponseSuccess(thumbsUpResult, '请求成功'))
         })
@@ -46,11 +54,10 @@ router.get('/all', (req, res, next) => {
         })
 })
 
-router.get('/list', (req, res, next) => {
+routerThumbUp.get('/list', (req: Request, res: Response, next) => {
     let sqlArray = []
     sqlArray.push(` select * from thumbs_up order by date_init asc`)
-    utility
-        .getDataFromDB( 'diary', sqlArray)
+    getDataFromDB( 'diary', sqlArray)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
                 res.send(new ResponseSuccess(data))
@@ -63,28 +70,26 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-router.post('/add', (req, res, next) => {
+routerThumbUp.post('/add', (req: Request, res: Response, next) => {
     checkThumbsUpExist(req.body.name)
         .then(dataThumbsUpExistanceArray => {
             // email 记录是否已经存在
             if (dataThumbsUpExistanceArray.length > 0){
                 return res.send(new ResponseError('', '点赞信息名已存在'))
             } else {
-                utility
-                    .verifyAuthorization(req)
+                verifyAuthorization(req)
                     .then(userInfo => {
-                        if (userInfo.email === configProject.adminCount ){
-                            let timeNow = utility.dateFormatter(new Date())
+                        if (userInfo.email === CONFIG_PROJECT.adminCount ){
+                            let timeNow = dateFormatter(new Date())
                             let sqlArray = []
                             sqlArray.push(`
                                 insert into thumbs_up(name, count, description, link_address, date_init) 
                                 values('${req.body.name}', ${req.body.count}, '${req.body.description || ''}', '${req.body.link_address}', '${timeNow}')`
                             )
-                            utility
-                                .getDataFromDB( 'diary', sqlArray)
+                            getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
-                                        utility.updateUserLastLoginTime(userInfo.uid)
+                                        updateUserLastLoginTime(userInfo.uid)
                                         res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 id
                                     } else {
                                         res.send(new ResponseError('', '点赞信息查询错误'))
@@ -106,12 +111,11 @@ router.post('/add', (req, res, next) => {
         })
 })
 
-router.put('/modify', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerThumbUp.put('/modify', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
-                let timeNow = utility.dateFormatter(new Date())
+            if (userInfo.email === CONFIG_PROJECT.adminCount ){
+                let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 sqlArray.push(`
                     update thumbs_up set 
@@ -121,11 +125,10 @@ router.put('/modify', (req, res, next) => {
                     link_address = '${req.body.link_address}'
                     where name = '${req.body.name}'
                 `)
-                utility
-                    .getDataFromDB( 'diary', sqlArray)
+                getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的点赞信息 id
                         } else {
                             res.send(new ResponseError('', '点赞信息操作错误'))
@@ -143,21 +146,19 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
-router.delete('/delete', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerThumbUp.delete('/delete', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
+            if (userInfo.email === CONFIG_PROJECT.adminCount ){
                 let sqlArray = []
                 sqlArray.push(`
                     delete from thumbs_up 
                                where name = '${req.body.name}'
                     `)
-                utility
-                    .getDataFromDB( 'diary', sqlArray)
+                getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的点赞信息 id
                         } else {
                             res.send(new ResponseError('', '点赞信息删除失败'))
@@ -180,10 +181,10 @@ router.delete('/delete', (req, res, next) => {
 function checkThumbsUpExist(name){
     let sqlArray = []
     sqlArray.push(`select * from thumbs_up where name='${name}'`)
-    return utility.getDataFromDB( 'diary', sqlArray)
+    return getDataFromDB( 'diary', sqlArray)
 }
 
 
 
 
-module.exports = router
+export {routerThumbUp}

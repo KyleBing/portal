@@ -1,26 +1,32 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+import {
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerDiaryBill = express.Router()
 
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
 
-router.get('/', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryBill.get('/', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             // let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 日记起点
             let sqlArray = []
             sqlArray.push(`SELECT *from diaries where uid='${ruserInfo.uid}' and category = 'bill' order by date asc`)
-            utility
-                .getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( 'diary', sqlArray)
                 .then(billDiaryList => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
+                    updateUserLastLoginTime(userInfo.uid)
                     let billResponse = []
 
                     billDiaryList.forEach(diary => {
                         // decode unicode
-                        billResponse.push(utility.processBillOfDay(diary, []))
+                        billResponse.push(processBillOfDay(diary, []))
                     })
                     res.send(new ResponseSuccess(billResponse, '请求成功'))
                 })
@@ -34,13 +40,12 @@ router.get('/', (req, res, next) => {
 })
 
 
-router.get('/sorted', (req, res, next) => {
+routerDiaryBill.get('/sorted', (req: Request, res: Response, next) => {
     if (!req.query.years){
         res.send(new ResponseError('', '未选择年份'))
         return
     }
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             let yearNow = new Date().getFullYear()
             let sqlRequests = []
@@ -61,9 +66,10 @@ router.get('/sorted', (req, res, next) => {
                 }
             })
 
-            sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
+            sqlRequests.push(getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
-            Promise.all(sqlRequests)
+            Promise
+                .all(sqlRequests)
                 .then(yearDataArray => {
                     let responseData = []
                     let afterValues = yearDataArray[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
@@ -82,7 +88,7 @@ router.get('/sorted', (req, res, next) => {
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
                         daysArray.forEach(item => {
-                            let processedDayData = utility.processBillOfDay(item, keywords)
+                            let processedDayData = processBillOfDay(item, keywords)
                             // 当内容 items 的数量大于 0 时
                             if (processedDayData.items.length > 0){
                                 daysData.push(processedDayData)
@@ -102,14 +108,14 @@ router.get('/sorted', (req, res, next) => {
                                 month: daysArray[0].month,
                                 count: daysArray.length,
                                 days: daysData,
-                                sum: utility.formatMoney(monthSum),
-                                sumIncome: utility.formatMoney(monthSumIncome),
-                                sumOutput: utility.formatMoney(monthSumOutput),
+                                sum: formatMoney(monthSum),
+                                sumIncome: formatMoney(monthSumIncome),
+                                sumOutput: formatMoney(monthSumOutput),
                                 food: {
-                                    breakfast: utility.formatMoney(food.breakfast),
-                                    launch: utility.formatMoney(food.launch),
-                                    dinner: utility.formatMoney(food.dinner),
-                                    sum: utility.formatMoney(food.breakfast + food.launch + food.dinner)
+                                    breakfast: formatMoney(food.breakfast),
+                                    launch: formatMoney(food.launch),
+                                    dinner: formatMoney(food.dinner),
+                                    sum: formatMoney(food.breakfast + food.launch + food.dinner)
                                 }
                             })
                         }
@@ -129,14 +135,13 @@ router.get('/sorted', (req, res, next) => {
 
 
 
-router.get('/keys', (req, res, next) => {
+routerDiaryBill.get('/keys', (req: Request, res: Response, next) => {
     let currentYear = new Date().getFullYear()
     let years = []
     for(let i=0;i<5;i++){
         years.push( currentYear - i)
     }
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             let sqlRequests = []
             let sqlArray = []
@@ -156,7 +161,7 @@ router.get('/keys', (req, res, next) => {
                 }
             })
 
-            sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
+            sqlRequests.push(getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             let BillKeyMap = new Map()
 
@@ -167,7 +172,7 @@ router.get('/keys', (req, res, next) => {
                     let afterValues = yearDataArray[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
                     afterValues.forEach(daysArray => {
                         daysArray.forEach(item => {
-                            let processedDayData = utility.processBillOfDay(item, [])
+                            let processedDayData = processBillOfDay(item, [])
                             // 当内容 items 的数量大于 0 时
                             if (processedDayData.items.length > 0){
                                 processedDayData.items.forEach(billItem => {
@@ -203,15 +208,13 @@ router.get('/keys', (req, res, next) => {
         })
 })
 
-router.get('/day-sum', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryBill.get('/day-sum', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            utility
-                .getDataFromDB('diary', [`select content, date  from diaries where category = 'bill' and uid = '${userInfo.uid}'`])
+            getDataFromDB('diary', [`select content, date  from diaries where category = 'bill' and uid = '${userInfo.uid}'`])
                 .then(billData => {
                     let finalData = billData.map(item => {
-                        let originalData = utility.processBillOfDay(item)
+                        let originalData = processBillOfDay(item)
                         delete originalData.items
                         delete originalData.sum
                         return originalData
@@ -226,7 +229,7 @@ router.get('/day-sum', (req, res, next) => {
 })
 
 
-router.get('/month-sum', (req, res, next) => {
+routerDiaryBill.get('/month-sum', (req: Request, res: Response, next) => {
 
     let yearNow = new Date().getFullYear()
     let yearStart = 2018
@@ -235,8 +238,7 @@ router.get('/month-sum', (req, res, next) => {
         years.push(i)
     }
 
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             let yearNow = new Date().getFullYear()
             let sqlRequests = []
@@ -257,7 +259,7 @@ router.get('/month-sum', (req, res, next) => {
                 }
             })
 
-            sqlRequests.push(utility.getDataFromDB( 'diary', sqlArray))
+            sqlRequests.push(getDataFromDB( 'diary', sqlArray))
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             Promise.all(sqlRequests)
                 .then(yearDataArray => {
@@ -273,7 +275,7 @@ router.get('/month-sum', (req, res, next) => {
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         let keywords = req.query.keyword ? req.query.keyword.split(' ') : []
                         daysArray.forEach(item => {
-                            let processedDayData = utility.processBillOfDay(item, keywords)
+                            let processedDayData = processBillOfDay(item, keywords)
                             // 当内容 items 的数量大于 0 时
                             if (processedDayData.items.length > 0){
                                 daysData.push(processedDayData)
@@ -289,9 +291,9 @@ router.get('/month-sum', (req, res, next) => {
                                 month_id: daysArray[0].month_id,
                                 month: daysArray[0].month,
                                 count: daysArray.length,
-                                sum: utility.formatMoney(monthSum),
-                                sumIncome: utility.formatMoney(monthSumIncome),
-                                sumOutput: utility.formatMoney(monthSumOutput),
+                                sum: formatMoney(monthSum),
+                                sumIncome: formatMoney(monthSumIncome),
+                                sumOutput: formatMoney(monthSumOutput),
                             })
                         }
 
@@ -310,4 +312,4 @@ router.get('/month-sum', (req, res, next) => {
 
 
 
-module.exports = router
+export {routerDiaryBill}

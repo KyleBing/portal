@@ -1,9 +1,9 @@
-const express = require('express')
-const router = express.Router()
+import express from 'express'
+const routerIndex = express.Router()
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+routerIndex.get('/', (req, res, next) => {
   res.render('index', { title: 'Portal for Diary' })
 })
 
-module.exports = router
+export {routerIndex}

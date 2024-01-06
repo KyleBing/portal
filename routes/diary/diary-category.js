@@ -1,19 +1,29 @@
-const express = require('express')
-const router = express.Router()
-const configProject = require('../../config/configProject')
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerDiaryCategory = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config"
+
 
 const TABLE_NAME = 'diary_category' // 表名
 const DATA_NAME = '日记类别'          // 操作的数据名
 
-router.get('/list', (req, res, next) => {
+routerDiaryCategory.get('/list', (req: Request, res: Response, next) => {
     // query.name_en
     let sqlArray = []
     sqlArray.push(` select * from ${TABLE_NAME} order by sort_id asc`)
-    utility
-        .getDataFromDB( 'diary', sqlArray)
+    getDataFromDB( 'diary', sqlArray)
         .then(data => {
             if (data) { // 没有记录时会返回  undefined
                 res.send(new ResponseSuccess(data))
@@ -25,29 +35,27 @@ router.get('/list', (req, res, next) => {
             res.send(new ResponseError(err, err.message))
         })
 })
-router.post('/add', (req, res, next) => {
+routerDiaryCategory.post('/add', (req: Request, res: Response, next) => {
     checkCategoryExist(req.body.name_en)
         .then(dataCategoryExistanceArray => {
             // email 记录是否已经存在
             if (dataCategoryExistanceArray.length > 0){
                 return res.send(new ResponseError('', `${DATA_NAME}已存在`))
             } else {
-                utility
-                    .verifyAuthorization(req)
+                verifyAuthorization(req)
                     .then(userInfo => {
-                        if (userInfo.email === configProject.adminCount ){
-                            let timeNow = utility.dateFormatter(new Date())
+                        if (userInfo.email === CONFIG_PROJECT.adminCount ){
+                            let timeNow = dateFormatter(new Date())
                             // query.name_en
                             let sqlArray = []
                             sqlArray.push(`
                                 insert into ${TABLE_NAME}(name, name_en, color, sort_id, date_init) 
                                 values('${req.body.name}', '${req.body.name_en}', '${req.body.color}', '${req.body.sort_id}', '${timeNow}')`
                             )
-                            utility
-                                .getDataFromDB( 'diary', sqlArray)
+                            getDataFromDB( 'diary', sqlArray)
                                 .then(data => {
                                     if (data) { // 没有记录时会返回  undefined
-                                        utility.updateUserLastLoginTime(userInfo.uid)
+                                        updateUserLastLoginTime(userInfo.uid)
                                         res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
                                     } else {
                                         res.send(new ResponseError('', `${DATA_NAME}查询错误`))
@@ -69,12 +77,11 @@ router.post('/add', (req, res, next) => {
         })
 
 })
-router.put('/modify', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryCategory.put('/modify', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
-                let timeNow = utility.dateFormatter(new Date())
+            if (userInfo.email === CONFIG_PROJECT.adminCount ){
+                let timeNow = dateFormatter(new Date())
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(`
@@ -85,11 +92,10 @@ router.put('/modify', (req, res, next) => {
                     sort_id = ${req.body.sort_id}
                     where name_en = '${req.body.name_en}'
                     `)
-                utility
-                    .getDataFromDB( 'diary', sqlArray)
+                getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '修改成功')) // 添加成功之后，返回添加后的日记类别 id
                         } else {
                             res.send(new ResponseError('', `${DATA_NAME}操作错误`))
@@ -107,22 +113,20 @@ router.put('/modify', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
-router.delete('/delete', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryCategory.delete('/delete', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
+            if (userInfo.email === CONFIG_PROJECT.adminCount ){
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(`
                     delete from ${TABLE_NAME} 
                                where name_en = '${req.body.name_en}'
                     `)
-                utility
-                    .getDataFromDB( 'diary', sqlArray)
+                getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的日记类别 id
                         } else {
                             res.send(new ResponseError('', '日记类别删除失败'))
@@ -145,9 +149,9 @@ router.delete('/delete', (req, res, next) => {
 function checkCategoryExist(categoryName){
     let sqlArray = []
     sqlArray.push(`select * from ${TABLE_NAME} where name_en='${categoryName}'`)
-    return utility.getDataFromDB( 'diary', sqlArray)
+    return getDataFromDB( 'diary', sqlArray)
 }
 
 
 
-module.exports = router
+export {routerDiaryCategory}

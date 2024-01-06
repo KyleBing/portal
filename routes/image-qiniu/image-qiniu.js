@@ -1,11 +1,19 @@
-const express = require('express')
-const router = express.Router()
-const configProject = require('../../config/configProject')
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+import {
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerImageQiniu = express.Router()
 
-const qiniu = require("qiniu")
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config"
+import qiniu from "qiniu"
 
 /**
  * 七牛云图片 处理
@@ -15,13 +23,12 @@ const TABLE_NAME = 'image_qiniu' // 文件存储
 const DATA_NAME = '七牛云图片'    // 操作的数据名
 
 // 生成 token 根据 bucket
-router.get('/', (req, res, next) => {
+routerImageQiniu.get('/', (req: Request, res: Response, next) => {
     if (req.query.bucket){
         if (req.query.hahaha){
             res.send(new ResponseSuccess(getQiniuToken(req.query.bucket), '凭证获取成功'))
         } else {
-            utility
-                .verifyAuthorization(req)
+            verifyAuthorization(req)
                 .then(userInfo => {
                     res.send(new ResponseSuccess(getQiniuToken(req.query.bucket), '凭证获取成功'))
                 })
@@ -35,7 +42,7 @@ router.get('/', (req, res, next) => {
 })
 
 function getQiniuToken(bucket){
-    let mac = new qiniu.auth.digest.Mac(configProject.qiniuAccessKey, configProject.qiniuSecretKey);
+    let mac = new qiniu.auth.digest.Mac(CONFIG_PROJECT.qiniuAccessKey, CONFIG_PROJECT.qiniuSecretKey);
     const options = {
         scope: bucket
     };
@@ -43,9 +50,8 @@ function getQiniuToken(bucket){
     return putPolicy.uploadToken(mac)
 }
 
-router.get('/list', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerImageQiniu.get('/list', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 文件起点
 
@@ -75,10 +81,9 @@ router.get('/list', (req, res, next) => {
 
             sqlArray.push(`order by date_create desc`)
 
-            utility
-                .getDataFromDB( DB_NAME, sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
+                    updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
@@ -89,23 +94,21 @@ router.get('/list', (req, res, next) => {
             res.send(new ResponseError(verified, '无权查看文件列表：用户信息错误'))
         })
 })
-router.post('/add', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerImageQiniu.post('/add', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
-                let timeNow = utility.dateFormatter(new Date())
+            if (userInfo.email === CONFIG_PROJECT.adminCount ){
+                let timeNow = dateFormatter(new Date())
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(`
                                 insert into ${TABLE_NAME}(id, description, date_create, type, bucket, base_url) 
                                 values('${req.body.id}', '${req.body.description || ''}', '${timeNow}', '${req.body.type}', '${req.body.bucket}', '${req.body.base_url}')`
                 )
-                utility
-                    .getDataFromDB( DB_NAME, sqlArray)
+                getDataFromDB( DB_NAME, sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的文件 id
                         } else {
                             res.send(new ResponseError('', `${DATA_NAME}查询错误`))
@@ -124,21 +127,19 @@ router.post('/add', (req, res, next) => {
         })
 
 })
-router.delete('/delete', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerImageQiniu.delete('/delete', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
+            if (userInfo.email === CONFIG_PROJECT.adminCount ){
                 let sqlArray = []
                 sqlArray.push(`
                     delete from ${TABLE_NAME} 
                                where id = '${req.body.id}'
                     `)
-                utility
-                    .getDataFromDB( DB_NAME, sqlArray)
+                getDataFromDB( DB_NAME, sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的文件类别 id
                         } else {
                             res.send(new ResponseError('', `${DATA_NAME}删除失败`))
@@ -160,4 +161,4 @@ router.delete('/delete', (req, res, next) => {
 
 
 
-module.exports = router
+export {routerImageQiniu}

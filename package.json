@@ -1,11 +1,12 @@
 {
   "name": "diary-portal-private",
-  "version": "1.2.3",
+  "version": "1.2.2",
   "date-modify": "2023-06-01",
   "date-init": "2022-03-21",
   "private": true,
+  "main": "bin/www.ts",
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "ts-node bin/www.ts",
     "ws": "node ./bin/ws.js"
   },
   "dependencies": {
@@ -14,13 +15,19 @@
     "debug": "~2.6.9",
     "express": "~4.18.2",
     "http-errors": "~2.0.0",
+    "js-base64": "^3.7.5",
     "morgan": "~1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql": "^2.18.1",
     "pug": "3.0.2",
     "qiniu": "^7.8.0",
     "ws": "^8.11.0",
-    "xml2json": "^0.12.0",
-    "js-base64": "^3.7.5"
+    "xml2json": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }

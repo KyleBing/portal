@@ -1,9 +1,14 @@
 class ResponseError {
-    constructor(data, message) {
-        this.success = false // true / false
+    success: boolean
+    message: string
+    data: any
+    constructor(data: any, message?: string) {
+        this.success = false
         this.message = message
         this.data = data
     }
 }
 
-module.exports = ResponseError
+export {
+    ResponseError
+}

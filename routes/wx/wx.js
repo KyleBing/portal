@@ -1,9 +1,9 @@
 const express = require('express')
-const configProject = require('../../config/configProject')
+const CONFIG_PROJECT = require('../../config/configProject')
 const utility = require("../../config/utility");
 const ResponseSuccess = require("../../response/ResponseSuccess");
 const ResponseError = require("../../response/ResponseError");
-const router = express.Router()
+const routerWX = express.Router()
 const axios = require("axios");
 
 let TEMP_TOKEN = {
@@ -12,13 +12,13 @@ let TEMP_TOKEN = {
     expireTimeStamp: 0
 }
 
-router.post('/login', (req, res, next) => {
+routerWX.post('/login', (req: Request, res: Response, next) => {
     axios({
         url: 'https://api.weixin.qq.com/sns/jscode2session',
         method: 'GET',
         params:{
-            appid: configProject.wxMiniAppId,
-            secret: configProject.wxMiniSecret,
+            appid: CONFIG_PROJECT.wxMiniAppId,
+            secret: CONFIG_PROJECT.wxMiniSecret,
             js_code: req.body.code, // code 是小程序里获取的
             grant_type: 'authorization_code'
         }
@@ -31,15 +31,15 @@ router.post('/login', (req, res, next) => {
         })
 })
 
-router.post('/login-with-token', (req, res, next) => {
+routerWX.post('/login-with-token', (req: Request, res: Response, next) => {
     getToken()
         .then(token => {
             axios({
                 url: 'https://api.weixin.qq.com/sns/jscode2session',
                 method: 'GET',
                 params:{
-                    appid: configProject.wxMiniAppId,
-                    secret: configProject.wxMiniSecret,
+                    appid: CONFIG_PROJECT.wxMiniAppId,
+                    secret: CONFIG_PROJECT.wxMiniSecret,
                     js_code: req.body.code, // code 是小程序里获取的
                     grant_type: 'authorization_code'
                 }
@@ -67,8 +67,8 @@ function getToken(){
                 url: 'https://api.weixin.qq.com/cgi-bin/token',
                 params: {
                     grant_type: 'client_credential',
-                    appid: configProject.wxMiniAppId,
-                    secret: configProject.wxMiniSecret
+                    appid: CONFIG_PROJECT.wxMiniAppId,
+                    secret: CONFIG_PROJECT.wxMiniSecret
                 }
             })
                 .then(res => {
@@ -86,4 +86,4 @@ function getToken(){
 }
 
 
-module.exports = router
+export {routerWX}

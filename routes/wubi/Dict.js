@@ -1,10 +1,9 @@
-// 字典对象
-const Word = require("./Word")
-const WordGroup = require("./WordGroup")
 
 
 // 获取字符串的实际 unicode 长度，如：一个 emoji 表情的正确长度应该为 1
-function getUnicodeStringLength(str){
+import {Word} from "./Word";
+
+function getUnicodeStringLength(str: string){
     let wordLength = 0
     for(let letter of str){
         wordLength = wordLength + 1
@@ -12,11 +11,21 @@ function getUnicodeStringLength(str){
     return wordLength
 }
 
-
-const os = require('os')
+import os from "os"
+import {WordGroup} from "./WordGroup";
 
 class Dict {
-    constructor(fileContent, fileName, filePath) {
+    dictTypeName: string
+    filePath: string
+    fileName: string
+    header: string | null
+    wordsOrigin: Word[] | WordGroup[]
+    lastIndex: number
+    lastGroupIndex: number
+    isGroupMode: boolean
+    indexEndOfHeader: number
+
+    constructor(fileContent: string, fileName: string, filePath: string) {
         this.dictTypeName    = 'Dict'
         this.filePath        = filePath  // 文件路径
         this.fileName        = fileName  // 文件名字
@@ -51,7 +60,7 @@ class Dict {
     }
 
     // 返回所有 word
-    getDictWordsInNormalMode(fileContent){
+    getDictWordsInNormalMode(fileContent: string){
         let startPoint = new Date().getTime()
         let EOL = this.getFileEOLFrom(fileContent)
         let lines = fileContent.split(EOL) // 拆分词条与编码成单行
@@ -67,7 +76,7 @@ class Dict {
     }
 
     // 返回 word 分组
-    getDictWordsInGroupMode(fileContent){
+    getDictWordsInGroupMode(fileContent: string){
         let startPoint = new Date().getTime()
         let EOL = this.getFileEOLFrom(fileContent)
         let lines = fileContent.split(EOL) // 拆分词条与编码成单行
@@ -80,11 +89,11 @@ class Dict {
                 if (temp && temp.groupName) { // 如果上一个已经有名字了，说明需要保存
                     wordsGroup.push(temp)
                 }
-                temp = new WordGroup(this.lastGroupIndex++, item.substring(3).trim())
+                temp = new WordGroup(this.lastGroupIndex++, item.substring(3).trim(), [],false)
                 lastItemIsEmptyLine = false
             } else if (item.indexOf('\t') > -1) { // 是词条
                 if (!temp){ // 第一行是词条时，没有分组名时
-                    temp = new WordGroup(this.lastGroupIndex++)
+                    temp = new WordGroup(this.lastGroupIndex++, '', [], false)
                 }
                 temp.dict.push(getWordFromLine(index, item))
                 lastItemIsEmptyLine = false
@@ -99,7 +108,7 @@ class Dict {
                     if (temp){
                         temp.groupName = temp.groupName || '未命名'
                         wordsGroup.push(temp)
-                        temp = new WordGroup(this.lastGroupIndex++)
+                        temp = new WordGroup(this.lastGroupIndex++, '', [], false)
                     }
                 }
                 lastItemIsEmptyLine = true
@@ -116,7 +125,7 @@ class Dict {
         }
     }
     // 判断码表文件的换行符是 \r\n 还是 \n
-    getFileEOLFrom(fileContent){
+    getFileEOLFrom(fileContent: string){
         if(fileContent.indexOf('\r\n') > -1){
             console.log('文件换行符为： \\r\\n')
             return '\r\n'
@@ -127,7 +136,7 @@ class Dict {
     }
 
     // 排序
-    sort(groupIndex){
+    sort(groupIndex: number){
         let startPoint = new Date().getTime()
         if (this.isGroupMode){ // group mode
             if (groupIndex !== -1){ // -1 代表全部
@@ -145,7 +154,7 @@ class Dict {
 
     // 查重，返回重复定义的字词
     // includeCharacter 当包含单字时
-    getRepetitionWords(filterSingleCharacter, isWithAllRepeatWord){
+    getRepetitionWords(filterSingleCharacter: string, isWithAllRepeatWord: boolean){
         let startPoint = new Date().getTime()
         let wordMap = new Map()
         let repetitionWords = []
@@ -246,7 +255,7 @@ class Dict {
      * @param word Word
      * @param groupIndex Number
      */
-    addNewWord(word, groupIndex){
+    addNewWord(word: Word, groupIndex: number){
         if(this.isGroupMode){
             if (groupIndex !== -1){
                 this.wordsOrigin[groupIndex].dict.push(word)
@@ -261,7 +270,7 @@ class Dict {
     }
 
     // 依次序添加 words
-    addWordsInOrder(words, groupIndex){
+    addWordsInOrder(words: Word[], groupIndex: number){
         let startPoint = new Date().getTime()
         if (this.isGroupMode && groupIndex !== -1){
             this.addWordToDictInOrderWithGroup(words, groupIndex)
@@ -274,7 +283,7 @@ class Dict {
     }
 
     // 依次序添加 word
-    addWordToDictInOrder(word){
+    addWordToDictInOrder(word: Word){
         let insetPosition = null // 插入位置 index
         for (let i=0; i<this.wordsOrigin.length-1; i++){ // -1 为了避免下面 i+1 为 undefined
             if (word.code >= this.wordsOrigin[i]  && word.code <= this.wordsOrigin[i+1].code){
@@ -292,7 +301,7 @@ class Dict {
 
 
     // 依次序添加 word groupMode
-    addWordToDictInOrderWithGroup(words, groupIndex){
+    addWordToDictInOrderWithGroup(words: Word[], groupIndex: number){
         let dictWords = this.wordsOrigin[groupIndex].dict
         console.log('TODO: add to group')
         words.forEach(word => {
@@ -314,7 +323,7 @@ class Dict {
 
 
     // 删除词条
-    deleteWords(wordIdSet, isDeleteInSelf){ // isDeleteInSelf 在移动词条到自己分组时使用，不删除空的分组
+    deleteWords(wordIdSet: Set<number>, isDeleteInSelf: boolean){ // isDeleteInSelf 在移动词条到自己分组时使用，不删除空的分组
         if (this.isGroupMode){
             let deleteGroupIds = [] // 记录 words 为 0 的 group，最后删除分组
             this.wordsOrigin.forEach((group, index) => {
@@ -332,12 +341,12 @@ class Dict {
         }
     }
 
-    addGroupBeforeId(groupIndex){
+    addGroupBeforeId(groupIndex: number){
         this.wordsOrigin.splice(groupIndex,0,new WordGroup(this.lastGroupIndex++,'',[],true))
     }
 
     // 分组模式：删除分组
-    deleteGroup(groupId){
+    deleteGroup(groupId: number){
         console.log('要删除的分组 id: ',groupId)
         this.wordsOrigin = this.wordsOrigin.filter(group => group.id !== groupId)
     }
@@ -365,7 +374,7 @@ class Dict {
 
 
     // 在 origin 中调换两个词条的位置
-    exchangePositionInOrigin(word1, word2){
+    exchangePositionInOrigin(word1: Word, word2: Word){
         // 确保 word1 在前
         if (parseInt(word1.id) > parseInt(word2.id)){
             let temp = word1
@@ -386,7 +395,7 @@ class Dict {
 }
 
 // 从一条词条字符串中获取 word 对象
-function getWordFromLine(index, lineStr){
+function getWordFromLine(index: number, lineStr: string){
     let wordArray = lineStr.split('\t')
     let code = wordArray[1]
     code = code.replaceAll('\r', '') // 消除 v1.07 版本的错误
@@ -395,4 +404,4 @@ function getWordFromLine(index, lineStr){
     let note = wordArray[3]
     return new Word(index, code, word, priority, note)
 }
-module.exports =  Dict
+export {Dict}

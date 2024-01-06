@@ -1,9 +1,9 @@
 const express = require('express')
-const configProject = require('../../config/configProject')
+const CONFIG_PROJECT = require('../../config/configProject')
 const utility = require("../../config/utility");
 const ResponseSuccess = require("../../response/ResponseSuccess");
 const ResponseError = require("../../response/ResponseError");
-const router = express.Router()
+const routerWXPublic = express.Router()
 const axios = require("axios");
 
 const crypto = require('crypto')
@@ -19,7 +19,7 @@ let access_token = {
 
 
 // 微信公众号信息处理
-router.post('/', (req, res, next) => {
+routerWXPublic.post('/', (req: Request, res: Response, next) => {
     if (checkWxAuthorization(req)){
         // console.log('[ 已验证 ] 请求来自微信')
         let xmlData = ''
@@ -58,7 +58,7 @@ function checkWxAuthorization(req){
     let timestamp = req.query.timestamp  // 时间戳
     let nonce     = req.query.nonce      // 随机数
 
-    let tempArray = [configProject.wxToken, timestamp, nonce].sort()
+    let tempArray = [CONFIG_PROJECT.wxToken, timestamp, nonce].sort()
     let tempVerifiedStr = tempArray.join('')
     let shasum = crypto.createHash('sha1')
     let generatedSignature = shasum.update(tempVerifiedStr).digest('hex')
@@ -66,7 +66,7 @@ function checkWxAuthorization(req){
 }
 
 
-router.get('/menu/create', (req, res, next) => {
+routerWXPublic.get('/menu/create', (req: Request, res: Response, next) => {
     axios({
         method: 'post',
         url: 'https://api.weixin.qq.com/cgi-bin/menu/create',
@@ -112,7 +112,7 @@ router.get('/menu/create', (req, res, next) => {
 })
 
 
-router.get('/access-token', (req, res, next) => {
+routerWXPublic.get('/access-token', (req: Request, res: Response, next) => {
     getAccessToken()
         .then(response => {
             res.send(new ResponseSuccess(response, '获取成功'))
@@ -132,8 +132,8 @@ function getAccessToken(){
                 url: 'https://api.weixin.qq.com/cgi-bin/token',
                 params: {
                     grant_type: 'client_credential',
-                    appid: configProject.wxPublicAppId,
-                    secret: configProject.wxPublicSecret
+                    appid: CONFIG_PROJECT.wxPublicAppId,
+                    secret: CONFIG_PROJECT.wxPublicSecret
                 },
             })
                 .then(response => {
@@ -160,7 +160,7 @@ function getAccessToken(){
 
 
 // 微信开发者绑定
-router.get('/', (req, res, next) => {
+routerWXPublic.get('/', (req: Request, res: Response, next) => {
     let echostr   = req.query.echostr    // 随机字符串
     if (checkWxAuthorization(req)){
         console.log('[已验证] 微信')
@@ -174,4 +174,4 @@ router.get('/', (req, res, next) => {
 
 
 
-module.exports = router
+export {routerWXPublic}

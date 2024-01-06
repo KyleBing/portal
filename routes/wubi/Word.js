@@ -1,14 +1,11 @@
 // 词条对象
 class Word{
-    /**
-     *
-     * @param id Number ID
-     * @param code String 编码
-     * @param word String 词条
-     * @param priority String 权重
-     * @param note String 备注
-     */
-    constructor(id, code, word, priority, note) {
+    id: number
+    code: string
+    word: string
+    priority: number | ''
+    note: string
+    constructor(id: number, code: string, word: string, priority: number, note: string) {
         this.id = id
         this.code = code
         this.word = word
@@ -32,30 +29,32 @@ class Word{
             return this.word + '\t' + this.code
         }
     }
-    toFileString(seperator, codeFirst){
+    toFileString(seperator: string, codeFirst: boolean){
         if (codeFirst){
             return this.code + seperator + this.word
         } else {
             return this.word + seperator + this.code
         }
     }
-    setCode(code){
+    setCode(code: string){
         this.code = code
     }
-    setId(id){
+    setId(id: number){
         this.id = id
     }
     // 复制一个对象
     clone(){
         return new Word(this.id, this.code, this.word, this.priority, this.note)
     }
-    isEqualTo(word){
+    isEqualTo(word: Word){
         return this.id === word.id
     }
     // compare a word to another word
-    isContentEqualTo(word){
+    isContentEqualTo(word: Word){
         return this.word === word.word && this.code === word.code
     }
 }
 
-module.exports =  Word
+export {
+    Word
+}

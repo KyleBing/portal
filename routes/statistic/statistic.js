@@ -1,14 +1,23 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require("../../response/ResponseSuccess");
-const ResponseError = require("../../response/ResponseError");
-const configProject = require("../../config/configProject")
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode, unicodeEncode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerDiaryStatistic = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config";
 
 // 统计数据，后台用的
-router.get('/', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryStatistic.get('/', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             if (userInfo.group_id === 1) {
@@ -39,8 +48,7 @@ router.get('/', (req, res, next) => {
                               (SELECT COUNT(*) FROM wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
                         `)
             }
-            utility
-                .getDataFromDB('diary', sqlArray, true)
+            getDataFromDB('diary', sqlArray, true)
                 .then(data => {
                     res.send(new ResponseSuccess(data))
                 })
@@ -54,14 +62,12 @@ router.get('/', (req, res, next) => {
 })
 
 // 用户统计 - 日记
-router.get('/user-data-diary', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryStatistic.get('/user-data-diary', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`SELECT nickname, count_diary FROM users where count_diary > 3 order by count_diary desc`)
-            utility
-                .getDataFromDB('diary', sqlArray)
+            getDataFromDB('diary', sqlArray)
                 .then(data => {
                     res.send(new ResponseSuccess(data))
                 })
@@ -75,14 +81,12 @@ router.get('/user-data-diary', (req, res, next) => {
 })
 
 // 用户统计 - 词条
-router.get('/user-data-words', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryStatistic.get('/user-data-words', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`SELECT nickname, count_words FROM users where count_words != 0 order by count_words desc`)
-            utility
-                .getDataFromDB('diary', sqlArray)
+            getDataFromDB('diary', sqlArray)
                 .then(data => {
                     res.send(new ResponseSuccess(data))
                 })
@@ -96,13 +100,11 @@ router.get('/user-data-words', (req, res, next) => {
 })
 
 // 日记类别数据
-router.get('/category', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryStatistic.get('/category', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             // 1. get categories list
-            utility
-                .getDataFromDB('diary', [` select * from diary_category order by sort_id asc`])
+            getDataFromDB('diary', [` select * from diary_category order by sort_id asc`])
                 .then(categoryListData => {
                     if (categoryListData) {
                         // categoryListData = [{"id": 1, "name_en": "life", "name": "生活", "count": 0, "color": "#FF9500", "date_init": "2022-03-23T13:23:02.000Z"}]
@@ -118,8 +120,7 @@ router.get('/category', (req, res, next) => {
                     from diaries where uid='${userInfo.uid}'
             `)
 
-                        utility
-                            .getDataFromDB('diary', sqlArray, true)
+                        getDataFromDB('diary', sqlArray, true)
                             .then(data => {
                                 res.send(new ResponseSuccess(data))
                             })
@@ -140,9 +141,8 @@ router.get('/category', (req, res, next) => {
 })
 
 // 年份月份数据
-router.get('/year', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryStatistic.get('/year', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let yearNow = new Date().getFullYear()
             let sqlRequests = []
@@ -159,7 +159,7 @@ router.get('/year', (req, res, next) => {
                 group by month
                 order by month desc
         `)
-                sqlRequests.push(utility.getDataFromDB('diary', sqlArray))
+                sqlRequests.push(getDataFromDB('diary', sqlArray))
             }
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             Promise.all(sqlRequests)
@@ -188,16 +188,14 @@ router.get('/year', (req, res, next) => {
 })
 
 // 用户统计信息
-router.get('/users', (req, res, next) => {utility
-    .verifyAuthorization(req)
+routerDiaryStatistic.get('/users', (req: Request, res: Response, next) => {verifyAuthorization(req)
     .then(userInfo => {
         let sqlArray = []
         sqlArray.push(`
                             select uid, last_visit_time, nickname, register_time, count_diary, count_dict, count_map_route, sync_count
                             from users where count_diary >= 5 or sync_count >= 5 or count_map_route >=1
                         `)
-        utility
-            .getDataFromDB('diary', sqlArray)
+        getDataFromDB('diary', sqlArray)
             .then(data => {
                 res.send(new ResponseSuccess(data))
             })
@@ -211,13 +209,11 @@ router.get('/users', (req, res, next) => {utility
 })
 
 // 气温统计
-router.get('/weather', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+routerDiaryStatistic.get('/weather', (req: Request, res: Response, next) => {
+    verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = [`select temperature, temperature_outside, date from diaries where category = 'life' and uid = '${userInfo.uid}'`]
-            utility
-                .getDataFromDB('diary', sqlArray)
+            getDataFromDB('diary', sqlArray)
                 .then(weatherData => {
                     res.send(new ResponseSuccess(weatherData, '请求成功'))
                 })
@@ -231,4 +227,4 @@ router.get('/weather', (req, res, next) => {
 
 })
 
-module.exports = router
+export {routerDiaryStatistic}

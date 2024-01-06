@@ -1,11 +1,22 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode, unicodeEncode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerQrFront = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config";
 
 
-router.get('/', (req, res, next) => {
+routerQrFront.get('/', (req: Request, res: Response, next) => {
     // query.hash
     let sqlArray = []
     sqlArray.push(`
@@ -36,16 +47,14 @@ router.get('/', (req, res, next) => {
                      left join users on qrs.uid = users.uid
                         where qrs.hash = '${req.query.hash}' and is_public = 1`)
     // 1. 先查询出 QR 结果
-    utility
-        .getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( 'diary', sqlArray, true)
         .then(dataQr => {
             if (dataQr) { // 没有记录时会返回  undefined
                 // decode unicode
-                dataQr.message = utility.unicodeDecode(dataQr.message)
-                dataQr.description = utility.unicodeDecode(dataQr.description)
+                dataQr.message = unicodeDecode(dataQr.message)
+                dataQr.description = unicodeDecode(dataQr.description)
 
-                utility
-                    .getDataFromDB(
+                getDataFromDB(
                         'diary',
                         [`select hash, car_name, car_plate, imgs from qrs 
                                   where 
@@ -75,10 +84,9 @@ router.get('/', (req, res, next) => {
 })
 
 function countPlusOne(hash){
-    utility
-        .getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
+    getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
         .then()
 }
 
 
-module.exports = router
+export {routerQrFront}

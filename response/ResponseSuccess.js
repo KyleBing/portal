@@ -1,9 +1,14 @@
 class ResponseSuccess {
-    constructor(data, message) {
-        this.success = true // true / false
+    success: boolean
+    message: string
+    data: any
+    constructor(data: any, message?: string) {
+        this.success = true
         this.message = message
         this.data = data
     }
 }
 
-module.exports = ResponseSuccess
+export {
+    ResponseSuccess
+}

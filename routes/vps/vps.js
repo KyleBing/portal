@@ -1,9 +1,21 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
-const configProject = require("../../config/configProject")
+import {
+    dateFormatter,
+    formatMoney,
+    getDataFromDB,
+    processBillOfDay,
+    unicodeDecode, unicodeEncode,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
+import express = require("express")
+const routerVPSBandwagonHost = express.Router()
+
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
+import {CONFIG_PROJECT} from "../../config/config";
+import crypto from 'crypto'
+
 const axios = require("axios");
 
 // BandwagonHost Command List
@@ -25,8 +37,8 @@ const BandwagonHostCommand = {
     getRateLimitStatus: "getRateLimitStatus"
 }
 
-router.get('/bandwagonhost', (req, res, next) => {
-    const url = `https://api.64clouds.com/v1/${BandwagonHostCommand.getLiveServiceInfo}?veid=${configProject.vpsVEID}&api_key=${configProject.vpsApiKey}`
+routerVPSBandwagonHost.get('/bandwagonhost', (req: Request, res: Response, next) => {
+    const url = `https://api.64clouds.com/v1/${BandwagonHostCommand.getLiveServiceInfo}?veid=${CONFIG_PROJECT.vpsVEID}&api_key=${CONFIG_PROJECT.vpsApiKey}`
 
     axios
         .get(url)
@@ -39,7 +51,7 @@ router.get('/bandwagonhost', (req, res, next) => {
 })
 
 
-router.get('/justmysocks', (req, res, next) => {
+routerVPSBandwagonHost.get('/justmysocks', (req: Request, res: Response, next) => {
     const url = 'https://justmysocks5.net/members/getbwcounter.php?service=622366&id=f6f5ae7c-df75-41e9-8891-ea90292e66ac'
 
 
@@ -71,4 +83,4 @@ router.get('/justmysocks', (req, res, next) => {
         })
 })
 
-module.exports = router
+export {routerVPSBandwagonHost}

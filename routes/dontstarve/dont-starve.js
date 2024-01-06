@@ -1,15 +1,15 @@
-const express = require('express')
-const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+import {getDataFromDB,} from "../../config/utility";
+import express from "express"
+const routerDontStarve = express.Router()
 
+import {Response, Request} from "express";
+import {ResponseError} from "../../response/ResponseError";
+import {ResponseSuccess} from "../../response/ResponseSuccess";
 
 // get list
 function getDataList(sqlArray, path){
-    router.get(path, (req, res, next) => {
-        utility
-            .getDataFromDB(
+    routerDontStarve.get(path, (req: Request, res: Response, next) => {
+        getDataFromDB(
                 'starve',
                 sqlArray,
             )
@@ -86,9 +86,8 @@ ListGetInfo.forEach(item => {
 
 
 function getDataInfo(tableName, path){
-    router.get(path, (req, res, next) => {
-        utility
-            .getDataFromDB(
+    routerDontStarve.get(path, (req: Request, res: Response, next) => {
+        getDataFromDB(
                 'starve',
                 [`select * from ${tableName} where id = ${req.query.id}`],
                 true
@@ -109,4 +108,4 @@ function getDataInfo(tableName, path){
 
 
 
-module.exports = router
+export {routerDontStarve}
