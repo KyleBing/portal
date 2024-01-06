@@ -4,8 +4,7 @@
 ## 一、项目说明
 服务对象： [《标题日记》](https://github.com/KyleBing/diary-vue)
 
-> 线上已运行的例子：
-
+> 线上已运行的例子：  
 > http [http://kylebing.cn:3000/diary/detail?diaryId=6766](http://kylebing.cn:3000/diary/detail?diaryId=6766)
 
 
