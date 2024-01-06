@@ -236,24 +236,24 @@ CREATE TABLE \`invitations\`  (
 -- Table structure for diaries
 -- ----------------------------
 DROP TABLE IF EXISTS \`diaries\`;
-CREATE TABLE \`diaries\`  (
+CREATE TABLE \`diaries\` (
   \`id\` int(11) NOT NULL AUTO_INCREMENT,
-  \`date\` datetime(0) NOT NULL COMMENT '日记日期',
-  \`title\` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '标题',
-  \`content\` longtext CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL COMMENT '内容',
-  \`temperature\` int(3) NULL DEFAULT -273 COMMENT '室内温度',
-  \`temperature_outside\` int(3) NULL DEFAULT -273 COMMENT '室外温度',
-  \`weather\` enum('sunny','cloudy','overcast','sprinkle','rain','thunderstorm','fog','snow','tornado','smog','sandstorm') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'sunny' COMMENT '天气',
-  \`category\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'life' COMMENT '类别',
-  \`date_create\` datetime(0) NOT NULL COMMENT '创建日期',
-  \`date_modify\` datetime(0) NULL DEFAULT NULL COMMENT '编辑日期',
+  \`date\` datetime NOT NULL COMMENT '日记日期',
+  \`title\` text NOT NULL COMMENT '标题',
+  \`content\` longtext DEFAULT NULL COMMENT '内容',
+  \`temperature\` float(6,0) DEFAULT -273 COMMENT '室内温度',
+  \`temperature_outside\` float(6,0) DEFAULT -273 COMMENT '室外温度',
+  \`weather\` enum('sunny','cloudy','overcast','sprinkle','rain','thunderstorm','fog','snow','tornado','smog','sandstorm') NOT NULL DEFAULT 'sunny' COMMENT '天气',
+  \`category\` varchar(20) NOT NULL DEFAULT 'life' COMMENT '类别',
+  \`date_create\` datetime NOT NULL COMMENT '创建日期',
+  \`date_modify\` datetime DEFAULT NULL COMMENT '编辑日期',
   \`uid\` int(11) NOT NULL COMMENT '用户id',
   \`is_public\` int(1) NOT NULL DEFAULT 0 COMMENT '是否共享',
   \`is_markdown\` int(1) NOT NULL DEFAULT 0 COMMENT '是否为 Markdown',
   PRIMARY KEY (\`id\`) USING BTREE,
-  INDEX \`category_link\`(\`category\`) USING BTREE,
-  CONSTRAINT \`category_link\` FOREIGN KEY (\`category\`) REFERENCES \`diary_category\` (\`name_en\`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
+  KEY \`category_link\` (\`category\`) USING BTREE,
+  CONSTRAINT \`category_link\` FOREIGN KEY (\`category\`) REFERENCES \`diary_category\` (\`name_en\`)
+) ENGINE=InnoDB AUTO_INCREMENT=13160 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=COMPACT;
 
 -- ----------------------------
 -- Table structure for qrs
