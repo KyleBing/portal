@@ -76,7 +76,9 @@ router.get('/sorted', (req, res, next) => {
                         let food = {
                             breakfast: 0, // 早餐
                             launch: 0, // 午餐
-                            dinner: 0 // 晚饭
+                            dinner: 0, // 晚饭
+                            supermarket: 0, // 超市
+                            fruit: 0, // 水果
                         }
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
@@ -92,6 +94,8 @@ router.get('/sorted', (req, res, next) => {
                                 food.breakfast = food.breakfast + processedDayData.items.filter(item => item.item.indexOf('早餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
                                 food.launch = food.launch + processedDayData.items.filter(item => item.item.indexOf('午餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
                                 food.dinner = food.dinner + processedDayData.items.filter(item => item.item.indexOf('晚餐') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
+                                food.supermarket = food.supermarket + processedDayData.items.filter(item => item.item.indexOf('超市') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
+                                food.fruit = food.fruit + processedDayData.items.filter(item => item.item.indexOf('水果') > -1).reduce((a,b) => a.price || 0 + b.price || 0, 0)
                             }
                         })
 
@@ -109,7 +113,9 @@ router.get('/sorted', (req, res, next) => {
                                     breakfast: utility.formatMoney(food.breakfast),
                                     launch: utility.formatMoney(food.launch),
                                     dinner: utility.formatMoney(food.dinner),
-                                    sum: utility.formatMoney(food.breakfast + food.launch + food.dinner)
+                                    supermarket: utility.formatMoney(food.supermarket),
+                                    fruit: utility.formatMoney(food.fruit),
+                                    sum: utility.formatMoney(food.breakfast + food.launch + food.dinner + food.supermarket + food.fruit)
                                 }
                             })
                         }
