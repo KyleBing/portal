@@ -99,6 +99,8 @@ router.get('/sorted', (req, res, next) => {
                             }
                         })
 
+                        let billMonthTop5 = getBillMonthTop5(daysData)
+
                         if (daysData.length > 0){
                             responseData.push({
                                 id: daysArray[0].id,
@@ -109,6 +111,8 @@ router.get('/sorted', (req, res, next) => {
                                 sum: utility.formatMoney(monthSum),
                                 sumIncome: utility.formatMoney(monthSumIncome),
                                 sumOutput: utility.formatMoney(monthSumOutput),
+                                incomeTop5: billMonthTop5.income,
+                                outcomeTop5: billMonthTop5.outcome,
                                 food: {
                                     breakfast: utility.formatMoney(food.breakfast),
                                     launch: utility.formatMoney(food.launch),
@@ -132,6 +136,23 @@ router.get('/sorted', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
+
+// 获取每月账单最高的前5个消费项目
+function getBillMonthTop5(daysBillItem){
+    let monthBillItems = []
+    daysBillItem.forEach(billDay => {
+        billDay.items.forEach(billItem => {
+            monthBillItems.push(billItem)
+        })
+    })
+    monthBillItems.sort((a,b) => a.price > b.price ? 1: -1)
+
+    let billItemsIncome = monthBillItems.filter(item => item.price > 0).sort((a,b) => a.price < b.price ? 1: -1)
+    return {
+        outcome: monthBillItems.splice(0,5),
+        income: billItemsIncome.splice(0,5)
+    }
+}
 
 
 
