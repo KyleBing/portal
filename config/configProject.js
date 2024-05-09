@@ -6,6 +6,9 @@ module.exports = {
     qiniuAccessKey: '',
     qiniuSecretKey: '',
 
+    /**
+     * 以下信息未启用
+     */
     // 微信小程序开发者信息
     wxMiniAppId: '',
     wxMiniSecret: '',
