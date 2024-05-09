@@ -224,6 +224,49 @@ npm run start
 5. 将项目文件放置于服务器 nginx 主目录的 `/diary/` 下
 6. 此时后台项目在 `/portal/` 目录下，前端项目在 `/dairy/` 下，这样就能直接使用了
 
+最终的目录结构应该是这样的：
+
+```bash
+[ nginx 根目录 ]
+      ├── diary-vue  # 日记前端源码
+      │   ├── dist
+      │   ├── archive
+      │   ...
+      │
+      ├── diary      # 日记前端
+      │   ├── appicon-apple.png
+      │   ├── assets
+      │   ├── favicon.png
+      │   ├── images
+      │   ├── index.html
+      │   ├── logo.svg
+      │   ├── manifest.webmanifest
+      │   ├── preloading.css
+      │   ├── registerSW.js
+      │   ├── sw.js
+      │   └── workbox-3e911b1d.js
+      │
+      └── portal     # 日记后台
+          ├── app.js
+          ├── bin
+          ├── CHANGELOG.md
+          ├── config
+          ├── DATABASE_LOCK
+          ├── entity
+          ├── node_modules
+          ├── package.json
+          ├── package-lock.json
+          ├── public
+          ├── README.md
+          ├── response
+          ├── routes
+          ├── temp
+          ├── upload
+          ├── views
+          └── yarn.lock
+
+```
+
 ## 三、开发说明
 
 ### 1. 密码说明
