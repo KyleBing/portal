@@ -228,12 +228,12 @@ npm run start
 
 ```bash
 [ nginx 根目录 ]
-      ├── diary-vue  # 日记前端源码
+      ├── diary-vue  # 日记前端源码，这个不需要放到服务器上，它的主要作用就是生成下方的 ./diary/ 目录下的前端项目文件
       │   ├── dist
       │   ├── archive
       │   ...
       │
-      ├── diary      # 日记前端
+      ├── diary      # 日记前端文件
       │   ├── appicon-apple.png
       │   ├── assets
       │   ├── favicon.png
