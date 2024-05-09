@@ -227,10 +227,11 @@ npm run start
 最终的目录结构应该是这样的：
 
 ```bash
-[ nginx 根目录 ]
+[ nginx 文档根目录 ]
       ├── diary-vue  # 日记前端源码，这个不需要放到服务器上，它的主要作用就是生成下方的 ./diary/ 目录下的前端项目文件
       │   ├── dist
       │   ├── archive
+      │   ├── src
       │   ...
       │
       ├── diary      # 日记前端文件
