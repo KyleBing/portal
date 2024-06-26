@@ -33,7 +33,6 @@ router.get('/', (req, res, next) => {
         })
 })
 
-
 router.get('/sorted', (req, res, next) => {
     if (!req.query.years){
         res.send(new ResponseError('', '未选择年份'))
@@ -154,8 +153,6 @@ function getBillMonthTop5(daysBillItem){
     }
 }
 
-
-
 router.get('/keys', (req, res, next) => {
     let currentYear = new Date().getFullYear()
     let years = []
@@ -252,7 +249,6 @@ router.get('/day-sum', (req, res, next) => {
         })
 })
 
-
 router.get('/month-sum', (req, res, next) => {
 
     let yearNow = new Date().getFullYear()
@@ -334,6 +330,39 @@ router.get('/month-sum', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
+
+router.get('/borrow', (req, res, next) => {
+    // 1. 验证 token
+    utility
+        .verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`select * from diaries where title = '借还记录' and uid = ${userInfo.uid}`) // 固定 '借还记录' 为标题的日记作为存储借还记录
+            // 2. 查询出日记结果
+            utility
+                .getDataFromDB( 'diary', sqlArray, true)
+                .then(dataDiary => {
+                    if (dataDiary) {
+                        // decode unicode
+                        dataDiary.title = utility.unicodeDecode(dataDiary.title || '')
+                        dataDiary.content = utility.unicodeDecode(dataDiary.content || '')
+
+                        // 记录最后访问时间
+                        utility.updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess(dataDiary.content))
+                    } else {
+                        res.send(new ResponseSuccess('', ''))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
 
 
 
