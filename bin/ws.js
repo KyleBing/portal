@@ -22,7 +22,7 @@ class WSMessage{
 
 // 创建连接
 wss.on("connection", ws => {
-    console.log("新客户端已连接")
+    console.log(`${utility.dateFormatter(new Date())} 新客户端已连接`)
     // 接收到 client 数据时
     ws.on("message", data => {
         // console.log(`客户端返回信息: ${data}`)
@@ -53,13 +53,13 @@ wss.on("connection", ws => {
         }
     })
     ws.on("close", () => {
-        console.log("websocket server: 客户端已关闭连接")
+        console.log(`${utility.dateFormatter(new Date())} websocket server: 客户端已关闭连接`)
     })
     ws.onerror = function () {
-        console.log("websocket server: 出错了")
+        console.log(`${utility.dateFormatter(new Date())} websocket server: 出错了`)
     }
 })
 
 
 
-console.log("websocket 服务已运行在端口 9999")
+console.log(`${utility.dateFormatter(new Date())} websocket 服务已运行在端口 9999`)

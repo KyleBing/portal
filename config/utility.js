@@ -79,8 +79,7 @@ function getMysqlConnection(dbName){
 
 
 // 格式化时间，输出字符串
-function dateFormatter(date, formatString) {
-    formatString = formatString || 'yyyy-MM-dd hh:mm:ss'
+function dateFormatter(date, formatString = 'yyyy-MM-dd hh:mm:ss') {
     let dateRegArray = {
         "M+": date.getMonth() + 1,                      // 月份
         "d+": date.getDate(),                           // 日
