@@ -106,34 +106,35 @@ INSERT INTO \`diary_category\` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-
 -- Table structure for users
 -- ----------------------------
 DROP TABLE IF EXISTS \`users\`;
-CREATE TABLE \`users\`  (
+CREATE TABLE \`users\` (
   \`uid\` int(11) NOT NULL AUTO_INCREMENT,
-  \`email\` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  \`email\` varchar(50) NOT NULL,
   \`nickname\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '昵称',
   \`username\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '用户名',
-  \`password\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '密码',
-  \`register_time\` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
-  \`last_visit_time\` datetime(0) NULL DEFAULT NULL COMMENT '最后访问时间',
-  \`comment\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '注释',
-  \`wx\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT '' COMMENT '微信二维码',
-  \`phone\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '手机号',
-  \`homepage\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '个人主页',
-  \`gaode\` varchar(250) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NULL DEFAULT NULL COMMENT '高德组队邀请码',
+  \`password\` varchar(100) NOT NULL COMMENT '密码',
+  \`register_time\` datetime DEFAULT NULL COMMENT '注册时间',
+  \`last_visit_time\` datetime DEFAULT NULL COMMENT '最后访问时间',
+  \`comment\` varchar(255) DEFAULT NULL COMMENT '注释',
+  \`wx\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT '' COMMENT '微信二维码',
+  \`phone\` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '手机号',
+  \`homepage\` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '个人主页',
+  \`gaode\` varchar(250) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin DEFAULT NULL COMMENT '高德组队邀请码',
   \`group_id\` int(11) NOT NULL DEFAULT 2 COMMENT '用户组别ID',
-  \`count_diary\` int(8) NULL DEFAULT 0 COMMENT '数量 - 日记',
-  \`count_dict\` int(8) NULL DEFAULT 0 COMMENT '数量 - 码表',
-  \`count_qr\` int(8) NULL DEFAULT 0 COMMENT '数量 - 二维码',
-  \`count_words\` int(8) NULL DEFAULT 0 COMMENT '数量 - 词条',
-  \`count_map_route\` int(8) NULL DEFAULT 0 COMMENT '数量 - 路线规划',
-  \`sync_count\` int(6) NULL DEFAULT 0 COMMENT '同步次数',
-  \`avatar\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT 'avatar图片地址',
-  \`city\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '城市',
-  \`geolocation\` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '经纬度',
-  PRIMARY KEY (\`uid\`, \`email\`) USING BTREE,
-  INDEX \`group_id\`(\`group_id\`) USING BTREE,
-  INDEX \`uid\`(\`uid\`) USING BTREE,
-  CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
+  \`count_diary\` int(8) DEFAULT 0 COMMENT '数量 - 日记',
+  \`count_dict\` int(8) DEFAULT 0 COMMENT '数量 - 码表',
+  \`count_qr\` int(8) DEFAULT 0 COMMENT '数量 - 二维码',
+  \`count_words\` int(8) DEFAULT 0 COMMENT '数量 - 词条',
+  \`count_map_route\` int(8) DEFAULT 0 COMMENT '数量 - 路线规划',
+  \`count_map_pointer\` int(8) DEFAULT NULL COMMENT '数量 - 地图点图',
+  \`sync_count\` int(6) DEFAULT 0 COMMENT '同步次数',
+  \`avatar\` varchar(255) DEFAULT NULL COMMENT 'avatar图片地址',
+  \`city\` varchar(255) DEFAULT NULL COMMENT '城市',
+  \`geolocation\` varchar(255) DEFAULT NULL COMMENT '经纬度',
+  PRIMARY KEY (\`uid\`,\`email\`) USING BTREE,
+  KEY \`group_id\` (\`group_id\`) USING BTREE,
+  KEY \`uid\` (\`uid\`) USING BTREE,
+  CONSTRAINT \`group_id\` FOREIGN KEY (\`group_id\`) REFERENCES \`user_group\` (\`id\`)
+) ENGINE=InnoDB AUTO_INCREMENT=2526 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=COMPACT;
 
 
 -- ----------------------------
