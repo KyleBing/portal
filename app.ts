@@ -20,11 +20,14 @@ app.use(express.static(path.join(__dirname, 'public')))
 import routerIndex from "./routes"
 app.use('/', routerIndex)
 
-let usersRouter = require('./routes/user/user')
-app.use('/user', usersRouter)
+// 用户
+import routerUser from "./routes/user/user"
+app.use('/user', routerUser)
 
-let init = require('./routes/init')
-app.use('/init', init)
+// 初始化
+import routerInit from "./routes/init"
+app.use('/init', routerInit)
+
 //
 // // 邀请码
 // let invitationRouter = require('./routes/user/invitation')
@@ -65,6 +68,7 @@ let routerDiary = require('./routes/diary/diary')
 let routerDiaryCategory = require('./routes/diary/diary-category')
 let routerBankCard = require('./routes/diary/bankCard')
 let routerBill = require('./routes/diary/bill')
+
 app.use('/diary', routerDiary)
 app.use('/diary-category', routerDiaryCategory)
 app.use('/bank-card', routerBankCard)      // 银行卡列表

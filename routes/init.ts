@@ -1,11 +1,19 @@
-const express = require('express')
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../response/Response";
+import mysql from "mysql"
+import configDatabase from "../config/configDatabase";
+import configProject from "../config/configProject";
+import {
+    unicodeDecode,
+    dateFormatter,
+    getDataFromDB,
+    getMysqlConnection,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../config/utility";
 const router = express.Router()
-const utility = require('../config/utility')
-const ResponseSuccess = require("../response/ResponseSuccess");
-const ResponseError = require("../response/Response");
-const mysql = require("mysql");
-const configDatabase = require("../config/configDatabase");
-const { stat, writeFile } = require("fs");
+
+import {stat, writeFile } from "fs"
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
 
@@ -29,7 +37,7 @@ router.get('/', (req, res, next) => {
                     createTables()
                         .then(msg => {
 
-                            writeFile(LOCK_FILE_NAME, 'Database has been locked, file add in ' + utility.dateFormatter(new Date()),err => {
+                            writeFile(LOCK_FILE_NAME, 'Database has been locked, file add in ' + dateFormatter(new Date()),err => {
                                 if (err){
                                     res.send('初始化失败')
                                 } else {
@@ -386,4 +394,4 @@ SET FOREIGN_KEY_CHECKS = 1;
     })
 }
 
-module.exports = router
+export default router

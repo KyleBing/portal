@@ -5,7 +5,8 @@
   "date-init": "2022-03-21",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "npx ts-node bin/www",
+    "original_start": "node ./bin/www",
     "ws": "node ./bin/ws.js"
   },
   "dependencies": {

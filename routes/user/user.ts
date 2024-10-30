@@ -1,3 +1,8 @@
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import mysql from "mysql"
+import configDatabase from "../../config/configDatabase";
+import configProject from "../../config/configProject";
 import {
     unicodeDecode,
     dateFormatter,
@@ -6,15 +11,9 @@ import {
     updateUserLastLoginTime,
     verifyAuthorization
 } from "../../config/utility";
-
-import express from "express"
-
-import configProject from "../../config/configProject";
-import {ResponseSuccess, ResponseError } from "../../response/Response";
 const router = express.Router()
 
 import bcrypt from "bcrypt"
-
 
 /* GET users listing. */
 router.post('/register', (req, res, next) => {
@@ -500,5 +499,4 @@ router.delete('/destroy-account', (req, res, next) => {
         })
 })
 
-
-module.exports = router
+export default router
