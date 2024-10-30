@@ -1,9 +1,12 @@
 import mysql from "mysql"
 import configDatabase from "./configDatabase";
 import configProject from "./configProject";
+import {Diary, DiaryBill} from "../entity/Diary";
+import express from "express";
+import {BillDay} from "../entity/Bill";
 
 // 运行 SQL 并返回 DB 结果
-function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: boolean) {
+function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: boolean): Promise<any> {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection({
             host:       configDatabase.host,
@@ -36,7 +39,7 @@ function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: 
 
 
 // 验证用户是否有权限
-function verifyAuthorization(req: { get: (arg0: string) => any; query: { token: any; }; }){
+function verifyAuthorization(req: express.Request): Promise<any>{
     let token = req.get('Diary-Token') || req.query.token
     let uid = req.get('Diary-Uid')
     return new Promise((resolve, reject) => {
@@ -104,22 +107,22 @@ function dateFormatter(date: Date, formatString = 'yyyy-MM-dd hh:mm:ss') {
 function unicodeEncode(str: string){
     if(!str)return '';
     if(typeof str !== 'string') return str
-    let text = escape(str);
-    text = text.replaceAll(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
+    let text = encodeURIComponent(str);
+    text = text.replace(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
         console.log('source: ',source)
         return source.replace('%', '\\\\')
     })
-    return unescape(text);
+    return decodeURIComponent(text);
 }
 
 // text -> unicode
 function  unicodeDecode(str: string)
 {
-    let text = escape(str);
-    text = text.replaceAll(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
+    let text = encodeURIComponent(str);
+    text = text.replace(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
         return source.replace('%5C', '%')
     })
-    return unescape(text);
+    return decodeURIComponent(text);
 }
 
 function updateUserLastLoginTime(uid: string){
@@ -135,7 +138,7 @@ function updateUserLastLoginTime(uid: string){
 
 
 // 处理账单文本内容，转成格式化的账单数据
-function processBillOfDay(diaryObj, filterKeywords = []){
+function processBillOfDay(diaryObj: DiaryBill, filterKeywords: Array<string> = []){
     let str = diaryObj.content.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
     let strArray =
         str
@@ -146,7 +149,7 @@ function processBillOfDay(diaryObj, filterKeywords = []){
                 return reg.test(item)
             })
 
-    let response = {
+    let response: BillDay = {
         id: diaryObj.id,
         month_id: diaryObj.month_id,
         date: diaryObj.date,
@@ -174,7 +177,7 @@ function processBillOfDay(diaryObj, filterKeywords = []){
     return response
 }
 
-function formatMoney(number: number){
+function formatMoney(number: number): number{
     return Number(number.toFixed(2))
 }
 

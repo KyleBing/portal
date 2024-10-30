@@ -64,10 +64,10 @@ app.use('/init', routerInit)
 // app.use('/vps', routerVPS)
 
 // 日记相关
-let routerDiary = require('./routes/diary/diary')
-let routerDiaryCategory = require('./routes/diary/diary-category')
-let routerBankCard = require('./routes/diary/bankCard')
-let routerBill = require('./routes/diary/bill')
+import routerDiary from './routes/diary/diary'
+import routerDiaryCategory from './routes/diary/diaryCategory'
+import routerBankCard from './routes/diary/bankCard'
+import routerBill from './routes/diary/bill'
 
 app.use('/diary', routerDiary)
 app.use('/diary-category', routerDiaryCategory)

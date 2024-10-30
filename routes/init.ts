@@ -14,17 +14,24 @@ import {
 const router = express.Router()
 
 import {stat, writeFile } from "fs"
+import {DatabaseConfig} from "../entity/DatabaseConfig";
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
 
 router.get('/', (req, res, next) => {
 
     stat(LOCK_FILE_NAME, ((err, stats) => {
-        if (err){
+        if (err) {
             // 如果没有该文件，说明数据库没有初始化过
-            let tempConfigDatabase = {}
+            let tempConfigDatabase: DatabaseConfig = {
+                host: '',
+                user: '',
+                password: '',
+                port: 3306,
+                multipleStatements: false, // 允许同时请求多条 sql 语句
+                timezone: ''
+            }
             Object.assign(tempConfigDatabase, configDatabase)
-            delete tempConfigDatabase.database
             let connection = mysql.createConnection(tempConfigDatabase)
             connection.connect()
             const sqlCreation = 'CREATE DATABASE IF NOT EXISTS diary'
