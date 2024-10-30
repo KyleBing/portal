@@ -3,8 +3,6 @@ import path from "path"
 import logger from "morgan"
 
 import express from "express"
-
-
 const app = express()
 
 // view engine setup
@@ -91,11 +89,11 @@ app.use('/bill', routerBill)
 // // 图片、文件操作
 // let routerFileManager = require('./routes/file/fileManager')
 // app.use('/file-manager', routerFileManager)
-//
-// // 七牛云图片
-// let routerImageQiniu = require('./routes/image-qiniu/image-qiniu')
-// app.use('/image-qiniu', routerImageQiniu)
-//
+
+// 七牛云图片
+import routerQiniu from './routes/imageQiniu/imageQiniu'
+app.use('/image-qiniu', routerQiniu)
+
 //
 // // 五笔相关
 // let routerWubiDict = require('./routes/wubi/wubi-dict')
@@ -118,7 +116,7 @@ app.use((req, res, next) => {
     next(createError(404))
 })
 
-// error handler
+// ERROR HANDLER
 app.use((err, req, res, next) => {
     // set locals, only providing error in development
     res.locals.message = err.message

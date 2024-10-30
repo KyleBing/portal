@@ -1,11 +1,15 @@
-const express = require('express')
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import configProject from "../../config/configProject";
+import {
+    dateFormatter,
+    getDataFromDB,
+    updateUserLastLoginTime,
+    verifyAuthorization
+} from "../../config/utility";
 const router = express.Router()
-const configProject = require('../../config/configProject')
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/Response')
 
-const qiniu = require("qiniu")
+import qiniu from 'qiniu'
 
 /**
  * 七牛云图片 处理
@@ -18,14 +22,13 @@ const DATA_NAME = '七牛云图片'    // 操作的数据名
 router.get('/', (req, res) => {
     if (req.query.bucket){
         if (req.query.hahaha){
-            res.send(new ResponseSuccess(getQiniuToken(req.query.bucket), '凭证获取成功'))
+            res.send(new ResponseSuccess(getQiniuToken(String(req.query.bucket)), '凭证获取成功'))
         } else {
-            utility
-                .verifyAuthorization(req)
-                .then(userInfo => {
-                    res.send(new ResponseSuccess(getQiniuToken(req.query.bucket), '凭证获取成功'))
+            verifyAuthorization(req)
+                .then(() => {
+                    res.send(new ResponseSuccess(getQiniuToken(String(req.query.bucket)), '凭证获取成功'))
                 })
-                .catch(err => {
+                .catch(() => {
                     res.send(new ResponseError('', '参数错误'))
                 })
         }
@@ -34,7 +37,7 @@ router.get('/', (req, res) => {
     }
 })
 
-function getQiniuToken(bucket){
+function getQiniuToken(bucket: string){
     let mac = new qiniu.auth.digest.Mac(configProject.qiniuAccessKey, configProject.qiniuSecretKey);
     const options = {
         scope: bucket
@@ -44,21 +47,23 @@ function getQiniuToken(bucket){
 }
 
 router.get('/list', (req, res) => {
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
-            let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 文件起点
-
+            // let startPoint = 0
+            // if (req.query.pageNo && req.query.pageSize){
+            //     startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize) // 文件起点
+            // }
+            //
             let sqlArray = []
             sqlArray.push(`SELECT * from ${TABLE_NAME} `)
 
             let tempQueryArray = []
             // keywords
             if (req.query.keywords){
-                let keywords = JSON.parse(req.query.keywords)
+                let keywords = JSON.parse(String(req.query.keywords))
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => ` description like '%${keyword}%' ESCAPE '/' ` )
+                    let keywordStrArray = keywords.map((keyword: string) => ` description like '%${keyword}%' ESCAPE '/' ` )
                     tempQueryArray.push(keywordStrArray.join(' or ')) // 在每个 keywords 中间添加 'or'
                 }
             }
@@ -75,10 +80,9 @@ router.get('/list', (req, res) => {
 
             sqlArray.push(`order by date_create desc`)
 
-            utility
-                .getDataFromDB( DB_NAME, sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
+                    updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
@@ -90,22 +94,20 @@ router.get('/list', (req, res) => {
         })
 })
 router.post('/add', (req, res) => {
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount ){
-                let timeNow = utility.dateFormatter(new Date())
+                let timeNow = dateFormatter(new Date())
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(`
                                 insert into ${TABLE_NAME}(id, description, date_create, type, bucket, base_url) 
                                 values('${req.body.id}', '${req.body.description || ''}', '${timeNow}', '${req.body.type}', '${req.body.bucket}', '${req.body.base_url}')`
                 )
-                utility
-                    .getDataFromDB( DB_NAME, sqlArray)
+                getDataFromDB( DB_NAME, sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的文件 id
                         } else {
                             res.send(new ResponseError('', `${DATA_NAME}查询错误`))
@@ -125,8 +127,7 @@ router.post('/add', (req, res) => {
 
 })
 router.delete('/delete', (req, res) => {
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount ){
                 let sqlArray = []
@@ -134,11 +135,10 @@ router.delete('/delete', (req, res) => {
                     delete from ${TABLE_NAME} 
                                where id = '${req.body.id}'
                     `)
-                utility
-                    .getDataFromDB( DB_NAME, sqlArray)
+                getDataFromDB( DB_NAME, sqlArray)
                     .then(data => {
                         if (data) { // 没有记录时会返回  undefined
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的文件类别 id
                         } else {
                             res.send(new ResponseError('', `${DATA_NAME}删除失败`))
@@ -157,7 +157,4 @@ router.delete('/delete', (req, res) => {
         })
 })
 
-
-
-
-module.exports = router
+export default router
