@@ -1,15 +1,25 @@
-const express = require('express')
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import mysql from "mysql"
+import configDatabase from "../../config/configDatabase";
+import configProject from "../../config/configProject";
+import {
+    unicodeEncode,
+    unicodeDecode,
+    dateFormatter,
+    getDataFromDB,
+    getMysqlConnection,
+    updateUserLastLoginTime,
+    verifyAuthorization, processBillOfDay, formatMoney
+} from "../../config/utility";
+import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
+import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/Response')
-const {get} = require("axios");
+
 const CURRENT_TABLE = 'map_pointer'
 
-
 router.post('/list', (req, res) => {
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         // 已经登录
         .then(userInfo => {
             getPointerList(userInfo, req, res)
@@ -147,8 +157,7 @@ router.get('/detail', (req, res) => {
 
 router.post('/add', (req, res) => {
     // 1. 验证用户信息是否正确
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查路线名是否已存在
             let encodedName = utility.unicodeEncode(req.body.name)
@@ -186,7 +195,6 @@ router.post('/add', (req, res) => {
                                 res.send(new ResponseSuccess( // 添加成功之后，返回添加后的 路线  id
                                     {id: data.insertId},
                                     '信息添加成功',
-                                    '添加成功'
                                 ))
                             })
                             .catch(err => {
@@ -294,5 +302,4 @@ router.delete('/delete', (req, res) => {
         })
 })
 
-
-module.exports = router
+export default router

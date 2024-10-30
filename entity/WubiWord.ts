@@ -1,5 +1,13 @@
 // 词条对象
-class Word{
+import WubiDict from "@entity/WubiDict";
+
+class WubiWord {
+    id = 0
+    code = ''
+    word = ''
+    priority: string | number = ''
+    note = ''
+
     /**
      *
      * @param id Number ID
@@ -8,7 +16,7 @@ class Word{
      * @param priority String 权重
      * @param note String 备注
      */
-    constructor(id, code, word, priority, note) {
+    constructor(id: number, code: string, word: string, priority: number | string, note: string) {
         this.id = id
         this.code = code
         this.word = word
@@ -39,23 +47,23 @@ class Word{
             return this.word + seperator + this.code
         }
     }
-    setCode(code){
+    setCode(code: string){
         this.code = code
     }
-    setId(id){
+    setId(id: number){
         this.id = id
     }
     // 复制一个对象
     clone(){
-        return new Word(this.id, this.code, this.word, this.priority, this.note)
+        return new WubiWord(this.id, this.code, this.word, this.priority, this.note)
     }
-    isEqualTo(word){
+    isEqualTo(word: WubiWord){
         return this.id === word.id
     }
     // compare a word to another word
-    isContentEqualTo(word){
+    isContentEqualTo(word: WubiWord){
         return this.word === word.word && this.code === word.code
     }
 }
 
-module.exports =  Word
+export default WubiWord

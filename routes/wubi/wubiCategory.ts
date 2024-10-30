@@ -1,9 +1,20 @@
-const express = require('express')
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import mysql from "mysql"
+import configDatabase from "../../config/configDatabase";
+import configProject from "../../config/configProject";
+import {
+    unicodeEncode,
+    unicodeDecode,
+    dateFormatter,
+    getDataFromDB,
+    getMysqlConnection,
+    updateUserLastLoginTime,
+    verifyAuthorization, processBillOfDay, formatMoney
+} from "../../config/utility";
+import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
+import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
-const configProject = require('../../config/configProject')
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/Response')
 
 const TABLE_NAME = 'wubi_category'      // 表名
 const DATA_NAME = '五笔码表类别'          // 操作的数据名

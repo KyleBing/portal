@@ -1,6 +1,6 @@
 // 字典对象
-const Word = require("./Word")
-const WordGroup = require("./WordGroup")
+const Word = require("./WubiWord")
+const WordGroup = require("./WubiWordGroup")
 
 
 // 获取字符串的实际 unicode 长度，如：一个 emoji 表情的正确长度应该为 1
@@ -15,7 +15,17 @@ function getUnicodeStringLength(str){
 
 const os = require('os')
 
-class Dict {
+class WubiDict {
+    dictTypeName    = 'Dict'
+    filePath        = ''  // 文件路径
+    fileName        = ''  // 文件名字
+    header          = null      // 文件头部内容
+    wordsOrigin     = []        // 文件词条数组，groupMode 的时候，是 WordGroup Array，否则是 Word Array
+    lastIndex       = 0         // 最后一个Word Index 的值，用于新添加词时，作为唯一的 id 传入
+    lastGroupIndex  = 0         // 最后一个WordGroup Index 的值，用于新添加词时，作为唯一的 id 传入
+    isGroupMode     = false     // 识别码表是否为分组形式的
+    indexEndOfHeader = 0
+
     constructor(fileContent, fileName, filePath) {
         this.dictTypeName    = 'Dict'
         this.filePath        = filePath  // 文件路径
@@ -395,4 +405,5 @@ function getWordFromLine(index, lineStr){
     let note = wordArray[3]
     return new Word(index, code, word, priority, note)
 }
-module.exports =  Dict
+
+export default WubiDict
