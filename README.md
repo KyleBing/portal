@@ -1,13 +1,18 @@
-# 《标题日记》 后台 - nodejs 版
+# 我的后台 `nodejs` `ts`
+
+该后台服务的前端项目：
+
+- [《标题日记》](https://github.com/KyleBing/diary-vue)
+- [《路书》](https://github.com/KyleBing/map)
+- 《五笔相关》
+- 《二维码》
+- 《文件管理》
 
 
-## 一、项目说明
-服务对象： [《标题日记》](https://github.com/KyleBing/diary-vue)
+## 一、接口
 
 > 线上已运行的例子：  
 > http [http://kylebing.cn:3000/diary/detail?diaryId=6766](http://kylebing.cn:3000/diary/detail?diaryId=6766)
-
-
 
 ### 
 ```bash
@@ -75,14 +80,11 @@
 # 9. 二维码前端信息
 - /qr-front/ # 码的信息 `2022-05-18`
 
-# 10. VPS主机信息接口
-- /vps/ # vps 信息
-
-# 11. 饥荒数据
+# 10. 饥荒数据
 - /dont-starve/{tablename}/list # 列表数据
 - /dont-starve/{tablename}/info # 详情数据
 
-# 12. 路书数据
+# 11. 路书数据
 地图路线
 - /map-route/list
 - /map-route/detail
@@ -282,5 +284,6 @@ npm run start
 }
 ```
 
-## 四、其它
-> 始于 `2022-04-14`
+## 四、历程
+- 始于 `2022-04-14`
+- 改成 ts 版本 `2024-10-31`

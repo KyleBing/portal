@@ -148,6 +148,13 @@
     "@types/node" "*"
     "@types/send" "*"
 
+"@types/xml2json@^0.11.6":
+  version "0.11.6"
+  resolved "https://registry.yarnpkg.com/@types/xml2json/-/xml2json-0.11.6.tgz#2f5aa67f27f73afc7d5beda23f3440a2dd7dfb68"
+  integrity sha512-OYZ5cB4zctk4JdK1MGdLmeBMdmg+/AClCUspQ6KtQ2vZLJkSpm0XWE9H0vCfCGlXvbqn9CBqIda2dXX2KAE/5w==
+  dependencies:
+    "@types/node" "*"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"

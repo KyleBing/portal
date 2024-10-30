@@ -1,14 +1,11 @@
-const express = require('express')
-const configProject = require('../../config/configProject')
-const utility = require("../../config/utility");
-const ResponseSuccess = require("../../response/ResponseSuccess");
-const ResponseError = require("../../response/Response");
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import configProject from "../../config/configProject";
 const router = express.Router()
-const axios = require("axios");
+import axios from "axios";
 
-const crypto = require('crypto')
-const xml2json = require('xml2json')
-
+import crypto from "crypto";
+import xml2json from "xml2json"
 
 // 临时 access token
 let access_token = {
@@ -66,7 +63,7 @@ function checkWxAuthorization(req){
 }
 
 
-router.get('/menu/create', (req, res) => {
+router.get('/menu/create', (_, res) => {
     axios({
         method: 'post',
         url: 'https://api.weixin.qq.com/cgi-bin/menu/create',
@@ -112,7 +109,7 @@ router.get('/menu/create', (req, res) => {
 })
 
 
-router.get('/access-token', (req, res) => {
+router.get('/access-token', (_, res) => {
     getAccessToken()
         .then(response => {
             res.send(new ResponseSuccess(response, '获取成功'))

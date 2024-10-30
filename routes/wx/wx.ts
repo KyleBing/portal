@@ -1,10 +1,9 @@
-const express = require('express')
-const configProject = require('../../config/configProject')
-const utility = require("../../config/utility");
-const ResponseSuccess = require("../../response/ResponseSuccess");
-const ResponseError = require("../../response/Response");
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import configProject from "../../config/configProject";
 const router = express.Router()
-const axios = require("axios");
+
+import axios from "axios";
 
 let TEMP_TOKEN = {
     access_token: '',
@@ -33,7 +32,7 @@ router.post('/login', (req, res) => {
 
 router.post('/login-with-token', (req, res) => {
     getToken()
-        .then(token => {
+        .then(_ => {
             axios({
                 url: 'https://api.weixin.qq.com/sns/jscode2session',
                 method: 'GET',
