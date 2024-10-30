@@ -15,7 +15,7 @@ import {
 import Diary from "./diary";
 const router = express.Router()
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
 
     // 1. 验证 token
     verifyAuthorization(req)

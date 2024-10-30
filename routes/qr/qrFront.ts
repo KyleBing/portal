@@ -1,11 +1,13 @@
-const express = require('express')
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {
+    unicodeDecode,
+    getDataFromDB,
+} from "../../config/utility";
 const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/Response')
 
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
     // query.hash
     let sqlArray = []
     sqlArray.push(`
@@ -36,16 +38,14 @@ router.get('/', (req, res, next) => {
                      left join users on qrs.uid = users.uid
                         where qrs.hash = '${req.query.hash}' and is_public = 1`)
     // 1. 先查询出 QR 结果
-    utility
-        .getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( 'diary', sqlArray, true)
         .then(dataQr => {
             if (dataQr) { // 没有记录时会返回  undefined
                 // decode unicode
-                dataQr.message = utility.unicodeDecode(dataQr.message)
-                dataQr.description = utility.unicodeDecode(dataQr.description)
+                dataQr.message = unicodeDecode(dataQr.message)
+                dataQr.description = unicodeDecode(dataQr.description)
 
-                utility
-                    .getDataFromDB(
+                getDataFromDB(
                         'diary',
                         [`select hash, car_name, car_plate, imgs from qrs 
                                   where 
@@ -59,7 +59,7 @@ router.get('/', (req, res, next) => {
                             dataQr: dataQr,
                             hashList: dataHasList
                         }, '获取成功'))
-                        countPlusOne(req.query.hash)
+                        countPlusOne(String(req.query.hash))
                     })
                     .catch(err => {
                         console.log(err)
@@ -74,11 +74,9 @@ router.get('/', (req, res, next) => {
         })
 })
 
-function countPlusOne(hash){
-    utility
-        .getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
+function countPlusOne(hash: string){
+    getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
         .then()
 }
 
-
-module.exports = router
+export default router

@@ -20,7 +20,7 @@ import crypto from 'crypto'
 
 
 const TABLE_NAME = 'invitations'
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
@@ -52,7 +52,7 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-router.post('/generate', (req, res, next) => {
+router.post('/generate', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount){ // admin
@@ -82,7 +82,7 @@ router.post('/generate', (req, res, next) => {
 })
 
 // 标记邀请码为已分享状态
-router.post('/mark-shared', (req, res, next) => {
+router.post('/mark-shared', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount){ // admin
@@ -105,7 +105,7 @@ router.post('/mark-shared', (req, res, next) => {
         })
 })
 
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     if (!req.query.id){
         res.send(new ResponseError('', '参数错误，缺少 id'))
         return

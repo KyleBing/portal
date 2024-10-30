@@ -17,7 +17,7 @@ const router = express.Router()
 const TABLE_NAME = 'diary_category' // 表名
 const DATA_NAME = '日记类别'          // 操作的数据名
 
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     // query.name_en
     let sqlArray = []
     sqlArray.push(` select * from ${TABLE_NAME} order by sort_id asc`)
@@ -33,7 +33,7 @@ router.get('/list', (req, res, next) => {
             res.send(new ResponseError(err, err.message))
         })
 })
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     checkCategoryExist(req.body.name_en)
         .then(dataCategoryExistanceArray => {
             // email 记录是否已经存在
@@ -75,7 +75,7 @@ router.post('/add', (req, res, next) => {
         })
 
 })
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount ){
@@ -111,7 +111,7 @@ router.put('/modify', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount ){

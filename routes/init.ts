@@ -18,7 +18,7 @@ import {DatabaseConfig} from "../entity/DatabaseConfig";
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
 
     stat(LOCK_FILE_NAME, ((err, stats) => {
         if (err) {

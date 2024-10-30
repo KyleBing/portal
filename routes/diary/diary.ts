@@ -14,7 +14,7 @@ import {
 } from "../../config/utility";
 const router = express.Router()
 
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize) // 日记起点
@@ -82,7 +82,7 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-router.get('/export', (req, res, next) => {
+router.get('/export', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
@@ -112,7 +112,7 @@ router.get('/export', (req, res, next) => {
         })
 })
 
-router.get('/temperature', (req, res, next) => {
+router.get('/temperature', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
@@ -155,7 +155,7 @@ router.get('/temperature', (req, res, next) => {
         })
 })
 
-router.get('/detail', (req, res, next) => {
+router.get('/detail', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
     // 1. 先查询出日记结果
@@ -198,7 +198,7 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
@@ -228,7 +228,7 @@ router.post('/add', (req, res, next) => {
         })
 })
 
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
 
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
@@ -267,7 +267,7 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
@@ -295,7 +295,7 @@ router.delete('/delete', (req, res, next) => {
         })
 })
 
-router.get('/latest-recommend', (req, res, next) => {
+router.get('/latest-recommend', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where title like '%首页推荐%' and is_public = 1 and uid = 3 order by date desc`)
     // 1. 先查询出日记结果
@@ -316,7 +316,7 @@ router.get('/latest-recommend', (req, res, next) => {
         })
 })
 
-router.get('/get-latest-public-diary-with-keyword', (req, res, next) => {
+router.get('/get-latest-public-diary-with-keyword', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`)
     // 1. 先查询出日记结果
@@ -331,7 +331,7 @@ router.get('/get-latest-public-diary-with-keyword', (req, res, next) => {
         })
 })
 
-router.post('/clear', (req, res, next) => {
+router.post('/clear', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === 'test@163.com'){

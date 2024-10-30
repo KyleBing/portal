@@ -26,7 +26,7 @@ const DEST_FOLDER = 'upload' // 临时文件存放文件夹
 const uploadLocal = multer({dest: TEMP_FOLDER}) // 文件存储在服务器的什么位置
 const storage = multer.memoryStorage()
 
-router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
+router.post('/upload', uploadLocal.single('file'), (req, res) => {
     let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
     const destPath = `${DEST_FOLDER}/${fileOriginalName}`
     verifyAuthorization(req)
@@ -100,7 +100,7 @@ router.post('/upload', uploadLocal.single('file'), (req, res, next) => {
         })
 })
 
-router.post('/modify', (req, res, next) => {
+router.post('/modify', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
@@ -123,7 +123,7 @@ router.post('/modify', (req, res, next) => {
 })
 
 // TODO: 用事务处理
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
@@ -158,7 +158,7 @@ router.delete('/delete', (req, res, next) => {
         })
 })
 
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let startPoint = (Number(req.query.pageNo) - 1) * Number( req.query.pageSize) // 文件记录起点

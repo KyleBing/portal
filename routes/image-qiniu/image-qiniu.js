@@ -15,7 +15,7 @@ const TABLE_NAME = 'image_qiniu' // 文件存储
 const DATA_NAME = '七牛云图片'    // 操作的数据名
 
 // 生成 token 根据 bucket
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
     if (req.query.bucket){
         if (req.query.hahaha){
             res.send(new ResponseSuccess(getQiniuToken(req.query.bucket), '凭证获取成功'))
@@ -43,7 +43,7 @@ function getQiniuToken(bucket){
     return putPolicy.uploadToken(mac)
 }
 
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -89,7 +89,7 @@ router.get('/list', (req, res, next) => {
             res.send(new ResponseError(verified, '无权查看文件列表：用户信息错误'))
         })
 })
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -124,7 +124,7 @@ router.post('/add', (req, res, next) => {
         })
 
 })
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {

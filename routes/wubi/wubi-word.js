@@ -15,7 +15,7 @@ const TABLE_NAME = 'wubi_words'
 
 // used for dict init
 // 废弃
-router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
+router.post('/upload-dict', uploadStorage.single('dict'), (req, res) => {
     // 1. 验证用户信息是否正确
     utility
         .verifyAuthorization(req)
@@ -47,7 +47,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-router.post('/list', (req, res, next) => {
+router.post('/list', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -153,7 +153,7 @@ router.post('/list', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
-router.post('/export-extra', (req, res, next) => {
+router.post('/export-extra', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -192,7 +192,7 @@ router.post('/export-extra', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
-router.post('/check-exist', (req, res, next) => {
+router.post('/check-exist', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -215,7 +215,7 @@ router.post('/check-exist', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     // 1. 验证用户信息是否正确
     utility
         .verifyAuthorization(req)
@@ -244,7 +244,7 @@ router.post('/add', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-router.post('/add-batch', (req, res, next) => {
+router.post('/add-batch', (req, res) => {
     // 1. 验证用户信息是否正确
     utility
         .verifyAuthorization(req)
@@ -306,7 +306,7 @@ router.post('/add-batch', (req, res, next) => {
         })
 })
 
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
 
     // 1. 验证用户信息是否正确
     utility
@@ -351,7 +351,7 @@ router.put('/modify', (req, res, next) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     utility
         .verifyAuthorization(req)
@@ -387,7 +387,7 @@ router.delete('/delete', (req, res, next) => {
 })
 
 // 批量修改词条类别
-router.put('/modify-batch', (req, res, next) => {
+router.put('/modify-batch', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -417,9 +417,9 @@ router.put('/modify-batch', (req, res, next) => {
 })
 
 
-router.get('/statistic', (req, res, next) => {})
-router.get('/thumbs-up', (req, res, next) => {})
-router.get('/thumbs-down', (req, res, next) => {})
+router.get('/statistic', (req, res) => {})
+router.get('/thumbs-up', (req, res) => {})
+router.get('/thumbs-down', (req, res) => {})
 
 
 module.exports = router

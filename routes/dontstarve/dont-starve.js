@@ -7,7 +7,7 @@ const ResponseError = require('../../response/Response')
 
 // get list
 function getDataList(sqlArray, path){
-    router.get(path, (req, res, next) => {
+    router.get(path, (req, res) => {
         utility
             .getDataFromDB(
                 'starve',
@@ -86,7 +86,7 @@ ListGetInfo.forEach(item => {
 
 
 function getDataInfo(tableName, path){
-    router.get(path, (req, res, next) => {
+    router.get(path, (req, res) => {
         utility
             .getDataFromDB(
                 'starve',

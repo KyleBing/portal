@@ -19,7 +19,7 @@ let access_token = {
 
 
 // 微信公众号信息处理
-router.post('/', (req, res, next) => {
+router.post('/', (req, res) => {
     if (checkWxAuthorization(req)){
         // console.log('[ 已验证 ] 请求来自微信')
         let xmlData = ''
@@ -66,7 +66,7 @@ function checkWxAuthorization(req){
 }
 
 
-router.get('/menu/create', (req, res, next) => {
+router.get('/menu/create', (req, res) => {
     axios({
         method: 'post',
         url: 'https://api.weixin.qq.com/cgi-bin/menu/create',
@@ -112,7 +112,7 @@ router.get('/menu/create', (req, res, next) => {
 })
 
 
-router.get('/access-token', (req, res, next) => {
+router.get('/access-token', (req, res) => {
     getAccessToken()
         .then(response => {
             res.send(new ResponseSuccess(response, '获取成功'))
@@ -160,7 +160,7 @@ function getAccessToken(){
 
 
 // 微信开发者绑定
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
     let echostr   = req.query.echostr    // 随机字符串
     if (checkWxAuthorization(req)){
         console.log('[已验证] 微信')

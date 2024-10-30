@@ -53,25 +53,32 @@ app.use('/invitation', routerInvitation)
 // let routerMapPointer = require('./routes/map/map-pointer')
 // app.use('/map-route', routerMapRoute)
 // app.use('/map-pointer', routerMapPointer)
-//
-// // 统计
-// let diaryStatisticRouter = require('./routes/statistic/statistic')
-// app.use('/statistic', diaryStatisticRouter)
-//
+
+// 统计
+import routerStatistic from './routes/statistic/statistic'
+app.use('/statistic', routerStatistic)
+
 // // 搬瓦工 VPS
 // let routerVPS = require('./routes/vps/vps')
 // app.use('/vps', routerVPS)
 
-// 日记相关
+// 日记
 import routerDiary from './routes/diary/diary'
-import routerDiaryCategory from './routes/diary/diaryCategory'
-import routerBankCard from './routes/diary/bankCard'
-import routerBill from './routes/diary/bill'
-
 app.use('/diary', routerDiary)
+
+// 日记类别
+import routerDiaryCategory from './routes/diary/diaryCategory'
 app.use('/diary-category', routerDiaryCategory)
-app.use('/bank-card', routerBankCard)      // 银行卡列表
-app.use('/bill', routerBill)          // 账单
+
+// 日记 - 银行卡
+import routerBankCard from './routes/diary/bankCard'
+app.use('/bank-card', routerBankCard)
+
+// 日记 - 账单
+import routerBill from './routes/diary/bill'
+app.use('/bill', routerBill)
+
+
 
 // // 点赞管理
 // let routerThumbsUp = require('./routes/thumbs-up/thumbs-up')

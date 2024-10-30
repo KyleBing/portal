@@ -8,7 +8,7 @@ const ResponseError = require('../../response/Response')
 const TABLE_NAME = 'wubi_category'      // 表名
 const DATA_NAME = '五笔码表类别'          // 操作的数据名
 
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -52,7 +52,7 @@ router.get('/list', (req, res, next) => {
             res.send(new ResponseError('', errInfo))
         })
 })
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
 
     checkCategoryExist(req.body.name)
         .then(dataCategoryExistanceArray => {
@@ -95,7 +95,7 @@ router.post('/add', (req, res, next) => {
             }
         })
 })
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -131,7 +131,7 @@ router.put('/modify', (req, res, next) => {
             res.send(new ResponseError('', err.message))
         })
 })
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {

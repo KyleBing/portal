@@ -12,7 +12,7 @@ let TEMP_TOKEN = {
     expireTimeStamp: 0
 }
 
-router.post('/login', (req, res, next) => {
+router.post('/login', (req, res) => {
     axios({
         url: 'https://api.weixin.qq.com/sns/jscode2session',
         method: 'GET',
@@ -31,7 +31,7 @@ router.post('/login', (req, res, next) => {
         })
 })
 
-router.post('/login-with-token', (req, res, next) => {
+router.post('/login-with-token', (req, res) => {
     getToken()
         .then(token => {
             axios({

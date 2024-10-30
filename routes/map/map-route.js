@@ -8,7 +8,7 @@ const {adminCount} = require("../../config/configProject");
 const CURRENT_TABLE = 'map_route'
 
 
-router.post('/list', (req, res, next) => {
+router.post('/list', (req, res) => {
     utility
         .verifyAuthorization(req)
         // 已经登录
@@ -117,7 +117,7 @@ function getRouteLineList(userInfo, req, res){
         })
 }
 
-router.get('/detail', (req, res, next) => {
+router.get('/detail', (req, res) => {
     let sql = `select  
                                 ${CURRENT_TABLE}.id, 
                                 ${CURRENT_TABLE}.name, 
@@ -158,7 +158,7 @@ router.get('/detail', (req, res, next) => {
         })
 })
 
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     // 1. 验证用户信息是否正确
     utility
         .verifyAuthorization(req)
@@ -228,7 +228,7 @@ function checkRouteExist(routeName) {
 }
 
 
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
 
     Promise.all([
         utility.verifyAuthorization(req),
@@ -276,7 +276,7 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     Promise.all([
         utility.verifyAuthorization(req),
         utility.getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)

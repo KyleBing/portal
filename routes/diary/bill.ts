@@ -17,7 +17,7 @@ import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
 
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             // let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 日记起点
@@ -43,7 +43,7 @@ router.get('/', (req, res, next) => {
         })
 })
 
-router.get('/sorted', (req, res, next) => {
+router.get('/sorted', (req, res) => {
     if (!req.query.years){
         res.send(new ResponseError('', '未选择年份'))
         return
@@ -180,7 +180,7 @@ function getBillMonthTop5(billDays: Array<BillDay>): {
     }
 }
 
-router.get('/keys', (req, res, next) => {
+router.get('/keys', (req, res) => {
     let currentYear = new Date().getFullYear()
     let years = []
     for(let i=0;i<5;i++){
@@ -253,7 +253,7 @@ router.get('/keys', (req, res, next) => {
         })
 })
 
-router.get('/day-sum', (req, res, next) => {
+router.get('/day-sum', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             getDataFromDB('diary', [`select content, date  from diaries where category = 'bill' and uid = '${userInfo.uid}'`])
@@ -273,7 +273,7 @@ router.get('/day-sum', (req, res, next) => {
         })
 })
 
-router.get('/month-sum', (req, res, next) => {
+router.get('/month-sum', (req, res) => {
 
     let yearNow = new Date().getFullYear()
     let yearStart = 2018
@@ -357,7 +357,7 @@ router.get('/month-sum', (req, res, next) => {
         })
 })
 
-router.get('/borrow', (req, res, next) => {
+router.get('/borrow', (req, res) => {
     // 1. 验证 token
     verifyAuthorization(req)
         .then(userInfo => {

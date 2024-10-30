@@ -7,7 +7,7 @@ const ResponseError = require('../../response/Response')
 const DatabaseTableName = 'wubi_dict'
 
 // 下载码表文件
-router.get('/pull', (req, res, next) => {
+router.get('/pull', (req, res) => {
     // 1. 是否属于系统中的用户
     utility
         .verifyAuthorization(req)
@@ -37,7 +37,7 @@ router.get('/pull', (req, res, next) => {
 })
 
 // 上传码表文件
-router.put('/push', (req, res, next) => {
+router.put('/push', (req, res) => {
     let timeNow = utility.dateFormatter(new Date())
 
     // 1. 是否属于系统中的用户
@@ -105,7 +105,7 @@ router.put('/push', (req, res, next) => {
 })
 
 // 检查对应的文件是否存在备份
-router.post('/check-backup-exist', (req, res, next) => {
+router.post('/check-backup-exist', (req, res) => {
     // 1. 是否属于系统中的用户
     utility
         .verifyAuthorization(req)

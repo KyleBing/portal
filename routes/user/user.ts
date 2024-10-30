@@ -17,7 +17,7 @@ const router = express.Router()
 import bcrypt from "bcrypt"
 
 /* GET users listing. */
-router.post('/register', (req, res, next) => {
+router.post('/register', (req, res) => {
     // TODO: 验证传过来的数据库必填项
     if (req.body.invitationCode === configProject.invitation){ // 万能全局邀请码
         registerUser(req, res)
@@ -101,7 +101,7 @@ function checkEmailOrUserNameExist(email, username){
     return getDataFromDB( 'diary', sqlArray)
 }
 
-router.post('/list', (req, res, next) => {
+router.post('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let promisesAll = []
@@ -159,7 +159,7 @@ router.post('/list', (req, res, next) => {
         })
 })
 
-router.get('/detail', (req, res, next) => {
+router.get('/detail', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
     getDataFromDB( 'diary', sqlArray, true)
@@ -211,7 +211,7 @@ router.get('/detail', (req, res, next) => {
 })
 
 
-router.get('/avatar', (req, res, next) => {
+router.get('/avatar', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select avatar from users where email = '${req.query.email}'`)
     getDataFromDB( 'diary', sqlArray, true)
@@ -224,7 +224,7 @@ router.get('/avatar', (req, res, next) => {
 })
 
 
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     checkEmailOrUserNameExist(req.body.email, req.body.username)
         .then(dataEmailExistArray => {
             // email 记录是否已经存在
@@ -279,7 +279,7 @@ function checkHashExist(username, email){
 
 
 // 设置用户资料：昵称，avatar，手机号
-router.put('/set-profile', (req, res, next) => {
+router.put('/set-profile', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
@@ -312,7 +312,7 @@ router.put('/set-profile', (req, res, next) => {
 })
 
 
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
 
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
@@ -359,7 +359,7 @@ function operateUserInfo(req, res, userInfo){
         })
 }
 
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
@@ -390,7 +390,7 @@ router.delete('/delete', (req, res, next) => {
         })
 })
 
-router.post('/login', (req, res, next) => {
+router.post('/login', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from users where email = '${req.body.email}'`)
 
@@ -416,7 +416,7 @@ router.post('/login', (req, res, next) => {
 })
 
 // 修改密码
-router.put('/change-password', (req, res, next) => {
+router.put('/change-password', (req, res) => {
     if (!req.body.password){
         res.send(new ResponseError('', '参数错误：password 未定义'))
         return
@@ -447,7 +447,7 @@ router.put('/change-password', (req, res, next) => {
 })
 
 // 注销帐号
-router.delete('/destroy-account', (req, res, next) => {
+router.delete('/destroy-account', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             // 演示帐户时不允许执行注销操作

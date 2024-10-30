@@ -11,7 +11,7 @@ const configProject = require("../../config/configProject");
  * req.query.key
  */
 
-router.get('/', (req, res, next) => {
+router.get('/', (req, res) => {
     if (req.query.key) {
         let sqlArray = [
             `SELECT *
@@ -31,7 +31,7 @@ router.get('/', (req, res, next) => {
     }
 })
 
-router.get('/all', (req, res, next) => {
+router.get('/all', (req, res) => {
     let sqlArray = [
         `SELECT *
              from thumbs_up`
@@ -46,7 +46,7 @@ router.get('/all', (req, res, next) => {
         })
 })
 
-router.get('/list', (req, res, next) => {
+router.get('/list', (req, res) => {
     let sqlArray = []
     sqlArray.push(` select * from thumbs_up order by date_init asc`)
     utility
@@ -63,7 +63,7 @@ router.get('/list', (req, res, next) => {
         })
 })
 
-router.post('/add', (req, res, next) => {
+router.post('/add', (req, res) => {
     checkThumbsUpExist(req.body.name)
         .then(dataThumbsUpExistanceArray => {
             // email 记录是否已经存在
@@ -106,7 +106,7 @@ router.post('/add', (req, res, next) => {
         })
 })
 
-router.put('/modify', (req, res, next) => {
+router.put('/modify', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -143,7 +143,7 @@ router.put('/modify', (req, res, next) => {
         })
 })
 
-router.delete('/delete', (req, res, next) => {
+router.delete('/delete', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {

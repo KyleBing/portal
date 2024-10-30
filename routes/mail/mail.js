@@ -8,7 +8,7 @@ const router = express.Router()
 
 
 // 发送邮件
-router.post('/send', (req, res, next) => {
+router.post('/send', (req, res) => {
     utility
         .verifyAuthorization(req)
         .then(userInfo => {
@@ -31,7 +31,7 @@ router.post('/send', (req, res, next) => {
         })
 })
 // 发送邮件给管理员
-router.post('/send-to-admin', (req, res, next) => {
+router.post('/send-to-admin', (req, res) => {
     if (!configProject.adminCount) {
         res.send(new ResponseError('后台管理员邮箱未设置'))
         return
