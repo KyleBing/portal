@@ -1,4 +1,5 @@
-const express = require('express')
+import express from "express"
+import exp from "node:constants";
 const router = express.Router()
 
 /* GET home page. */
@@ -6,4 +7,4 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Portal for Diary' })
 })
 
-module.exports = router
+export default router

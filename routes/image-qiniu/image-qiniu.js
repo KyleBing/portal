@@ -3,7 +3,7 @@ const router = express.Router()
 const configProject = require('../../config/configProject')
 const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+const ResponseError = require('../../response/Response')
 
 const qiniu = require("qiniu")
 

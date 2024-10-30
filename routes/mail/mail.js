@@ -1,6 +1,6 @@
 const { exec } = require('child_process')
 const configProject = require('../../config/configProject')
-const ResponseError = require("../../response/ResponseError");
+const ResponseError = require("../../response/Response");
 const utility = require("../../config/utility");
 const express = require("express");
 const ResponseSuccess = require("../../response/ResponseSuccess");

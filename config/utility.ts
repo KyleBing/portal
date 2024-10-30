@@ -1,9 +1,9 @@
-const mysql = require("mysql");
-const configDatabase = require('./configDatabase')
-const configProject = require('./configProject')
+import mysql from "mysql"
+import configDatabase from "./configDatabase";
+import configProject from "./configProject";
 
 // 运行 SQL 并返回 DB 结果
-function getDataFromDB(dbName, sqlArray, isSingleValue) {
+function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: boolean) {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection({
             host:       configDatabase.host,
@@ -36,7 +36,7 @@ function getDataFromDB(dbName, sqlArray, isSingleValue) {
 
 
 // 验证用户是否有权限
-function verifyAuthorization(req){
+function verifyAuthorization(req: { get: (arg0: string) => any; query: { token: any; }; }){
     let token = req.get('Diary-Token') || req.query.token
     let uid = req.get('Diary-Uid')
     return new Promise((resolve, reject) => {
@@ -62,7 +62,7 @@ function verifyAuthorization(req){
     })
 }
 
-function getMysqlConnection(dbName){
+function getMysqlConnection(dbName: string){
     let connection = mysql.createConnection({
         host:       configDatabase.host,
         user:       configDatabase.user,
@@ -79,7 +79,7 @@ function getMysqlConnection(dbName){
 
 
 // 格式化时间，输出字符串
-function dateFormatter(date, formatString = 'yyyy-MM-dd hh:mm:ss') {
+function dateFormatter(date: Date, formatString = 'yyyy-MM-dd hh:mm:ss') {
     let dateRegArray = {
         "M+": date.getMonth() + 1,                      // 月份
         "d+": date.getDate(),                           // 日
@@ -101,7 +101,7 @@ function dateFormatter(date, formatString = 'yyyy-MM-dd hh:mm:ss') {
 }
 
 // unicode -> text
-function unicodeEncode(str){
+function unicodeEncode(str: string){
     if(!str)return '';
     if(typeof str !== 'string') return str
     let text = escape(str);
@@ -113,7 +113,7 @@ function unicodeEncode(str){
 }
 
 // text -> unicode
-function  unicodeDecode(str)
+function  unicodeDecode(str: string)
 {
     let text = escape(str);
     text = text.replaceAll(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
@@ -122,7 +122,7 @@ function  unicodeDecode(str)
     return unescape(text);
 }
 
-function updateUserLastLoginTime(uid){
+function updateUserLastLoginTime(uid: string){
     let timeNow = dateFormatter(new Date())
     getDataFromDB( 'diary', [`update users set last_visit_time='${timeNow}' where uid='${uid}'`])
         .then(data => {
@@ -174,12 +174,11 @@ function processBillOfDay(diaryObj, filterKeywords = []){
     return response
 }
 
-function formatMoney(number){
+function formatMoney(number: number){
     return Number(number.toFixed(2))
 }
 
-
-module.exports = {
+export {
     getDataFromDB,
     getMysqlConnection,
     dateFormatter, updateUserLastLoginTime,

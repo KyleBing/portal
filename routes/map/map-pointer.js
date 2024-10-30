@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+const ResponseError = require('../../response/Response')
 const {get} = require("axios");
 const CURRENT_TABLE = 'map_pointer'
 

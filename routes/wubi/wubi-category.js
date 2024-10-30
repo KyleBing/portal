@@ -3,7 +3,7 @@ const router = express.Router()
 const configProject = require('../../config/configProject')
 const utility = require('../../config/utility')
 const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/ResponseError')
+const ResponseError = require('../../response/Response')
 
 const TABLE_NAME = 'wubi_category'      // 表名
 const DATA_NAME = '五笔码表类别'          // 操作的数据名
