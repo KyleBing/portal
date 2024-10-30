@@ -1,10 +1,11 @@
 // 字典对象
-const Word = require("./WubiWord")
-const WordGroup = require("./WubiWordGroup")
-
+import Word from "./WubiWord"
+import WordGroup from "./WubiWordGroup"
+import os from 'os'
+import WubiWord from "./WubiWord";
 
 // 获取字符串的实际 unicode 长度，如：一个 emoji 表情的正确长度应该为 1
-function getUnicodeStringLength(str){
+function getUnicodeStringLength(str: string){
     let wordLength = 0
     for(let letter of str){
         wordLength = wordLength + 1
@@ -12,8 +13,6 @@ function getUnicodeStringLength(str){
     return wordLength
 }
 
-
-const os = require('os')
 
 class WubiDict {
     dictTypeName    = 'Dict'
@@ -26,7 +25,7 @@ class WubiDict {
     isGroupMode     = false     // 识别码表是否为分组形式的
     indexEndOfHeader = 0
 
-    constructor(fileContent, fileName, filePath) {
+    constructor(fileContent: string, fileName: string, filePath: string) {
         this.dictTypeName    = 'Dict'
         this.filePath        = filePath  // 文件路径
         this.fileName        = fileName  // 文件名字
@@ -61,7 +60,7 @@ class WubiDict {
     }
 
     // 返回所有 word
-    getDictWordsInNormalMode(fileContent){
+    getDictWordsInNormalMode(fileContent: string){
         let startPoint = new Date().getTime()
         let EOL = this.getFileEOLFrom(fileContent)
         let lines = fileContent.split(EOL) // 拆分词条与编码成单行
@@ -77,7 +76,7 @@ class WubiDict {
     }
 
     // 返回 word 分组
-    getDictWordsInGroupMode(fileContent){
+    getDictWordsInGroupMode(fileContent: string){
         let startPoint = new Date().getTime()
         let EOL = this.getFileEOLFrom(fileContent)
         let lines = fileContent.split(EOL) // 拆分词条与编码成单行
@@ -256,7 +255,7 @@ class WubiDict {
      * @param word Word
      * @param groupIndex Number
      */
-    addNewWord(word, groupIndex){
+    addNewWord(word: WubiWord, groupIndex: number){
         if(this.isGroupMode){
             if (groupIndex !== -1){
                 this.wordsOrigin[groupIndex].dict.push(word)
@@ -271,7 +270,7 @@ class WubiDict {
     }
 
     // 依次序添加 words
-    addWordsInOrder(words, groupIndex){
+    addWordsInOrder(words: Array<WubiWord>, groupIndex: number){
         let startPoint = new Date().getTime()
         if (this.isGroupMode && groupIndex !== -1){
             this.addWordToDictInOrderWithGroup(words, groupIndex)
@@ -284,7 +283,7 @@ class WubiDict {
     }
 
     // 依次序添加 word
-    addWordToDictInOrder(word){
+    addWordToDictInOrder(word: WubiWord){
         let insetPosition = null // 插入位置 index
         for (let i=0; i<this.wordsOrigin.length-1; i++){ // -1 为了避免下面 i+1 为 undefined
             if (word.code >= this.wordsOrigin[i]  && word.code <= this.wordsOrigin[i+1].code){
@@ -302,7 +301,7 @@ class WubiDict {
 
 
     // 依次序添加 word groupMode
-    addWordToDictInOrderWithGroup(words, groupIndex){
+    addWordToDictInOrderWithGroup(words: Array<WubiWord>, groupIndex: number){
         let dictWords = this.wordsOrigin[groupIndex].dict
         console.log('TODO: add to group')
         words.forEach(word => {
@@ -324,7 +323,7 @@ class WubiDict {
 
 
     // 删除词条
-    deleteWords(wordIdSet, isDeleteInSelf){ // isDeleteInSelf 在移动词条到自己分组时使用，不删除空的分组
+    deleteWords(wordIdSet, isDeleteInSelf: boolean){ // isDeleteInSelf 在移动词条到自己分组时使用，不删除空的分组
         if (this.isGroupMode){
             let deleteGroupIds = [] // 记录 words 为 0 的 group，最后删除分组
             this.wordsOrigin.forEach((group, index) => {
@@ -342,12 +341,12 @@ class WubiDict {
         }
     }
 
-    addGroupBeforeId(groupIndex){
+    addGroupBeforeId(groupIndex: number){
         this.wordsOrigin.splice(groupIndex,0,new WordGroup(this.lastGroupIndex++,'',[],true))
     }
 
     // 分组模式：删除分组
-    deleteGroup(groupId){
+    deleteGroup(groupId: number){
         console.log('要删除的分组 id: ',groupId)
         this.wordsOrigin = this.wordsOrigin.filter(group => group.id !== groupId)
     }
@@ -375,9 +374,9 @@ class WubiDict {
 
 
     // 在 origin 中调换两个词条的位置
-    exchangePositionInOrigin(word1, word2){
+    exchangePositionInOrigin(word1: WubiWord, word2: WubiWord){
         // 确保 word1 在前
-        if (parseInt(word1.id) > parseInt(word2.id)){
+        if (word1.id > word2.id){
             let temp = word1
             word1 = word2
             word2 = temp
@@ -396,10 +395,10 @@ class WubiDict {
 }
 
 // 从一条词条字符串中获取 word 对象
-function getWordFromLine(index, lineStr){
+function getWordFromLine(index: number, lineStr: string){
     let wordArray = lineStr.split('\t')
     let code = wordArray[1]
-    code = code.replaceAll('\r', '') // 消除 v1.07 版本的错误
+    code = code.replace(/\r/, '') // 消除 v1.07 版本的错误
     let word = wordArray[0]
     let priority = wordArray[2]
     let note = wordArray[3]

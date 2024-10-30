@@ -124,6 +124,4 @@ router.post('/check-backup-exist', (req, res) => {
 })
 
 
-
-
-module.exports = router
+export default router

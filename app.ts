@@ -76,39 +76,37 @@ app.use('/bank-card', routerBankCard)
 import routerBill from './routes/diary/bill'
 app.use('/bill', routerBill)
 
+// 点赞管理
+import routerThumbsUp from './routes/thumbsUp/thumbsUp'
+app.use('/thumbs-up', routerThumbsUp)
 
+// 邮件操作
+import routerMail from './routes/mail/mail'
+app.use('/mail', routerMail)
 
-// // 点赞管理
-// let routerThumbsUp = require('./routes/thumbs-up/thumbs-up')
-// app.use('/thumbs-up', routerThumbsUp)
-//
-// // 邮件操作
-// let routerMail = require('./routes/mail/mail')
-// app.use('/mail', routerMail)
-//
-// // 图片、文件操作
-// let routerFileManager = require('./routes/file/fileManager')
-// app.use('/file-manager', routerFileManager)
+// 图片、文件操作
+import routerFileManager from './routes/file/fileManager'
+app.use('/file-manager', routerFileManager)
 
 // 七牛云图片
 import routerQiniu from './routes/imageQiniu/imageQiniu'
 app.use('/image-qiniu', routerQiniu)
 
-//
-// // 五笔相关
-// let routerWubiDict = require('./routes/wubi/wubi-dict')
-// let routerWubiWord = require('./routes/wubi/wubi-word')
-// let routerWubiCategory = require('./routes/wubi/wubi-category')
-//
+
+// 五笔相关
+import routerWubiDict from './routes/wubi/wubiDict'
+import routerWubiWord from './routes/wubi/wubiWord'
+import routerWubiCategory from './routes/wubi/wubiCategory'
+
 // app.use('/dict', routerWubiDict)      // 词库保存 // 保留是因为之前助手需要这个接口路径
-// app.use('/wubi/dict', routerWubiDict)     // 词条操作
-// app.use('/wubi/word', routerWubiWord)     // 词条操作
-// app.use('/wubi/category', routerWubiCategory)  // 词条类别
-//
-//
-// // don't starve
-// let routerStarve = require('./routes/dontstarve/dont-starve')
-// app.use('/dont-starve', routerStarve)      // 饥荒
+app.use('/wubi/dict', routerWubiDict)     // 词条操作
+app.use('/wubi/word', routerWubiWord)     // 词条操作
+app.use('/wubi/category', routerWubiCategory)  // 词条类别
+
+
+// 饥荒
+import routerStarve from './routes/dontstarve/dontStarve'
+app.use('/starve', routerStarve)
 
 
 // catch 404 and forward to error handler

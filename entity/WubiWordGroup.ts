@@ -5,10 +5,10 @@ class WubiWordGroup {
     dict =  []
     isEditingTitle =  false // 标题是否在编辑
 
-    constructor(id: number, groupName: string, words: any[], editing = false) {
+    constructor(id: number, groupName: string = '', words: any[] = [], editing = false) {
         this.id = id
-        this.groupName = groupName || ''
-        this.dict = words || []
+        this.groupName = groupName
+        this.dict = words
         this.isEditingTitle = editing || false // 标题是否在编辑
     }
     // 复制一个对象

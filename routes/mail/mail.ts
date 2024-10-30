@@ -1,20 +1,19 @@
-const { exec } = require('child_process')
-const configProject = require('../../config/configProject')
-const ResponseError = require("../../response/Response");
-const utility = require("../../config/utility");
-const express = require("express");
-const ResponseSuccess = require("../../response/ResponseSuccess");
+import {exec} from "node:child_process";
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import configProject from "../../config/configProject";
+import {
+    verifyAuthorization,
+} from "../../config/utility";
 const router = express.Router()
-
 
 // 发送邮件
 router.post('/send', (req, res) => {
-    utility
-        .verifyAuthorization(req)
-        .then(userInfo => {
+    verifyAuthorization(req)
+        .then(_ => {
             if (req.query.email === configProject.adminCount) {
                 if (req.body.receiver.length > 0){
-                    req.body.receiver.forEach(receiverEmail => {
+                    req.body.receiver.forEach((receiverEmail: Array<string>) => {
                         sendEmail(req.body.title, req.body.content, receiverEmail)
                     })
                     res.send(new ResponseSuccess('', '执行完成'))
@@ -37,9 +36,8 @@ router.post('/send-to-admin', (req, res) => {
         return
     }
 
-    utility
-        .verifyAuthorization(req)
-        .then(verified => {
+    verifyAuthorization(req)
+        .then(_ => {
             if (req.query.email === configProject.adminCount) {
                 sendEmailToAdmin(req.body.title, req.body.content)
                 res.send(new ResponseSuccess('', '执行完成'))
@@ -53,7 +51,7 @@ router.post('/send-to-admin', (req, res) => {
 })
 
 // 给 n 个用户发邮件
-function sendEmail(title, content, receivers){
+function sendEmail(title: string, content: string, receivers: Array<string>){
     exec(` echo "${content}" | mail -s ${title} ${receivers.join(',')}`,(err, stdout, stderr) => {
         if (err){
             console.log('send email fail')
@@ -63,7 +61,7 @@ function sendEmail(title, content, receivers){
     })
 }
 // 给管理员发送邮件
-function sendEmailToAdmin(title, content){
+function sendEmailToAdmin(title: string, content: string,){
     exec(` echo "${content}" | mail -s ${title} ${configProject.adminCount}`,(err, stdout, stderr) => {
         if (err){
             console.log('send email fail')
@@ -73,5 +71,4 @@ function sendEmailToAdmin(title, content){
     })
 }
 
-module.exports = router
-
+export default router

@@ -1,18 +1,12 @@
-const express = require('express')
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {getDataFromDB,} from "../../config/utility";
 const router = express.Router()
-const utility = require('../../config/utility')
-const ResponseSuccess = require('../../response/ResponseSuccess')
-const ResponseError = require('../../response/Response')
-
 
 // get list
-function getDataList(sqlArray, path){
-    router.get(path, (req, res) => {
-        utility
-            .getDataFromDB(
-                'starve',
-                sqlArray,
-            )
+function getDataList(sqlArray: Array<string>, path: string) {
+    router.get(path, (_, res) => {
+        getDataFromDB('starve', sqlArray,)
             .then(data => {
                 if (data) { // 没有记录时会返回  undefined
                     res.send(new ResponseSuccess(data))
@@ -85,10 +79,9 @@ ListGetInfo.forEach(item => {
 })
 
 
-function getDataInfo(tableName, path){
+function getDataInfo(tableName: string, path: string){
     router.get(path, (req, res) => {
-        utility
-            .getDataFromDB(
+        getDataFromDB(
                 'starve',
                 [`select * from ${tableName} where id = ${req.query.id}`],
                 true
@@ -107,6 +100,4 @@ function getDataInfo(tableName, path){
 
 }
 
-
-
-module.exports = router
+export default router

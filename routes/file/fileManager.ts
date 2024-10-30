@@ -1,19 +1,13 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
-import configProject from "../../config/configProject";
+import {ResponseSuccess, ResponseError } from "../../response/Response";
 import {
     unicodeEncode,
-    unicodeDecode,
     dateFormatter,
     getDataFromDB,
     getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization, processBillOfDay, formatMoney
+    verifyAuthorization,
 } from "../../config/utility";
-import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
-import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
 
 import multer from 'multer'
@@ -24,7 +18,7 @@ const TABLE_NAME = 'file_manager' // 数据库名
 const TEMP_FOLDER = 'temp' // 临时文件存放文件夹
 const DEST_FOLDER = 'upload' // 临时文件存放文件夹
 const uploadLocal = multer({dest: TEMP_FOLDER}) // 文件存储在服务器的什么位置
-const storage = multer.memoryStorage()
+// const storage = multer.memoryStorage()
 
 router.post('/upload', uploadLocal.single('file'), (req, res) => {
     let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
@@ -44,9 +38,9 @@ router.post('/upload', uploadLocal.single('file'), (req, res) => {
                                  ${TABLE_NAME}(path, name_original, description, date_create, type, size, uid) 
                                 values ('${destPath}', '${fileOriginalName}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
 
-                    connection.query(sql, [], (queryErr,result) => {
-                        if (queryErr){
-                            connection.rollback(err => {
+                    connection.query(sql, [], (queryErr, _) => {
+                        if (queryErr) {
+                            connection.rollback(_ => {
                                 res.send(new ResponseError(queryErr, 'query: sql 事务执行失败，已回滚'))
                                 connection.end()
                             })
@@ -57,8 +51,8 @@ router.post('/upload', uploadLocal.single('file'), (req, res) => {
                                 fs.constants.COPYFILE_EXCL,
                                 (copyFileError => {
                                     if (copyFileError) {
-                                        connection.rollback(rollbackError => {
-                                            fs.rm(req.file.path, deleteErr => {})
+                                        connection.rollback(_ => {
+                                            fs.rm(req.file.path, _ => {})
                                             if (copyFileError.code === 'EEXIST'){
                                                 res.send(new ResponseError('', '文件已存在'))
                                             } else {
@@ -166,10 +160,10 @@ router.get('/list', (req, res) => {
             sqlArray.push(`SELECT *from ${TABLE_NAME} where uid='${userInfo.uid}'`)
             // keywords
             if (req.query.keywords){
-                let keywords = JSON.parse(String(req.query.keywords)).map(item => unicodeEncode(item))
+                let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( description like '%${keyword}%' ESCAPE '/' ` )
+                    let keywordStrArray = keywords.map((keyword: string) => `( description like '%${keyword}%' ESCAPE '/' ` )
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
@@ -198,4 +192,4 @@ router.get('/list', (req, res) => {
         })
 })
 
-module.exports = router
+export default router
