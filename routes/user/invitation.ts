@@ -1,16 +1,27 @@
-const express = require('express')
-const configProject = require('../../config/configProject')
-const utility = require("../../config/utility");
-const ResponseSuccess = require("../../response/ResponseSuccess");
-const ResponseError = require("../../response/Response");
+import express from "express"
+import {ResponseSuccess, ResponseError } from "../../response/Response";
+import mysql from "mysql"
+import configDatabase from "../../config/configDatabase";
+import configProject from "../../config/configProject";
+import {
+    unicodeEncode,
+    unicodeDecode,
+    dateFormatter,
+    getDataFromDB,
+    getMysqlConnection,
+    updateUserLastLoginTime,
+    verifyAuthorization, processBillOfDay, formatMoney
+} from "../../config/utility";
+import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
+import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
-const crypto = require('crypto')
+
+import crypto from 'crypto'
 
 
 const TABLE_NAME = 'invitations'
 router.get('/list', (req, res, next) => {
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             if (userInfo.email === configProject.adminCount ) { //
@@ -18,10 +29,9 @@ router.get('/list', (req, res, next) => {
             } else {
                 sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null and is_shared = 0 order by date_create desc  ;`)
             }
-            utility
-                .getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( 'diary', sqlArray)
                 .then(data => {
-                    utility.updateUserLastLoginTime(userInfo.uid)
+                    updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
                 .catch(err => {
@@ -32,8 +42,7 @@ router.get('/list', (req, res, next) => {
             let sqlArray = []
             // 获取未分享的可用邀请码
             sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null and is_shared = 0 order by date_create desc ;`)
-            utility
-                .getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
@@ -44,10 +53,10 @@ router.get('/list', (req, res, next) => {
 })
 
 router.post('/generate', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount){ // admin
-                let timeNow = utility.dateFormatter(new Date())
+                let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 crypto.randomBytes(12, (err, buffer) => {
                     let key = buffer.toString('base64')
@@ -55,8 +64,7 @@ router.post('/generate', (req, res, next) => {
                         insert into 
                             ${TABLE_NAME}(date_create, id) 
                             VALUES ('${timeNow}', '${key}')`)
-                    utility
-                        .getDataFromDB( 'diary', sqlArray)
+                    getDataFromDB( 'diary', sqlArray)
                         .then(data => {
                             res.send(new ResponseSuccess(key, '邀请码生成成功'))
                         })
@@ -75,14 +83,13 @@ router.post('/generate', (req, res, next) => {
 
 // 标记邀请码为已分享状态
 router.post('/mark-shared', (req, res, next) => {
-    utility.verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount){ // admin
                 let sqlArray = []
                 sqlArray.push(`
                         update ${TABLE_NAME} set is_shared = 1 where id = '${req.body.id}' `)
-                utility
-                    .getDataFromDB( 'diary', sqlArray)
+                getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         res.send(new ResponseSuccess('', '邀请码标记成功'))
                     })
@@ -104,17 +111,15 @@ router.delete('/delete', (req, res, next) => {
         return
     }
     // 1. 验证用户信息是否正确
-    utility
-        .verifyAuthorization(req)
+    verifyAuthorization(req)
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount){
                 let sqlArray = []
                 sqlArray.push(` DELETE from ${TABLE_NAME} WHERE id='${req.query.id}' `)
-                utility
-                    .getDataFromDB( 'diary', sqlArray)
+                getDataFromDB( 'diary', sqlArray)
                     .then(data => {
                         if (data.affectedRows > 0) {
-                            utility.updateUserLastLoginTime(req.body.email)
+                            updateUserLastLoginTime(req.body.email)
                             res.send(new ResponseSuccess('', '删除成功'))
                         } else {
                             res.send(new ResponseError('', '删除失败'))
@@ -132,5 +137,4 @@ router.delete('/delete', (req, res, next) => {
         })
 })
 
-
-module.exports = router
+export default router

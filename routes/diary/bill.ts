@@ -12,8 +12,8 @@ import {
     updateUserLastLoginTime,
     verifyAuthorization, processBillOfDay, formatMoney
 } from "../../config/utility";
-import {BillDay, BillFood, BillItem, BillMonth} from "../../entity/Bill";
-import {DiaryBill} from "../../entity/Diary";
+import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
+import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
 
 

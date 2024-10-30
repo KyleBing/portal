@@ -28,11 +28,10 @@ app.use('/user', routerUser)
 import routerInit from "./routes/init"
 app.use('/init', routerInit)
 
-//
-// // 邀请码
-// let invitationRouter = require('./routes/user/invitation')
-// app.use('/invitation', invitationRouter)
-//
+// 邀请码
+import routerInvitation from "./routes/user/invitation"
+app.use('/invitation', routerInvitation)
+
 // // 微信小程序
 // let routerWx = require('./routes/wx/wx')
 // app.use('/wx', routerWx)

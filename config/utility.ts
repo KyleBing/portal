@@ -107,22 +107,22 @@ function dateFormatter(date: Date, formatString = 'yyyy-MM-dd hh:mm:ss') {
 function unicodeEncode(str: string){
     if(!str)return '';
     if(typeof str !== 'string') return str
-    let text = encodeURIComponent(str);
+    let text = escape(str);
     text = text.replace(/(%u[ed][0-9a-f]{3})/ig, (source, replacement) => {
         console.log('source: ',source)
         return source.replace('%', '\\\\')
     })
-    return decodeURIComponent(text);
+    return unescape(text);
 }
 
 // text -> unicode
 function  unicodeDecode(str: string)
 {
-    let text = encodeURIComponent(str);
+    let text = escape(str);
     text = text.replace(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
         return source.replace('%5C', '%')
     })
-    return decodeURIComponent(text);
+    return unescape(text);
 }
 
 function updateUserLastLoginTime(uid: string){
