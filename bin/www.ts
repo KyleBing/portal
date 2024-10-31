@@ -34,7 +34,7 @@ server.listen(port)
  * Normalize a port into a number, string, or false.
  */
 
-function normalizePort(val: string) {
+function normalizePort(val) {
   const port = parseInt(val, 10)
 
   if (isNaN(port)) {

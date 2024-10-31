@@ -1,5 +1,3 @@
-import {formatMoney} from "../config/utility";
-
 interface BillMonth {
     id: number,
     month_id: string, // 202410

@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 const router = express.Router()
 

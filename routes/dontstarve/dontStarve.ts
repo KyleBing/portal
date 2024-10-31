@@ -1,6 +1,6 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import {getDataFromDB,} from "../../config/utility";
+import {ResponseSuccess, ResponseError } from "@response/Response";
+import {getDataFromDB,} from "@config/utility";
 const router = express.Router()
 
 // get list

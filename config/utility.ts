@@ -1,9 +1,9 @@
 import mysql from "mysql"
 import configDatabase from "./configDatabase";
 import configProject from "./configProject";
-import {Diary, DiaryBill} from "../entity/Diary";
+import {Diary, DiaryBill} from "@entity/Diary";
 import express from "express";
-import {BillDay} from "../entity/Bill";
+import {BillDay} from "@entity/Bill";
 
 // 运行 SQL 并返回 DB 结果
 function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: boolean): Promise<any> {

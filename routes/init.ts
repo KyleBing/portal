@@ -1,26 +1,20 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../response/Response";
+import {ResponseError } from "@response/Response";
 import mysql from "mysql"
 import configDatabase from "../config/configDatabase";
-import configProject from "../config/configProject";
 import {
-    unicodeDecode,
     dateFormatter,
-    getDataFromDB,
-    getMysqlConnection,
-    updateUserLastLoginTime,
-    verifyAuthorization
-} from "../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 import {stat, writeFile } from "fs"
-import {DatabaseConfig} from "../entity/DatabaseConfig";
+import {DatabaseConfig} from "@entity/DatabaseConfig";
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
 
-router.get('/', (req, res) => {
+router.get('/', (_req, res) => {
 
-    stat(LOCK_FILE_NAME, ((err, stats) => {
+    stat(LOCK_FILE_NAME, ((err, _) => {
         if (err) {
             // 如果没有该文件，说明数据库没有初始化过
             let tempConfigDatabase: DatabaseConfig = {
@@ -35,14 +29,14 @@ router.get('/', (req, res) => {
             let connection = mysql.createConnection(tempConfigDatabase)
             connection.connect()
             const sqlCreation = 'CREATE DATABASE IF NOT EXISTS diary'
-            connection.query(sqlCreation, [], function (err, result) {
+            connection.query(sqlCreation, [], function (err) {
                 if (err){
                     console.log('- 1. fail : create db fails, \nwith err info: \n' + err.message)
                     res.send(new ResponseError(err, err.message))
                 } else {
                     console.log('- 1. success: create db diary')
                     createTables()
-                        .then(msg => {
+                        .then(() => {
 
                             writeFile(LOCK_FILE_NAME, 'Database has been locked, file add in ' + dateFormatter(new Date()),err => {
                                 if (err){

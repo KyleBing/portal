@@ -1,10 +1,10 @@
 import {exec} from "node:child_process";
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 import {
     verifyAuthorization,
-} from "../../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 // 发送邮件

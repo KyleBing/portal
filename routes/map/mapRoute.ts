@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 import {
     unicodeEncode,
@@ -8,7 +8,7 @@ import {
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization
-} from "../../config/utility";
+} from "@config/utility";
 import {User} from "@entity/User";
 const router = express.Router()
 

@@ -1,9 +1,9 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
     unicodeDecode,
     getDataFromDB,
-} from "../../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 

@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 const router = express.Router()
 import axios from "axios";
@@ -12,7 +12,6 @@ let access_token = {
     expires: new Date().getTime(),
     access_token: ''
 }
-
 
 
 // 微信公众号信息处理

@@ -1,18 +1,11 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
-import configProject from "../../config/configProject";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
-    unicodeEncode,
     unicodeDecode,
-    dateFormatter,
     getDataFromDB,
-    getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization, processBillOfDay, formatMoney
-} from "../../config/utility";
-import Diary from "./diary";
+    verifyAuthorization
+} from "@config/utility";
 const router = express.Router()
 
 router.get('/', (req, res) => {

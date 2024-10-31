@@ -5,9 +5,11 @@
   "date-init": "2022-03-21",
   "private": true,
   "scripts": {
+    "serve": "node dist/bin/www.js",
     "start": "npx ts-node bin/www",
     "original_start": "node ./bin/www",
-    "ws": "node ./bin/ws.js"
+    "ws": "node ./bin/ws.js",
+    "build": "npx tsc"
   },
   "dependencies": {
     "axios": "^1.2.1",
@@ -31,6 +33,7 @@
     "@types/multer": "^1.4.12",
     "@types/mysql": "^2.15.26",
     "@types/node": "^22.8.4",
+    "@types/ws": "^8.5.12",
     "@types/xml2json": "^0.11.6",
     "typescript": "^5.6.3"
   }

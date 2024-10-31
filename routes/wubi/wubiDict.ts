@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
     unicodeEncode,
     unicodeDecode,
@@ -7,7 +7,7 @@ import {
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization,
-} from "../../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 const DatabaseTableName = 'wubi_dict'

@@ -1,9 +1,9 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
     getDataFromDB,
     verifyAuthorization
-} from "../../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 // 统计数据，后台用的

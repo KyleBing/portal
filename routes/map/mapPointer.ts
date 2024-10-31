@@ -1,19 +1,16 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
-import configProject from "../../config/configProject";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
     unicodeEncode,
     unicodeDecode,
     dateFormatter,
     getDataFromDB,
-    getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization, processBillOfDay, formatMoney
-} from "../../config/utility";
-import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
-import {DiaryBill} from "@entity/Diary";
+    verifyAuthorization,
+} from "@config/utility";
+import {User} from "@entity/User";
+import { Request, Response } from "express-serve-static-core";
+
 const router = express.Router()
 
 const CURRENT_TABLE = 'map_pointer'
@@ -25,13 +22,13 @@ router.post('/list', (req, res) => {
             getPointerList(userInfo, req, res)
         })
         // 未登录
-        .catch(verified => {
+        .catch(_ => {
             getPointerList(null, req, res)
             // res.send(new ResponseError(verified, '无权查看路线列表：用户信息错误'))
         })
 })
 
-function getPointerList(userInfo, req, res){
+function getPointerList(userInfo: User, req: Request<{}>, res: Response){
     let sqlBase = `select  
                         ${CURRENT_TABLE}.id, 
                         ${CURRENT_TABLE}.name, 
@@ -61,9 +58,9 @@ function getPointerList(userInfo, req, res){
 
     // keywords
     if (req.body.keyword) {
-        let keywords = req.body.keyword.split(' ').map(item => utility.unicodeEncode(item))
+        let keywords = req.body.keyword.split(' ').map((item: string) => unicodeEncode(item))
         if (keywords.length > 0) {
-            let keywordStrArray = keywords.map(keyword => `( ${CURRENT_TABLE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_TABLE}.note like '%${keyword}%' ESCAPE '/') `)
+            let keywordStrArray = keywords.map((keyword: string) => `( ${CURRENT_TABLE}.name like '%${keyword}%' ESCAPE '/'  or  ${CURRENT_TABLE}.note like '%${keyword}%' ESCAPE '/') `)
             filterArray.push(keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
         }
     }
@@ -83,11 +80,11 @@ function getPointerList(userInfo, req, res){
     let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
     let sql = `${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`
     console.log(sql)
-    promisesAll.push(utility.getDataFromDB(
+    promisesAll.push(getDataFromDB(
         'diary',
         [sql])
     )
-    promisesAll.push(utility.getDataFromDB(
+    promisesAll.push(getDataFromDB(
         'diary',
         [`select count(*) as sum from ${CURRENT_TABLE} ${filterArray.join(' ')}`], true)
     )
@@ -96,8 +93,8 @@ function getPointerList(userInfo, req, res){
         .all(promisesAll)
         .then(([dataList, dataSum]) => {
             dataList.forEach(item => {
-                item.name = utility.unicodeDecode(item.name)
-                item.note = utility.unicodeDecode(item.note)
+                item.name = unicodeDecode(item.name)
+                item.note = unicodeDecode(item.note)
                 return item
             })
             res.send(new ResponseSuccess({
@@ -132,12 +129,12 @@ router.get('/detail', (req, res) => {
                                users.username
                                     from ${CURRENT_TABLE}
                                         left join users on ${CURRENT_TABLE}.uid = users.uid where id = ${req.query.id}`
-    utility.getDataFromDB('diary', [sql], true)
+    getDataFromDB('diary', [sql], true)
         .then(lineInfoData => {
             if (lineInfoData.is_public === 1){
                 res.send(new ResponseSuccess(lineInfoData))
             } else {
-                utility.verifyAuthorization(req)
+                verifyAuthorization(req)
                     .then(userInfo => {
                         if (lineInfoData.uid === userInfo.uid || userInfo.group_id === 1){
                             res.send(new ResponseSuccess(lineInfoData))
@@ -160,7 +157,7 @@ router.post('/add', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             // 2. 检查路线名是否已存在
-            let encodedName = utility.unicodeEncode(req.body.name)
+            let encodedName = unicodeEncode(req.body.name)
             checkPointerExist(encodedName)
                 .then(existLogs => {
                     console.log(existLogs)
@@ -170,9 +167,9 @@ router.post('/add', (req, res) => {
                     } else {
                         // 2.2 不存在名为 hash 的记录
                         let sqlArray = []
-                        let parsedName = utility.unicodeEncode(req.body.name) // !
-                        let parsedNote = utility.unicodeEncode(req.body.note) || ''
-                        let timeNow = utility.dateFormatter(new Date())
+                        let parsedName = unicodeEncode(req.body.name) // !
+                        let parsedNote = unicodeEncode(req.body.note) || ''
+                        let timeNow = dateFormatter(new Date())
                         sqlArray.push(`
                            insert into ${CURRENT_TABLE}(
                            name, pointers, note, uid, date_create, date_modify, area, thumb_up, is_public)
@@ -188,10 +185,9 @@ router.post('/add', (req, res) => {
                                 '${Number(req.body.is_public)}'
                                 )
                         `)
-                        utility
-                            .getDataFromDB('diary', sqlArray)
+                        getDataFromDB('diary', sqlArray)
                             .then(data => {
-                                utility.updateUserLastLoginTime(userInfo.uid)
+                                updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess( // 添加成功之后，返回添加后的 路线  id
                                     {id: data.insertId},
                                     '信息添加成功',
@@ -217,23 +213,23 @@ router.post('/add', (req, res) => {
 function checkPointerExist(pointerName) {
     let sqlArray = []
     sqlArray.push(`select * from map_route where name='${pointerName}'`)
-    return utility.getDataFromDB('diary', sqlArray)
+    return getDataFromDB('diary', sqlArray)
 }
 
 
 router.put('/modify', (req, res) => {
 
     Promise.all([
-        utility.verifyAuthorization(req),
-        utility.getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
+        verifyAuthorization(req),
+        getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
     ])
         .then(response => {
             let userInfo = response[0]
             let lineInfoData = response[1]
             if (lineInfoData.uid === userInfo.uid || userInfo.group_id === 1){
-                let parsedName = utility.unicodeEncode(req.body.name) // !
-                let parsedNote = utility.unicodeEncode(req.body.note) || ''
-                let timeNow = utility.dateFormatter(new Date())
+                let parsedName = unicodeEncode(req.body.name) // !
+                let parsedNote = unicodeEncode(req.body.note) || ''
+                let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 sqlArray.push(`
                         update ${CURRENT_TABLE}
@@ -246,10 +242,9 @@ router.put('/modify', (req, res) => {
                                
                             WHERE id='${req.body.id}'
                     `)
-                utility
-                    .getDataFromDB('diary', sqlArray, true)
+                getDataFromDB('diary', sqlArray, true)
                     .then(data => {
-                        utility.updateUserLastLoginTime(req.body.email)
+                        updateUserLastLoginTime(req.body.email)
                         res.send(new ResponseSuccess(data, '修改成功'))
                     })
                     .catch(err => {
@@ -267,8 +262,8 @@ router.put('/modify', (req, res) => {
 
 router.delete('/delete', (req, res) => {
     Promise.all([
-        utility.verifyAuthorization(req),
-        utility.getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
+        verifyAuthorization(req),
+        getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where id = ${req.body.id}`], true)
     ])
         .then(response => {
             let userInfo = response[0]
@@ -279,11 +274,10 @@ router.delete('/delete', (req, res) => {
                         DELETE from ${CURRENT_TABLE}
                         WHERE id='${req.body.id}'
                     `)
-                utility
-                    .getDataFromDB('diary', sqlArray)
+                getDataFromDB('diary', sqlArray)
                     .then(data => {
                         if (data.affectedRows > 0) {
-                            utility.updateUserLastLoginTime(userInfo.uid)
+                            updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess('', '删除成功'))
                         } else {
                             res.send(new ResponseError('', '删除失败'))

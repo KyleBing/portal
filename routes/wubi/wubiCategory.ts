@@ -1,19 +1,12 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 import {
-    unicodeEncode,
-    unicodeDecode,
     dateFormatter,
     getDataFromDB,
-    getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization, processBillOfDay, formatMoney
-} from "../../config/utility";
-import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
-import {DiaryBill} from "@entity/Diary";
+    verifyAuthorization
+} from "@config/utility";
 const router = express.Router()
 
 const TABLE_NAME = 'wubi_category'      // 表名

@@ -1,12 +1,12 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 import {
     dateFormatter,
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization
-} from "../../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 import qiniu from 'qiniu'

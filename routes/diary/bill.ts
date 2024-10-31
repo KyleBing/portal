@@ -1,19 +1,12 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
-import configProject from "../../config/configProject";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
-    unicodeEncode,
     unicodeDecode,
-    dateFormatter,
     getDataFromDB,
-    getMysqlConnection,
     updateUserLastLoginTime,
     verifyAuthorization, processBillOfDay, formatMoney
-} from "../../config/utility";
+} from "@config/utility";
 import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
-import {DiaryBill} from "@entity/Diary";
 const router = express.Router()
 
 
@@ -50,7 +43,7 @@ router.get('/sorted', (req, res) => {
     }
     verifyAuthorization(req)
         .then(userInfo => {
-            let yearNow = new Date().getFullYear()
+            new Date().getFullYear();
             let sqlRequests = []
             let sqlArray: Array<string>
             (req.query.years as string).split(',').forEach(year => {
@@ -213,7 +206,7 @@ router.get('/keys', (req, res) => {
             Promise
                 .all(sqlRequests)
                 .then(yearDataArray => {
-                    let responseData = []
+                    // let responseData = []
                     let afterValues = yearDataArray[0].filter(item => item.length > 0) // 去年内容为 0 的年价数据
                     afterValues.forEach(daysArray => {
                         daysArray.forEach(item => {
@@ -284,7 +277,7 @@ router.get('/month-sum', (req, res) => {
 
     verifyAuthorization(req)
         .then(userInfo => {
-            let yearNow = new Date().getFullYear()
+            // let yearNow = new Date().getFullYear()
             let sqlRequests = []
             let sqlArray = []
             years.forEach(year => {

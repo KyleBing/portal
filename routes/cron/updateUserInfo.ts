@@ -5,12 +5,14 @@
  * 17 * * * * node /var/www/html/portal/routes/cron/updateUserInfo.js
  * 意思就是每个小时的 17 分刷新用户数据
  */
-const utility = require("../../config/utility");
-utility
-    .getDataFromDB('diary', [`select * from users`])
+
+import {getDataFromDB} from "@config/utility";
+import {User} from "@entity/User";
+
+getDataFromDB('diary', [`select * from users`])
     .then(data => {
         let sqlArray = []
-        data.forEach(user => {
+        data.forEach((user: User) => {
             sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_map_route = (SELECT count(*) from map_route where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_map_pointer = (SELECT count(*) from map_pointer where uid = ${user.uid}) where uid = ${user.uid};`)
@@ -18,15 +20,14 @@ utility
             sqlArray.push(`update users set count_qr    = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_words = (SELECT count(*) from wubi_words where user_init = ${user.uid} and category_id != 1) where uid = ${user.uid};`)
         })
-        utility
-            .getDataFromDB('diary', sqlArray, true)
-            .then(data => {
+        getDataFromDB('diary', sqlArray, true)
+            .then(() => {
                 console.log(`success: user's count diary|dict has updated`)
             })
-            .catch(err => {
+            .catch(() => {
                 console.log(`error:  user count diary|dict update`)
             })
     })
-    .catch(err => {
+    .catch(() => {
         console.log('error: get users info')
     })

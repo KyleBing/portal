@@ -1,17 +1,13 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
-import configProject from "../../config/configProject";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import {
     unicodeEncode,
     unicodeDecode,
     dateFormatter,
     getDataFromDB,
-    getMysqlConnection,
     updateUserLastLoginTime,
     verifyAuthorization, processBillOfDay
-} from "../../config/utility";
+} from "@config/utility";
 const router = express.Router()
 
 router.get('/list', (req, res) => {
@@ -26,10 +22,10 @@ router.get('/list', (req, res) => {
 
             // keywords
             if (req.query.keywords){
-                let keywords = JSON.parse(String(req.query.keywords)).map(item => unicodeEncode(item))
+                let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray = keywords.map((keyword: string) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
@@ -38,7 +34,7 @@ router.get('/list', (req, res) => {
             if (req.query.categories){
                 let categories = JSON.parse(String(req.query.categories))
                 if (categories.length > 0) {
-                    let categoryStrArray = categories.map(category => `category='${category}'`)
+                    let categoryStrArray = categories.map((category: string) => `category='${category}'`)
                     let tempString = categoryStrArray.join(' or ')
                     sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
                 }
@@ -62,7 +58,7 @@ router.get('/list', (req, res) => {
             getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
-                    data.forEach(diary => {
+                    data.forEach((diary) => {
                         // decode unicode
                         diary.title = unicodeDecode(diary.title)
                         diary.content = unicodeDecode(diary.content)

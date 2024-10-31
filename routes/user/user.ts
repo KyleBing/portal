@@ -1,17 +1,14 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "../../response/Response";
-import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
+import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
 import {
-    unicodeEncode,
     unicodeDecode,
     dateFormatter,
     getDataFromDB,
     getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization, processBillOfDay
-} from "../../config/utility";
+    verifyAuthorization
+} from "@config/utility";
 const router = express.Router()
 
 import bcrypt from "bcrypt"
