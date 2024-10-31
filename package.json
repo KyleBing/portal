@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "serve": "node dist/bin/www.js",
-    "start": "npx ts-node bin/www",
+    "dev": "npx ts-node bin/www",
     "original_start": "node ./bin/www",
     "ws": "node ./bin/ws.js",
     "build": "npx tsc"
