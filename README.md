@@ -1,4 +1,4 @@
-# 我的后台 `nodejs` `ts`
+# 我的后台 Portal `nodejs` `ts`
 
 该后台服务的前端项目：
 
@@ -9,7 +9,7 @@
 - 《文件管理》
 
 
-## 一、接口
+## 一、接口列表
 
 > 线上已运行的例子：  
 > http [http://kylebing.cn:3000/diary/detail?diaryId=6766](http://kylebing.cn:3000/diary/detail?diaryId=6766)
@@ -85,14 +85,14 @@
 - /dont-starve/{tablename}/info # 详情数据
 
 # 11. 路书数据
-地图路线
+## 地图路线
 - /map-route/list
 - /map-route/detail
 - /map-route/add
 - /map-route/modify
 - /map-route/delete
 
-地图信息
+## 地图信息
 - /map-pointer/list
 - /map-pointer/detail
 - /map-pointer/add
@@ -100,7 +100,6 @@
 - /map-pointer/delete
 
 ```
-
 
 
 ## 二、安装说明
@@ -115,7 +114,7 @@
 下载到项目文件后，执行 `npm i` 或者 `yarn` 安装项目依赖
 
 ### 2. 修改数据库配置文件
-修改 `/config/configDatabase.js` 文件内容，改成你的配置
+修改 `/config/configDatabase.ts` 文件内容，改成你的配置
 ```js
 module.exports = {
     host:       'localhost',
@@ -139,13 +138,13 @@ module.exports = {
 > pm2 的使用方法： [https://blog.csdn.net/KimBing/article/details/124249590](https://blog.csdn.net/KimBing/article/details/124249590)
 
 ```bash
-pm2 start bin/www --name diary
+pm2 start dist/bin/www --name diary
 ```
 
 如果你实在不用 pm2，也可以直接使用 `npm` 原始方法启动
 
 ```bash
-npm run start
+npm run serve
 ```
 
 项目启动后会运行在 `localhost:3000`，直接访问这个地址应该能看到：
@@ -167,8 +166,8 @@ npm run start
 ### 5. 配置 nginx，映射 `localhost:3000` 路径到  `/portal` 路径
 
 1. 打开 nginx 的配置文件，
-- CentOS 的 nginx 配置文件在 `/etc/nginx/conf.d/` 目录下。
-- Ubuntu 的 nginx 配置文件在 `/etc/nginx/site-avilable/default` 中。
+   - CentOS 的 nginx 配置文件在 `/etc/nginx/conf.d/` 目录下。
+   - Ubuntu 的 nginx 配置文件在 `/etc/nginx/site-avilable/default` 中。
 
 2. 打开 `default.conf` 或 `default` 文件
     ```bash
@@ -251,6 +250,7 @@ npm run start
       │
       └── portal     # 日记后台
           ├── app.js
+          ├── dist  # 可执行项目文件
           ├── bin
           ├── CHANGELOG.md
           ├── config
@@ -286,4 +286,4 @@ npm run start
 
 ## 四、历程
 - 始于 `2022-04-14`
-- 改成 ts 版本 `2024-10-31`
+- 改成 ts 版本 `2024-10-31` - `2024-11-01`

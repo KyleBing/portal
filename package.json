@@ -5,10 +5,10 @@
   "date-init": "2022-03-21",
   "private": true,
   "scripts": {
-    "serve": "node dist/bin/www.js",
-    "dev": "npx ts-node bin/www.ts",
-    "original_start": "node ./bin/www",
-    "ws": "node ./bin/ws.js",
+    "serve": "node dist/bin/portal.js",
+    "dev": "npx ts-node bin/portal.ts",
+    "original_start": "node bin/portal",
+    "ws": "node bin/ws.js",
     "build": "npx tsc"
   },
   "dependencies": {

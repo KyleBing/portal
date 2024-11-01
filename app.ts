@@ -10,93 +10,88 @@ app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'pug')
 
 app.use(logger('dev'))
-app.use(express.json({limit: '50mb'}))
+app.use(express.json({limit: '50mb'}))  // 上传文件内容的大小限制
 app.use(express.urlencoded({extended: false}))
 app.use(express.static(path.join(__dirname, 'public')))
 
 // 基础相关
-import routerIndex from "./routes"
+import routerIndex from "./src/index"
 app.use('/', routerIndex)
 
 // 用户
-import routerUser from "./routes/user/user"
+import routerUser from "./src/user/user"
 app.use('/user', routerUser)
 
 // 初始化
-import routerInit from "./routes/init"
+import routerInit from "./src/init/init"
 app.use('/init', routerInit)
 
 // 邀请码
-import routerInvitation from "./routes/user/invitation"
+import routerInvitation from "./src/user/invitation"
 app.use('/invitation', routerInvitation)
 
-// // 微信小程序
-// let routerWx = require('./routes/wx/wx')
-// app.use('/wx', routerWx)
-//
-// // 微信公众号
-// let routerWxPublic = require('./routes/wx/wx-public')
-// app.use('/wx-public', routerWxPublic)
-//
-// // 二维码-前端
-// let routerQr = require('./routes/qr/qr-front')
-// app.use('/qr-front', routerQr)            // QR 二维码
-//
-// // 二维码-后台
-// let routerQrManager = require('./routes/qr/qr-manager')
-// app.use('/qr-manager', routerQrManager)     // QR 二维码
-//
-// // 地图管理
-// let routerMapRoute = require('./routes/map/map-route')
-// let routerMapPointer = require('./routes/map/map-pointer')
-// app.use('/map-route', routerMapRoute)
-// app.use('/map-pointer', routerMapPointer)
+// 微信小程序
+import routerWx from './src/wx/wx'
+app.use('/wx', routerWx)
+
+// 微信公众号
+import routerWxPublic from './src/wx/wxPublic'
+app.use('/wx-public', routerWxPublic)
+
+// 二维码-前端
+import routerQr from './src/qr/qrFront'
+app.use('/qr-front', routerQr)            // QR 二维码
+// 二维码-后台
+import routerQrManager from './src/qr/qrManager'
+app.use('/qr-manager', routerQrManager)     // QR 二维码
+
+// 地图 - 路线
+import routerMapRoute from './src/map/mapRoute'
+app.use('/map-route', routerMapRoute)
+// 地图 - 点图
+import routerMapPointer from './src/map/mapPointer'
+app.use('/map-pointer', routerMapPointer)
 
 // 统计
-import routerStatistic from './routes/statistic/statistic'
+import routerStatistic from './src/statistic/statistic'
 app.use('/statistic', routerStatistic)
 
-// // 搬瓦工 VPS
-// let routerVPS = require('./routes/vps/vps')
-// app.use('/vps', routerVPS)
+
 
 // 日记
-import routerDiary from './routes/diary/diary'
+import routerDiary from './src/diary/diary'
 app.use('/diary', routerDiary)
-
-// 日记类别
-import routerDiaryCategory from './routes/diary/diaryCategory'
+// 日记 - 类别
+import routerDiaryCategory from './src/diary/diaryCategory'
 app.use('/diary-category', routerDiaryCategory)
-
 // 日记 - 银行卡
-import routerBankCard from './routes/diary/bankCard'
+import routerBankCard from './src/diary/bankCard'
 app.use('/bank-card', routerBankCard)
-
 // 日记 - 账单
-import routerBill from './routes/diary/bill'
+import routerBill from './src/diary/bill'
 app.use('/bill', routerBill)
 
 // 点赞管理
-import routerThumbsUp from './routes/thumbsUp/thumbsUp'
+import routerThumbsUp from './src/thumbsUp/thumbsUp'
 app.use('/thumbs-up', routerThumbsUp)
 
 // 邮件操作
-import routerMail from './routes/mail/mail'
+import routerMail from './src/mail/mail'
 app.use('/mail', routerMail)
 
 // 图片、文件操作
-import routerFileManager from './routes/file/fileManager'
+import routerFileManager from './src/file/fileManager'
 app.use('/file-manager', routerFileManager)
 
 // 七牛云图片
-import routerQiniu from './routes/imageQiniu/imageQiniu'
+import routerQiniu from './src/imageQiniu/imageQiniu'
 app.use('/image-qiniu', routerQiniu)
 
 
 // 五笔相关
-import routerWubiDict from './routes/wubi/wubiDict'
-import routerWubiWord from './routes/wubi/wubiWord'
-import routerWubiCategory from './routes/wubi/wubiCategory'
+import routerWubiDict from './src/wubi/wubiDict'
+import routerWubiWord from './src/wubi/wubiWord'
+import routerWubiCategory from './src/wubi/wubiCategory'
 
 // app.use('/dict', routerWubiDict)      // 词库保存 // 保留是因为之前助手需要这个接口路径
 app.use('/wubi/dict', routerWubiDict)     // 词条操作
@@ -105,7 +100,7 @@ app.use('/wubi/category', routerWubiCategory)  // 词条类别
 
 
 // 饥荒
-import routerStarve from './routes/dontstarve/dontStarve'
+import routerStarve from './src/dontstarve/dontStarve'
 app.use('/starve', routerStarve)
 
 
