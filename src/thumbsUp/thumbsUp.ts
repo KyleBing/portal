@@ -4,7 +4,6 @@ import configProject from "../../config/configProject";
 import {
     dateFormatter,
     getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
-    updateUserLastLoginTime,
     verifyAuthorization,
 } from "../utility";
 const router = express.Router()
@@ -17,7 +16,6 @@ const CURRENT_TABLE = 'thumbs_up'
  * 获取点赞初始计数
  * req.query.key
  */
-
 router.get('/', (req, res) => {
     if (req.query.key) {
         let sqlArray = [

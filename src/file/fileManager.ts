@@ -6,7 +6,7 @@ import {
     getDataFromDB,
     getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return,
+    verifyAuthorization, operate_db_without_return,
 } from "../utility";
 const router = express.Router()
 

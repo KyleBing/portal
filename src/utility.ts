@@ -15,13 +15,13 @@ export function getDataFromDB(
 ): Promise<any> {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection({
-            host:       configDatabase.host,
-            user:       configDatabase.user,
-            password:   configDatabase.password,
-            port:       configDatabase.port,
-            multipleStatements: configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
-            timezone: configDatabase.timezone,
-            database: dbName
+            host               : configDatabase.host,
+            user               : configDatabase.user,
+            password           : configDatabase.password,
+            port               : configDatabase.port,
+            multipleStatements : configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
+            timezone           : configDatabase.timezone,
+            database           : dbName
         })
         connection.connect()
         // console.log('---- SQL', sqlArray.join(' '))
@@ -73,13 +73,13 @@ export function verifyAuthorization(req: express.Request): Promise<any>{
 
 export function getMysqlConnection(dbName: string){
     let connection = mysql.createConnection({
-        host:       configDatabase.host,
-        user:       configDatabase.user,
-        password:   configDatabase.password,
-        port:       configDatabase.port,
-        multipleStatements: configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
-        timezone: configDatabase.timezone,
-        database: dbName
+        host               : configDatabase.host,
+        user               : configDatabase.user,
+        password           : configDatabase.password,
+        port               : configDatabase.port,
+        multipleStatements : configDatabase.multipleStatements, // 允许同时请求多条 sql 语句
+        timezone           : configDatabase.timezone,
+        database           : dbName
     })
     connection.connect()
     return connection

@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseError, ResponseSuccess} from "../response/Response";
+import {ResponseError} from "../response/Response";
 import mysql from "mysql"
 import configDatabase from "../../config/configDatabase";
 import {

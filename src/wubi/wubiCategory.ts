@@ -4,7 +4,6 @@ import configProject from "../../config/configProject";
 import {
     dateFormatter,
     getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
-    updateUserLastLoginTime,
     verifyAuthorization
 } from "../utility";
 const router = express.Router()
@@ -55,7 +54,6 @@ router.get('/list', (req, res) => {
         })
 })
 router.post('/add', (req, res) => {
-
     checkCategoryExist(req.body.name)
         .then(dataCategoryExistenceArray => {
             // email 记录是否已经存在
@@ -76,7 +74,6 @@ router.post('/add', (req, res) => {
                         } else {
                             res.send(new ResponseError('', '无权操作'))
                         }
-
                     })
                     .catch(err => {
                         res.send(new ResponseError('', err.message))
