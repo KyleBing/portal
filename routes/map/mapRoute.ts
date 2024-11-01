@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
+import {ResponseError, ResponseSuccess} from "../../response/Response";
 import configProject from "../../config/configProject";
 import {
     unicodeEncode,
@@ -8,8 +8,8 @@ import {
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization
-} from "@config/utility";
-import {User} from "@entity/User";
+} from "../../config/utility";
+import {User} from "entity/User";
 const router = express.Router()
 
 const CURRENT_TABLE = 'map_route'

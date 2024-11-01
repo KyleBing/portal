@@ -1,12 +1,11 @@
 import mysql from "mysql"
 import configDatabase from "./configDatabase";
-import configProject from "./configProject";
-import {Diary, DiaryBill} from "@entity/Diary";
+import {DiaryBill} from "entity/Diary";
 import express from "express";
-import {BillDay} from "@entity/Bill";
+import {BillDay} from "entity/Bill";
 
 // 运行 SQL 并返回 DB 结果
-function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: boolean): Promise<any> {
+export function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: boolean): Promise<any> {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection({
             host:       configDatabase.host,
@@ -39,7 +38,7 @@ function getDataFromDB(dbName: string, sqlArray: Array<string>, isSingleValue?: 
 
 
 // 验证用户是否有权限
-function verifyAuthorization(req: express.Request): Promise<any>{
+export function verifyAuthorization(req: express.Request): Promise<any>{
     let token = req.get('Diary-Token') || req.query.token
     let uid = req.get('Diary-Uid')
     return new Promise((resolve, reject) => {
@@ -65,7 +64,7 @@ function verifyAuthorization(req: express.Request): Promise<any>{
     })
 }
 
-function getMysqlConnection(dbName: string){
+export function getMysqlConnection(dbName: string){
     let connection = mysql.createConnection({
         host:       configDatabase.host,
         user:       configDatabase.user,
@@ -82,7 +81,7 @@ function getMysqlConnection(dbName: string){
 
 
 // 格式化时间，输出字符串
-function dateFormatter(date: Date, formatString = 'yyyy-MM-dd hh:mm:ss') {
+export function dateFormatter(date: Date, formatString = 'yyyy-MM-dd hh:mm:ss') {
     let dateRegArray = {
         "M+": date.getMonth() + 1,                      // 月份
         "d+": date.getDate(),                           // 日
@@ -104,7 +103,7 @@ function dateFormatter(date: Date, formatString = 'yyyy-MM-dd hh:mm:ss') {
 }
 
 // unicode -> text
-function unicodeEncode(str: string){
+export function unicodeEncode(str: string){
     if(!str)return '';
     if(typeof str !== 'string') return str
     let text = escape(str);
@@ -116,7 +115,7 @@ function unicodeEncode(str: string){
 }
 
 // text -> unicode
-function  unicodeDecode(str: string)
+export function  unicodeDecode(str: string)
 {
     let text = escape(str);
     text = text.replace(/(%5Cu[ed][0-9a-f]{3})/ig, source=>{
@@ -125,7 +124,7 @@ function  unicodeDecode(str: string)
     return unescape(text);
 }
 
-function updateUserLastLoginTime(uid: string){
+export function updateUserLastLoginTime(uid: string){
     let timeNow = dateFormatter(new Date())
     getDataFromDB( 'diary', [`update users set last_visit_time='${timeNow}' where uid='${uid}'`])
         .then(data => {
@@ -138,7 +137,7 @@ function updateUserLastLoginTime(uid: string){
 
 
 // 处理账单文本内容，转成格式化的账单数据
-function processBillOfDay(diaryObj: DiaryBill, filterKeywords: Array<string> = []){
+export function processBillOfDay(diaryObj: DiaryBill, filterKeywords: Array<string> = []){
     let str = diaryObj.content.replace(/ +/g, ' ') // 替换掉所有多个空格的间隔，改为一个空格
     let strArray =
         str
@@ -177,16 +176,6 @@ function processBillOfDay(diaryObj: DiaryBill, filterKeywords: Array<string> = [
     return response
 }
 
-function formatMoney(number: number): number{
+export function formatMoney(number: number): number{
     return Number(number.toFixed(2))
-}
-
-export {
-    getDataFromDB,
-    getMysqlConnection,
-    dateFormatter, updateUserLastLoginTime,
-    unicodeEncode, unicodeDecode,
-    verifyAuthorization,
-    // Bill
-    processBillOfDay, formatMoney
 }

@@ -1,12 +1,12 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
+import {ResponseError, ResponseSuccess} from "../../response/Response";
 import {
     unicodeDecode,
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization, processBillOfDay, formatMoney
-} from "@config/utility";
-import {BillDay, BillFood, BillItem, BillMonth} from "@entity/Bill";
+} from "../../config/utility";
+import {BillDay, BillFood, BillItem, BillMonth} from "entity/Bill";
 const router = express.Router()
 
 

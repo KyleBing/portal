@@ -1,5 +1,5 @@
 // 词条对象
-import WubiDict from "@entity/WubiDict";
+import WubiDict from "entity/WubiDict";
 
 class WubiWord {
     id = 0

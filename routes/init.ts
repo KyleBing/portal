@@ -1,14 +1,14 @@
 import express from "express"
-import {ResponseError } from "@response/Response";
+import {ResponseError, ResponseSuccess} from "../response/Response";
 import mysql from "mysql"
 import configDatabase from "../config/configDatabase";
 import {
     dateFormatter,
-} from "@config/utility";
+} from "../config/utility";
 const router = express.Router()
 
 import {stat, writeFile } from "fs"
-import {DatabaseConfig} from "@entity/DatabaseConfig";
+import {DatabaseConfig} from "entity/DatabaseConfig";
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
 

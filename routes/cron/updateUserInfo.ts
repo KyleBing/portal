@@ -6,8 +6,8 @@
  * 意思就是每个小时的 17 分刷新用户数据
  */
 
-import {getDataFromDB} from "@config/utility";
-import {User} from "@entity/User";
+import {getDataFromDB} from "../../config/utility";
+import {User} from "entity/User";
 
 getDataFromDB('diary', [`select * from users`])
     .then(data => {

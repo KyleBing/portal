@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
+
 import {
     unicodeEncode,
     unicodeDecode,
@@ -7,10 +7,10 @@ import {
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization,
-} from "@config/utility";
-import {User} from "@entity/User";
+} from "../../config/utility";
+import {User} from "entity/User";
 import { Request, Response } from "express-serve-static-core";
-
+import {ResponseError, ResponseSuccess} from "../../response/Response";
 const router = express.Router()
 
 const CURRENT_TABLE = 'map_pointer'

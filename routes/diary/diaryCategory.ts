@@ -1,12 +1,12 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
-import configProject from "@config/configProject";
+import {ResponseError, ResponseSuccess} from "../../response/Response";
+import configProject from "../../config/configProject";
 import {
     dateFormatter,
     getDataFromDB,
     updateUserLastLoginTime,
     verifyAuthorization
-} from "@config/utility";
+} from "../../config/utility";
 const router = express.Router()
 
 const TABLE_NAME = 'diary_category' // 表名

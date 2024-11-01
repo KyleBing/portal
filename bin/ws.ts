@@ -1,7 +1,7 @@
 import {
     dateFormatter,
     getDataFromDB,
-} from "@config/utility";
+} from "../config/utility";
 
 // 载入 ws 库
 import WebSocketServer from 'ws'

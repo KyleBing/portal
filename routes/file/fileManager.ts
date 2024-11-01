@@ -1,5 +1,5 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
+import {ResponseError, ResponseSuccess} from "../../response/Response";
 import {
     unicodeEncode,
     dateFormatter,
@@ -7,7 +7,7 @@ import {
     getMysqlConnection,
     updateUserLastLoginTime,
     verifyAuthorization,
-} from "@config/utility";
+} from "../../config/utility";
 const router = express.Router()
 
 import multer from 'multer'

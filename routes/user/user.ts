@@ -1,6 +1,6 @@
 import express from "express"
-import {ResponseSuccess, ResponseError } from "@response/Response";
 import configProject from "../../config/configProject";
+import {ResponseError, ResponseSuccess} from "../../response/Response";
 import {
     unicodeDecode,
     dateFormatter,
@@ -8,7 +8,7 @@ import {
     getMysqlConnection,
     updateUserLastLoginTime,
     verifyAuthorization
-} from "@config/utility";
+} from "../../config/utility";
 const router = express.Router()
 
 import bcrypt from "bcrypt"

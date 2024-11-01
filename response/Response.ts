@@ -19,7 +19,6 @@ class ResponseSuccess {
         this.data = data
     }
 }
-
 export {
-    ResponseError, ResponseSuccess
+    ResponseSuccess, ResponseError
 }
