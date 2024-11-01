@@ -101,6 +101,7 @@ app.use('/wubi/category', routerWubiCategory)  // 词条类别
 
 // 饥荒
 import routerStarve from './src/dontstarve/dontStarve'
+import router from "./src/index";
 app.use('/starve', routerStarve)
 
 

@@ -5,7 +5,8 @@
  */
 
 import app from "../app"
-const debug = require('debug')('diary-portal-node:server')
+
+const debug = require('debug')('portal:server')
 
 import http from "http"
 
@@ -35,19 +36,19 @@ server.listen(port)
  */
 
 function normalizePort(val) {
-  const port = parseInt(val, 10)
+    const port = parseInt(val, 10)
 
-  if (isNaN(port)) {
-    // named pipe
-    return val
-  }
+    if (isNaN(port)) {
+        // named pipe
+        return val
+    }
 
-  if (port >= 0) {
-    // port number
-    return port
-  }
+    if (port >= 0) {
+        // port number
+        return port
+    }
 
-  return false
+    return false
 }
 
 /**
