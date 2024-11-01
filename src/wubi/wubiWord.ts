@@ -6,7 +6,7 @@ import {
     dateFormatter,
     getDataFromDB,
     updateUserLastLoginTime,
-    verifyAuthorization,
+    verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return,
 } from "../utility";
 const router = express.Router()
 
@@ -16,7 +16,9 @@ const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
 const uploadStorage = multer({ storage: storage })
 
-const TABLE_NAME = 'wubi_words'
+const DB_NAME = 'diary'
+const DATA_NAME = '五笔词条'
+const CURRENT_TABLE = 'wubi_words'
 
 // used for dict init
 // 废弃
@@ -31,7 +33,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res) => {
             let timeNow = dateFormatter(new Date())
             dict.wordsOrigin.forEach(word => {
                 sqlArray.push(`
-                    INSERT into ${TABLE_NAME}(word, code, priority, date_create, comment, user_init, user_modify)
+                    INSERT into ${CURRENT_TABLE}(word, code, priority, date_create, comment, user_init, user_modify)
                     VALUES(
                         '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${userInfo.uid}', '${userInfo.uid}');`
                 )
@@ -74,7 +76,7 @@ router.post('/list', (req, res) => {
                                users_modify.uid as uid_modify, 
                                users_modify.nickname as nickname_modify, 
                                users_modify.group_id as group_id_modify
-                                from ${TABLE_NAME} 
+                                from ${CURRENT_TABLE} 
                                 LEFT JOIN wubi_category ON category_id = wubi_category.id
                                 LEFT JOIN users users_init ON wubi_words.user_init = users_init.uid
                                 LEFT JOIN users users_modify ON wubi_words.user_modify = users_modify.uid
@@ -125,7 +127,7 @@ router.post('/list', (req, res) => {
             )
             promisesAll.push(getDataFromDB(
                 'diary',
-                [`select count(*) as sum from ${TABLE_NAME} ${filterArray.join(' ')}`], true)
+                [`select count(*) as sum from ${CURRENT_TABLE} ${filterArray.join(' ')}`], true)
             )
 
             Promise
@@ -170,7 +172,7 @@ router.post('/export-extra', (req, res) => {
                        wubi_words.user_modify, 
                        users.email,
                        users.group_id
-                FROM ${TABLE_NAME} 
+                FROM ${CURRENT_TABLE} 
                          LEFT JOIN wubi_category  ON category_id = wubi_category.id
                          LEFT JOIN users ON wubi_words.user_init = users.uid
                 WHERE category_id != 1 and approved = 1
@@ -198,7 +200,7 @@ router.post('/check-exist', (req, res) => {
             let sqlArray = []
             let parseWord = unicodeEncode(req.body.word) // !
             sqlArray.push(`
-                select * from ${TABLE_NAME} where word like '%${parseWord}%' and code like '${req.body.code}%' limit 5`
+                select * from ${CURRENT_TABLE} where word like '%${parseWord}%' and code like '${req.body.code}%' limit 5`
             )
             getDataFromDB( 'diary', sqlArray, false)
                 .then(data => {
@@ -222,7 +224,7 @@ router.post('/add', (req, res) => {
             let timeNow = dateFormatter(new Date())
             let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
             sqlArray.push(`
-                    INSERT into ${TABLE_NAME}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id, approved )
+                    INSERT into ${CURRENT_TABLE}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id, approved )
                     VALUES(
                         '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
                         '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}', ${isApproved})`
@@ -247,7 +249,7 @@ router.post('/add-batch', (req, res) => {
 
             Promise.all(
                 req.body.words.map(word => {
-                    return getDataFromDB('diary', [`select * from ${TABLE_NAME} where code = '${word.code}' and word = '${word.word}'`], true)
+                    return getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where code = '${word.code}' and word = '${word.word}'`], true)
                 })
             )
                 .then(results => {
@@ -273,7 +275,7 @@ router.post('/add-batch', (req, res) => {
                             let parseWord = unicodeEncode(word.word) // !
                             let timeNow = dateFormatter(new Date())
                             let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
-                            return `INSERT into ${TABLE_NAME}(word, code, priority,
+                            return `INSERT into ${CURRENT_TABLE}(word, code, priority,
                                                           date_create, date_modify, comment, user_init, user_modify, category_id, approved)
                                 VALUES ('${parseWord}', '${word.code}', '${word.priority || 0}',
                                         '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}','${userInfo.uid}',
@@ -310,7 +312,7 @@ router.put('/modify', (req, res) => {
             let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
             let sqlArray = []
             sqlArray.push(`
-                        update ${TABLE_NAME}
+                        update ${CURRENT_TABLE}
                             set
                                 date_modify='${timeNow}',
                                 word='${parseWord}',
@@ -349,7 +351,7 @@ router.delete('/delete', (req, res) => {
         .then(userInfo => {
             let sqlArray = []
             sqlArray.push(`
-                        DELETE from ${TABLE_NAME}
+                        DELETE from ${CURRENT_TABLE}
                         WHERE id in (${req.body.ids.join(',')})
                     `)
             // 除管理员之外，只能操作自己创造的词
@@ -358,18 +360,9 @@ router.delete('/delete', (req, res) => {
             } else {
                 sqlArray.push(`and user_init = ${userInfo.uid}`)
             }
-            getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    if (data.affectedRows > 0) {
-                        updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '删除成功'))
-                    } else {
-                        res.send(new ResponseError('', '删除失败'))
-                    }
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err,))
-                })
+
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
+
         })
         .catch(err => {
             res.send(new ResponseError(err, '无权操作'))
@@ -381,7 +374,7 @@ router.put('/modify-batch', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let timeNow = dateFormatter(new Date())
-            let sqlArray = [`update ${TABLE_NAME} set date_modify='${timeNow}', user_modify=${userInfo.uid}, `]
+            let sqlArray = [`update ${CURRENT_TABLE} set date_modify='${timeNow}', user_modify=${userInfo.uid}, `]
             // 以下两个不会同时出现，所以不用加中间的 , 了
             if (req.body.hasOwnProperty('category_id')){
                 sqlArray.push(`category_id='${req.body.category_id}'`)

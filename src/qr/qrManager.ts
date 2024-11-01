@@ -6,9 +6,13 @@ import {
     dateFormatter,
     getDataFromDB,
     updateUserLastLoginTime,
-    verifyAuthorization
+    verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return
 } from "../utility";
 const router = express.Router()
+
+const DB_NAME = 'diary'
+const DATA_NAME = '二维码'
+const CURRENT_TABLE = 'qrs'
 
 router.get('/list', (req, res) => {
     verifyAuthorization(req)
@@ -36,13 +40,13 @@ router.get('/list', (req, res) => {
                                    users.uid,
                                    users.nickname,
                                    users.username
-                                        from qrs
-                                            left join users on qrs.uid = users.uid
+                                        from ${CURRENT_TABLE}
+                                            left join users on ${CURRENT_TABLE}.uid = users.uid
                             `)
             if (userInfo.group_id === 1){
 
             } else {
-                sqlArray.push([`where qrs.uid = ${userInfo.uid}`])
+                sqlArray.push([`where ${CURRENT_TABLE}.uid = ${userInfo.uid}`])
             }
 
             // keywords
@@ -58,14 +62,13 @@ router.get('/list', (req, res) => {
             let startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize) //  QR 起点
             sqlArray.push(` order by date_init desc
                   limit ${startPoint}, ${req.query.pageSize}`)
-
             getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
-                    data.forEach(diary => {
+                    data.forEach(qr => {
                         // decode unicode
-                        diary.message = unicodeDecode(diary.message)
-                        diary.description = unicodeDecode(diary.description)
+                        qr.message = unicodeDecode(qr.message)
+                        qr.description = unicodeDecode(qr.description)
                     })
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
@@ -80,7 +83,7 @@ router.get('/list', (req, res) => {
 
 router.get('/detail', (req, res) => {
     let sqlArray = []
-    sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
+    sqlArray.push(`select * from ${CURRENT_TABLE} where hash = '${req.query.hash}'`)
     getDataFromDB( 'diary', sqlArray, true)
         .then(dataQr => {
             // decode unicode
@@ -148,7 +151,7 @@ router.post('/add', (req, res) => {
                         let parsedDescription = unicodeEncode(req.body.description) || ''
                         let timeNow = dateFormatter(new Date())
                         sqlArray.push(`
-                           insert into qrs(hash, is_public, is_show_phone, message, description, car_name, car_plate, car_desc, is_show_car, wx_code_img, is_show_wx,
+                           insert into ${CURRENT_TABLE}(hash, is_public, is_show_phone, message, description, car_name, car_plate, car_desc, is_show_car, wx_code_img, is_show_wx,
                            is_show_homepage, is_show_gaode, date_modify, date_init, visit_count, uid, imgs, car_type)
                             values(
                                 '${req.body.hash.toLowerCase()}',
@@ -172,15 +175,8 @@ router.post('/add', (req, res) => {
                                 '${req.body.car_type}'
                                 )
                         `)
-                        getDataFromDB( 'diary', sqlArray)
-                            .then(data => {
-                                updateUserLastLoginTime(userInfo.uid)
-                                res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 QR  id
-                            })
-                            .catch(err => {
-                                console.log(err)
-                                res.send(new ResponseError(err, '添加失败'))
-                            })
+
+                        operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res)
                     }
                 })
                 .catch(err => {
@@ -196,7 +192,7 @@ router.post('/add', (req, res) => {
 // 检查用户名或邮箱是否存在
 function checkHashExist(hash: string){
     let sqlArray = []
-    sqlArray.push(`select * from qrs where hash='${hash.toLowerCase()}'`)
+    sqlArray.push(`select * from ${CURRENT_TABLE} where hash='${hash.toLowerCase()}'`)
     return getDataFromDB( 'diary', sqlArray)
 }
 
@@ -205,43 +201,38 @@ router.put('/modify', (req, res) => {
 
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
-        .then(() => {
+        .then(userInfo => {
             let parsedMessage = unicodeEncode(req.body.message) // !
             let parsedDescription = unicodeEncode(req.body.description) || ''
             let timeNow = dateFormatter(new Date())
 
             let sqlArray = []
             sqlArray.push(`
-                        update qrs
+                        update ${CURRENT_TABLE}
                             set
-                                qrs.is_public = '${req.body.is_public}',
-                                qrs.is_show_phone = '${req.body.is_show_phone}',
-                                qrs.message = '${parsedMessage}',
-                                qrs.description = '${parsedDescription}',
-                                qrs.car_name = '${req.body.car_name}',
-                                qrs.car_plate = '${req.body.car_plate}',
-                                qrs.car_desc = '${req.body.car_desc}',
-                                qrs.is_show_car = '${req.body.is_show_car}',
-                                qrs.is_show_wx = '${req.body.is_show_wx}',
-                                qrs.wx_code_img = '${req.body.wx_code_img}',
-                                qrs.is_show_homepage = '${req.body.is_show_homepage}',
-                                qrs.is_show_gaode = '${req.body.is_show_gaode}',
-                                qrs.date_modify = '${timeNow}',
-                                qrs.visit_count = '${req.body.visit_count}',
-                                qrs.uid = '${req.body.uid}',
-                                qrs.imgs = '${req.body.imgs}',
-                                qrs.car_type = '${req.body.car_type}'
+                                ${CURRENT_TABLE}.is_public = '${req.body.is_public}',
+                                ${CURRENT_TABLE}.is_show_phone = '${req.body.is_show_phone}',
+                                ${CURRENT_TABLE}.message = '${parsedMessage}',
+                                ${CURRENT_TABLE}.description = '${parsedDescription}',
+                                ${CURRENT_TABLE}.car_name = '${req.body.car_name}',
+                                ${CURRENT_TABLE}.car_plate = '${req.body.car_plate}',
+                                ${CURRENT_TABLE}.car_desc = '${req.body.car_desc}',
+                                ${CURRENT_TABLE}.is_show_car = '${req.body.is_show_car}',
+                                ${CURRENT_TABLE}.is_show_wx = '${req.body.is_show_wx}',
+                                ${CURRENT_TABLE}.wx_code_img = '${req.body.wx_code_img}',
+                                ${CURRENT_TABLE}.is_show_homepage = '${req.body.is_show_homepage}',
+                                ${CURRENT_TABLE}.is_show_gaode = '${req.body.is_show_gaode}',
+                                ${CURRENT_TABLE}.date_modify = '${timeNow}',
+                                ${CURRENT_TABLE}.visit_count = '${req.body.visit_count}',
+                                ${CURRENT_TABLE}.uid = '${req.body.uid}',
+                                ${CURRENT_TABLE}.imgs = '${req.body.imgs}',
+                                ${CURRENT_TABLE}.car_type = '${req.body.car_type}'
                             WHERE hash='${req.body.hash}'
                     `)
 
-            getDataFromDB( 'diary', sqlArray, true)
-                .then(data => {
-                    updateUserLastLoginTime(req.body.email)
-                    res.send(new ResponseSuccess(data, '修改成功'))
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, '修改失败'))
-                })
+
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改', res)
+
         })
         .catch(err => {
             res.send(new ResponseError(err, '无权操作'))
@@ -255,24 +246,13 @@ router.delete('/delete', (req, res) => {
 
             let sqlArray = []
             sqlArray.push(`
-                        DELETE from qrs
+                        DELETE from ${CURRENT_TABLE}
                         WHERE hash='${req.body.hash}'
                     `)
             if (userInfo.group_id !== 1){
                 sqlArray.push(` and uid='${userInfo.uid}'`) // 当为1管理员时，可以随意操作任意对象
             }
-            getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    if (data.affectedRows > 0) {
-                        updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '删除成功'))
-                    } else {
-                        res.send(new ResponseError('', '删除失败'))
-                    }
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err,))
-                })
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
 
         })
         .catch(err => {
@@ -288,16 +268,8 @@ router.post('/clear-visit-count', (req, res) => {
             if(userInfo.group_id === 1) {
                 let sqlArray = []
                 // let timeNow = dateFormatter(new Date())
-                sqlArray.push(` update qrs set visit_count = 0 where hash = '${req.body.hash}' `)
-                getDataFromDB( 'diary', sqlArray)
-                    .then(() => {
-                        updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '计数已清零')) // 添加成功之后，返回添加后的 QR  id
-                    })
-                    .catch(err => {
-                        console.log(err)
-                        res.send(new ResponseError(err, '计数清零失败'))
-                    })
+                sqlArray.push(` update ${CURRENT_TABLE} set visit_count = 0 where hash = '${req.body.hash}' `)
+                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '计数清零', res)
             } else {
                 res.send(new ResponseError('', '无权操作'))
             }

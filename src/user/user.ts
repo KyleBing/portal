@@ -7,9 +7,13 @@ import {
     getDataFromDB,
     getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization
+    verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return
 } from "../utility";
 const router = express.Router()
+
+const DB_NAME = 'diary'
+const DATA_NAME = '用户'
+const CURRENT_TABLE = 'users'
 
 import bcrypt from "bcrypt"
 
@@ -19,7 +23,7 @@ router.post('/register', (req, res) => {
     if (req.body.invitationCode === configProject.invitation){ // 万能全局邀请码
         registerUser(req, res)
     } else {
-        getDataFromDB('diary', [`select * from invitations where id = '${req.body.invitationCode}'`], true)
+        getDataFromDB(DB_NAME, [`select * from invitations where id = '${req.body.invitationCode}'`], true)
             .then(result => {
                 if (result){
                     if (result.binding_uid){
@@ -50,7 +54,7 @@ function registerUser(req, res){
                 bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
                     sqlArray.push(
                         // 注册的用户默认为普通用户
-                        `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
+                        `insert into ${CURRENT_TABLE}(email, nickname, username, password, register_time, last_visit_time, comment, 
                                                 wx, phone, homepage, gaode, group_id)
                                     VALUES (
                                     '${req.body.email}', 
@@ -67,10 +71,10 @@ function registerUser(req, res){
                                     '2'
                                     )`
                     )
-                    getDataFromDB( 'diary', sqlArray)
+                    getDataFromDB( DB_NAME, sqlArray)
                         .then(data => {
                             let lastInsertedUid = data.insertId
-                            getDataFromDB('diary', [`update invitations set binding_uid = ${lastInsertedUid}, date_register = '${timeNow}' where id = '${req.body.invitationCode}'`])
+                            getDataFromDB(DB_NAME, [`update invitations set binding_uid = ${lastInsertedUid}, date_register = '${timeNow}' where id = '${req.body.invitationCode}'`])
                                 .then(resInvitation => {
                                     res.send(new ResponseSuccess('', '注册成功'))
                                 })
@@ -94,8 +98,8 @@ function registerUser(req, res){
 // 检查用户名或邮箱是否存在
 function checkEmailOrUserNameExist(email, username){
     let sqlArray = []
-    sqlArray.push(`select * from users where email='${email}' or username ='${username}'`)
-    return getDataFromDB( 'diary', sqlArray)
+    sqlArray.push(`select * from ${CURRENT_TABLE} where email='${email}' or username ='${username}'`)
+    return getDataFromDB( DB_NAME, sqlArray)
 }
 
 router.post('/list', (req, res) => {
@@ -107,23 +111,23 @@ router.post('/list', (req, res) => {
                 // admin user
                 let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
                 promisesAll.push(getDataFromDB(
-                    'diary',
-                    [`SELECT * from users limit ${pointStart} , ${req.body.pageSize}`])
+                    DB_NAME,
+                    [`SELECT * from ${CURRENT_TABLE} limit ${pointStart} , ${req.body.pageSize}`])
                 )
                 promisesAll.push(getDataFromDB(
-                    'diary',
-                    [`select count(*) as sum from users`], true)
+                    DB_NAME,
+                    [`select count(*) as sum from ${CURRENT_TABLE}`], true)
                 )
             } else {
                 // normal user
                 let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
                 promisesAll.push(getDataFromDB(
-                    'diary',
-                    [`SELECT * from users where uid = '${userInfo.uid}' limit ${pointStart} , ${req.body.pageSize}`])
+                    DB_NAME,
+                    [`SELECT * from ${CURRENT_TABLE} where uid = '${userInfo.uid}' limit ${pointStart} , ${req.body.pageSize}`])
                 )
                 promisesAll.push(getDataFromDB(
-                    'diary',
-                    [`select count(*) as sum from users where uid = '${userInfo.uid}' `], true)
+                    DB_NAME,
+                    [`select count(*) as sum from ${CURRENT_TABLE} where uid = '${userInfo.uid}' `], true)
                 )
             }
 
@@ -159,7 +163,7 @@ router.post('/list', (req, res) => {
 router.get('/detail', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from qrs where hash = '${req.query.hash}'`)
-    getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( DB_NAME, sqlArray, true)
         .then(data => {
             // decode unicode
             data.message = unicodeDecode(data.message)
@@ -210,8 +214,8 @@ router.get('/detail', (req, res) => {
 
 router.get('/avatar', (req, res) => {
     let sqlArray = []
-    sqlArray.push(`select avatar from users where email = '${req.query.email}'`)
-    getDataFromDB( 'diary', sqlArray, true)
+    sqlArray.push(`select avatar from ${CURRENT_TABLE} where email = '${req.query.email}'`)
+    getDataFromDB( DB_NAME, sqlArray, true)
         .then(data => {
             res.send(new ResponseSuccess(data))
         })
@@ -233,7 +237,7 @@ router.post('/add', (req, res) => {
                 // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
                 bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
                     sqlArray.push(
-                        `insert into users(email, nickname, username, password, register_time, last_visit_time, comment, 
+                        `insert into ${CURRENT_TABLE}(email, nickname, username, password, register_time, last_visit_time, comment, 
                                                 wx, phone, homepage, gaode, group_id)
                                     VALUES (
                                     '${req.body.email}', 
@@ -250,7 +254,7 @@ router.post('/add', (req, res) => {
                                     '${req.body.group_id}'
                                     )`
                     )
-                    getDataFromDB( 'diary', sqlArray)
+                    getDataFromDB( DB_NAME, sqlArray)
                         .then(data => {
                             res.send(new ResponseSuccess('', '用户添加成功'))
                         })
@@ -270,8 +274,8 @@ router.post('/add', (req, res) => {
 // 检查用户名或邮箱是否存在
 function checkHashExist(username, email){
     let sqlArray = []
-    sqlArray.push(`select * from users where username ='${username.toLowerCase()}' or email = '${email}'`)
-    return getDataFromDB( 'diary', sqlArray)
+    sqlArray.push(`select * from ${CURRENT_TABLE} where username ='${username.toLowerCase()}' or email = '${email}'`)
+    return getDataFromDB( DB_NAME, sqlArray)
 }
 
 
@@ -283,15 +287,15 @@ router.put('/set-profile', (req, res) => {
             let avatar = req.body.avatar || ''
             let sqlArray = []
             sqlArray.push(`
-                update users
-                set users.nickname       = '${req.body.nickname}',
-                    users.phone          = '${req.body.phone}',
-                    users.avatar         = '${avatar}',
-                    users.city           = '${req.body.city}',
-                    users.geolocation    = '${req.body.geolocation}'
+                update ${CURRENT_TABLE}
+                set ${CURRENT_TABLE}.nickname       = '${req.body.nickname}',
+                    ${CURRENT_TABLE}.phone          = '${req.body.phone}',
+                    ${CURRENT_TABLE}.avatar         = '${avatar}',
+                    ${CURRENT_TABLE}.city           = '${req.body.city}',
+                    ${CURRENT_TABLE}.geolocation    = '${req.body.geolocation}'
                     WHERE uid = '${userInfo.uid}'
             `)
-            getDataFromDB('diary', sqlArray, true)
+            getDataFromDB(DB_NAME, sqlArray, true)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     verifyAuthorization(req)
@@ -332,21 +336,21 @@ router.put('/modify', (req, res) => {
 function operateUserInfo(req, res, userInfo){
     let sqlArray = []
     sqlArray.push(`
-                update users
+                update ${CURRENT_TABLE}
                     set
-                            users.email = '${req.body.email}', 
-                            users.nickname = '${req.body.nickname}', 
-                            users.username = '${req.body.username}', 
-                            users.comment = '${req.body.comment || ''}', 
-                            users.wx = '${req.body.wx}', 
-                            users.phone = '${req.body.phone}', 
-                            users.homepage = '${req.body.homepage}', 
-                            users.gaode = '${req.body.gaode}', 
-                            users.group_id = '${req.body.group_id}'
+                            ${CURRENT_TABLE}.email = '${req.body.email}', 
+                            ${CURRENT_TABLE}.nickname = '${req.body.nickname}', 
+                            ${CURRENT_TABLE}.username = '${req.body.username}', 
+                            ${CURRENT_TABLE}.comment = '${req.body.comment || ''}', 
+                            ${CURRENT_TABLE}.wx = '${req.body.wx}', 
+                            ${CURRENT_TABLE}.phone = '${req.body.phone}', 
+                            ${CURRENT_TABLE}.homepage = '${req.body.homepage}', 
+                            ${CURRENT_TABLE}.gaode = '${req.body.gaode}', 
+                            ${CURRENT_TABLE}.group_id = '${req.body.group_id}'
                     WHERE uid='${req.body.uid}'
             `)
 
-    getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( DB_NAME, sqlArray, true)
         .then(data => {
             updateUserLastLoginTime(userInfo.uid)
             res.send(new ResponseSuccess(data, '修改成功'))
@@ -363,21 +367,10 @@ router.delete('/delete', (req, res) => {
             if (userInfo.group_id === 1){
                 let sqlArray = []
                 sqlArray.push(`
-                        DELETE from users
+                        DELETE from ${CURRENT_TABLE}
                         WHERE uid='${req.body.uid}'
                     `)
-                getDataFromDB( 'diary', sqlArray)
-                    .then(data => {
-                        if (data.affectedRows > 0) {
-                            updateUserLastLoginTime(req.body.email)
-                            res.send(new ResponseSuccess('', '删除成功'))
-                        } else {
-                            res.send(new ResponseError('', '删除失败'))
-                        }
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err,))
-                    })
+                operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
             } else {
                 res.send(new ResponseError('', '无权操作'))
             }
@@ -389,9 +382,9 @@ router.delete('/delete', (req, res) => {
 
 router.post('/login', (req, res) => {
     let sqlArray = []
-    sqlArray.push(`select * from users where email = '${req.body.email}'`)
+    sqlArray.push(`select * from ${CURRENT_TABLE} where email = '${req.body.email}'`)
 
-    getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( DB_NAME, sqlArray, true)
         .then(data => {
             if (data) {
                 bcrypt.compare(req.body.password, data.password, function(err, isPasswordMatch) {
@@ -426,15 +419,8 @@ router.put('/change-password', (req, res) => {
                 return
             }
             bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
-                let changePasswordSqlArray = [`update users set password = '${encryptPasswordNew}' where email='${userInfo.email}'`]
-                getDataFromDB( 'diary', changePasswordSqlArray)
-                    .then(dataChangePassword => {
-                        updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '修改密码成功'))
-                    })
-                    .catch(errChangePassword => {
-                        res.send(new ResponseError('', '修改密码失败'))
-                    })
+                let sqlArray = [`update ${CURRENT_TABLE} set password = '${encryptPasswordNew}' where email='${userInfo.email}'`]
+                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改密码', res)
             })
         })
         .catch(err => {
@@ -452,7 +438,7 @@ router.delete('/destroy-account', (req, res) => {
                 res.send(new ResponseError('', '演示帐户不允许执行此操作'))
                 return
             }
-            let connection = getMysqlConnection('diary')
+            let connection = getMysqlConnection(DB_NAME)
             connection.beginTransaction(transactionError => {
                 if (transactionError){
                     connection.rollback(err => {
@@ -467,7 +453,7 @@ router.delete('/destroy-account', (req, res) => {
                                 delete from map_route where uid = ${userInfo.uid}; 
                                 delete from map_route where uid = ${userInfo.uid}; 
                                 delete from qrs where uid = ${userInfo.uid}; 
-                                delete from users where uid = ${userInfo.uid}; 
+                                delete from ${CURRENT_TABLE} where uid = ${userInfo.uid}; 
                                 `
                     connection.query(sql, [], (queryErr,result) => {
                         if (queryErr){

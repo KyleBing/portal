@@ -1,6 +1,6 @@
 class ResponseError {
-    success = false
-    message = ''
+    readonly success = false
+    message: string
     data = null
     constructor(data: any, message?: string) {
         this.success = false // true / false
@@ -10,8 +10,8 @@ class ResponseError {
 }
 
 class ResponseSuccess {
-    success = true
-    message = ''
+    readonly success = true
+    message: string
     data = null
     constructor(data: any, message?: string) {
         this.success = true // true / false

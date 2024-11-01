@@ -7,6 +7,7 @@ import {
     verifyAuthorization, processBillOfDay, formatMoney
 } from "../utility";
 import {BillDay, BillFood, BillItem, BillMonth} from "entity/Bill";
+import {Diary} from "entity/Diary";
 const router = express.Router()
 
 
@@ -21,7 +22,7 @@ router.get('/', (req, res) => {
                     updateUserLastLoginTime(userInfo.uid)
                     let billResponse = []
 
-                    billDiaryList.forEach(diary => {
+                    billDiaryList.forEach((diary: Diary) => {
                         // decode unicode
                         billResponse.push(processBillOfDay(diary, []))
                     })

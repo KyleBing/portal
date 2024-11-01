@@ -3,24 +3,26 @@ import {ResponseError, ResponseSuccess} from "../response/Response";
 import configProject from "../../config/configProject";
 import {
     dateFormatter,
-    getDataFromDB,
+    getDataFromDB, operate_db_and_return_added_id,
     updateUserLastLoginTime,
     verifyAuthorization,
 } from "../utility";
 const router = express.Router()
 
+const DB_NAME = 'diary'
+const DATA_NAME = '邀请码'
+const CURRENT_TABLE = 'invitations'
+
 import crypto from 'crypto'
 
-
-const TABLE_NAME = 'invitations'
 router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
             if (userInfo.email === configProject.adminCount ) { //
-                sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null order by date_create desc ;`)
+                sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null order by date_create desc ;`)
             } else {
-                sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null and is_shared = 0 order by date_create desc  ;`)
+                sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null and is_shared = 0 order by date_create desc  ;`)
             }
             getDataFromDB( 'diary', sqlArray)
                 .then(data => {
@@ -34,7 +36,7 @@ router.get('/list', (req, res) => {
         .catch(verified => {
             let sqlArray = []
             // 获取未分享的可用邀请码
-            sqlArray.push(`SELECT * from ${TABLE_NAME} where binding_uid is null and is_shared = 0 order by date_create desc ;`)
+            sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null and is_shared = 0 order by date_create desc ;`)
             getDataFromDB( 'diary', sqlArray)
                 .then(data => {
                     res.send(new ResponseSuccess(data, '请求成功'))
@@ -55,15 +57,10 @@ router.post('/generate', (req, res) => {
                     let key = buffer.toString('base64')
                     sqlArray.push(`
                         insert into 
-                            ${TABLE_NAME}(date_create, id) 
+                            ${CURRENT_TABLE}(date_create, id) 
                             VALUES ('${timeNow}', '${key}')`)
-                    getDataFromDB( 'diary', sqlArray)
-                        .then(data => {
-                            res.send(new ResponseSuccess(key, '邀请码生成成功'))
-                        })
-                        .catch(err => {
-                            res.send(new ResponseError(err, '邀请码生成失败'))
-                        })
+
+                    operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '生成', res)
                 })
             } else {
                 res.send(new ResponseError('', '无权限操作'))
@@ -81,14 +78,9 @@ router.post('/mark-shared', (req, res) => {
             if (userInfo.email === configProject.adminCount){ // admin
                 let sqlArray = []
                 sqlArray.push(`
-                        update ${TABLE_NAME} set is_shared = 1 where id = '${req.body.id}' `)
-                getDataFromDB( 'diary', sqlArray)
-                    .then(data => {
-                        res.send(new ResponseSuccess('', '邀请码标记成功'))
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err, '邀请码标记失败'))
-                    })
+                        update ${CURRENT_TABLE} set is_shared = 1 where id = '${req.body.id}' `)
+
+                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '标记', res)
             } else {
                 res.send(new ResponseError('', '无权限操作'))
             }
@@ -108,19 +100,9 @@ router.delete('/delete', (req, res) => {
         .then(userInfo => {
             if (userInfo.email === configProject.adminCount){
                 let sqlArray = []
-                sqlArray.push(` DELETE from ${TABLE_NAME} WHERE id='${req.query.id}' `)
-                getDataFromDB( 'diary', sqlArray)
-                    .then(data => {
-                        if (data.affectedRows > 0) {
-                            updateUserLastLoginTime(req.body.email)
-                            res.send(new ResponseSuccess('', '删除成功'))
-                        } else {
-                            res.send(new ResponseError('', '删除失败'))
-                        }
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err,))
-                    })
+                sqlArray.push(` DELETE from ${CURRENT_TABLE} WHERE id='${req.query.id}' `)
+
+                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res)
             } else {
                 res.send(new ResponseError('', '无权操作'))
             }

@@ -1,3 +1,6 @@
+import {BillDay} from "entity/Bill";
+import Bill from "../diary/bill";
+
 interface Diary {
     id: number,
     date: string,                 // 日记日期,
@@ -12,12 +15,10 @@ interface Diary {
     uid: number,                  // 用户id,
     is_public: number,            // 是否共享,
     is_markdown: number,          // Markdown,
-}
 
-// 账单返回日记内容，多加了几个字段
-interface DiaryBill extends Diary{
-    month: string, // 10
-    month_id: string, // 202410
+    billData? : BillDay   // 日记的账单数据，只有是账单类别时才有
+    month?: string, // 10
+    month_id?: string, // 202410
 }
 
 interface DiaryCategory {
@@ -44,7 +45,7 @@ enum EnumWeather {
 }
 
 export {
-    Diary, DiaryBill,
+    Diary,
     DiaryCategory,
 
     EnumWeather,

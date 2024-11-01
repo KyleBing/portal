@@ -3,7 +3,7 @@ import {ResponseError, ResponseSuccess} from "../response/Response";
 import configProject from "../../config/configProject";
 import {
     dateFormatter,
-    getDataFromDB,
+    getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
     updateUserLastLoginTime,
     verifyAuthorization
 } from "../utility";
@@ -14,9 +14,10 @@ import qiniu from 'qiniu'
 /**
  * 七牛云图片 处理
  */
-const DB_NAME = 'diary' // 数据库名
-const TABLE_NAME = 'image_qiniu' // 文件存储
-const DATA_NAME = '七牛云图片'    // 操作的数据名
+
+const DB_NAME = 'diary'
+const DATA_NAME = '七牛云图片'
+const CURRENT_TABLE = 'image_qiniu'
 
 // 生成 token 根据 bucket
 router.get('/', (req, res) => {
@@ -55,7 +56,7 @@ router.get('/list', (req, res) => {
             // }
             //
             let sqlArray = []
-            sqlArray.push(`SELECT * from ${TABLE_NAME} `)
+            sqlArray.push(`SELECT * from ${CURRENT_TABLE} `)
 
             let tempQueryArray = []
             // keywords
@@ -93,6 +94,7 @@ router.get('/list', (req, res) => {
             res.send(new ResponseError(verified, '无权查看文件列表：用户信息错误'))
         })
 })
+
 router.post('/add', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
@@ -101,21 +103,10 @@ router.post('/add', (req, res) => {
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(`
-                                insert into ${TABLE_NAME}(id, description, date_create, type, bucket, base_url) 
+                                insert into ${CURRENT_TABLE}(id, description, date_create, type, bucket, base_url) 
                                 values('${req.body.id}', '${req.body.description || ''}', '${timeNow}', '${req.body.type}', '${req.body.bucket}', '${req.body.base_url}')`
                 )
-                getDataFromDB( DB_NAME, sqlArray)
-                    .then(data => {
-                        if (data) { // 没有记录时会返回  undefined
-                            updateUserLastLoginTime(userInfo.uid)
-                            res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的文件 id
-                        } else {
-                            res.send(new ResponseError('', `${DATA_NAME}查询错误`))
-                        }
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err, `${DATA_NAME}添加失败`))
-                    })
+                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res,)
             } else {
                 res.send(new ResponseError('', '无权操作'))
             }
@@ -132,21 +123,10 @@ router.delete('/delete', (req, res) => {
             if (userInfo.email === configProject.adminCount ){
                 let sqlArray = []
                 sqlArray.push(`
-                    delete from ${TABLE_NAME} 
+                    delete from ${CURRENT_TABLE} 
                                where id = '${req.body.id}'
                     `)
-                getDataFromDB( DB_NAME, sqlArray)
-                    .then(data => {
-                        if (data) { // 没有记录时会返回  undefined
-                            updateUserLastLoginTime(userInfo.uid)
-                            res.send(new ResponseSuccess({id: data.insertId}, '删除成功')) // 添加成功之后，返回添加后的文件类别 id
-                        } else {
-                            res.send(new ResponseError('', `${DATA_NAME}删除失败`))
-                        }
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err, `${DATA_NAME}删除失败`))
-                    })
+                operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
             } else {
                 res.send(new ResponseError('', '无权操作'))
             }

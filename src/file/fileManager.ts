@@ -6,19 +6,23 @@ import {
     getDataFromDB,
     getMysqlConnection,
     updateUserLastLoginTime,
-    verifyAuthorization,
+    verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return,
 } from "../utility";
 const router = express.Router()
 
 import multer from 'multer'
 import fs from 'fs'
 
-const DB_NAME = 'diary' // 数据库名
-const TABLE_NAME = 'file_manager' // 数据库名
+const DB_NAME = 'diary'
+const DATA_NAME = '文件'
+const CURRENT_TABLE = 'file_manager'
+
 const TEMP_FOLDER = 'temp' // 临时文件存放文件夹
 const DEST_FOLDER = 'upload' // 临时文件存放文件夹
 const uploadLocal = multer({dest: TEMP_FOLDER}) // 文件存储在服务器的什么位置
 // const storage = multer.memoryStorage()
+
+
 
 router.post('/upload', uploadLocal.single('file'), (req, res) => {
     let fileOriginalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
@@ -35,7 +39,7 @@ router.post('/upload', uploadLocal.single('file'), (req, res) => {
                 } else {
                     let timeNow = dateFormatter(new Date())
                     let sql = `insert into
-                                 ${TABLE_NAME}(path, name_original, description, date_create, type, size, uid) 
+                                 ${CURRENT_TABLE}(path, name_original, description, date_create, type, size, uid) 
                                 values ('${destPath}', '${fileOriginalName}', '${req.body.note}', '${timeNow}', '${req.file.mimetype}', ${req.file.size}, ${userInfo.uid})`
 
                     connection.query(sql, [], (queryErr, _) => {
@@ -98,18 +102,11 @@ router.post('/modify', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
-            getDataFromDB( DB_NAME, [` update ${TABLE_NAME} set description = '${req.body.description}' WHERE id='${req.body.fileId}' and uid='${userInfo.uid}'`])
-                .then(data => {
-                    if (data.affectedRows > 0) {
-                        updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '修改成功'))
-                    } else {
-                        res.send(new ResponseError('', '修改失败'))
-                    }
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err,))
-                })
+            const sqlArray = [`
+                                update ${CURRENT_TABLE} set description = '${req.body.description}' 
+                                WHERE id='${req.body.fileId}' and uid='${userInfo.uid}'
+                            `]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改', res)
         })
         .catch(errInfo => {
             res.send(new ResponseError('', errInfo))
@@ -121,9 +118,9 @@ router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
-            getDataFromDB(DB_NAME, [`select * from ${TABLE_NAME} where id='${req.body.fileId}'`], true)
+            getDataFromDB(DB_NAME, [`select * from ${CURRENT_TABLE} where id='${req.body.fileId}'`], true)
                 .then(fileInfo => {
-                    getDataFromDB( DB_NAME, [` DELETE from ${TABLE_NAME} WHERE id='${req.body.fileId}' and uid='${userInfo.uid}' `])
+                    getDataFromDB( DB_NAME, [` DELETE from ${CURRENT_TABLE} WHERE id='${req.body.fileId}' and uid='${userInfo.uid}' `])
                         .then(data => {
                             if (data.affectedRows > 0) {
                                 updateUserLastLoginTime(userInfo.uid)
@@ -157,7 +154,7 @@ router.get('/list', (req, res) => {
         .then(userInfo => {
             let startPoint = (Number(req.query.pageNo) - 1) * Number( req.query.pageSize) // 文件记录起点
             let sqlArray = []
-            sqlArray.push(`SELECT *from ${TABLE_NAME} where uid='${userInfo.uid}'`)
+            sqlArray.push(`SELECT *from ${CURRENT_TABLE} where uid='${userInfo.uid}'`)
             // keywords
             if (req.query.keywords){
                 let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))

@@ -6,39 +6,43 @@ import {
 } from "../utility";
 const router = express.Router()
 
+const DB_NAME = 'diary'
+const DATA_NAME = '二维码'
+const CURRENT_TABLE = 'qrs'
+
 
 router.get('/', (req, res) => {
     // query.hash
     let sqlArray = []
     sqlArray.push(`
-            select qrs.hash,
-                   qrs.is_public,
-                   qrs.is_show_phone,
-                   qrs.message,
-                   qrs.car_name,
-                   qrs.car_plate,
-                   qrs.car_desc,
-                   qrs.is_show_car,
-                   qrs.is_show_wx,
-                   qrs.wx_code_img,
-                   qrs.description,
-                   qrs.is_show_homepage,
-                   qrs.is_show_gaode,
-                   qrs.date_init,
-                   qrs.visit_count,
-                   qrs.imgs,
-                   qrs.car_type,
+            select ${CURRENT_TABLE}.hash,
+                   ${CURRENT_TABLE}.is_public,
+                   ${CURRENT_TABLE}.is_show_phone,
+                   ${CURRENT_TABLE}.message,
+                   ${CURRENT_TABLE}.car_name,
+                   ${CURRENT_TABLE}.car_plate,
+                   ${CURRENT_TABLE}.car_desc,
+                   ${CURRENT_TABLE}.is_show_car,
+                   ${CURRENT_TABLE}.is_show_wx,
+                   ${CURRENT_TABLE}.wx_code_img,
+                   ${CURRENT_TABLE}.description,
+                   ${CURRENT_TABLE}.is_show_homepage,
+                   ${CURRENT_TABLE}.is_show_gaode,
+                   ${CURRENT_TABLE}.date_init,
+                   ${CURRENT_TABLE}.visit_count,
+                   ${CURRENT_TABLE}.imgs,
+                   ${CURRENT_TABLE}.car_type,
                    users.phone,
                    users.wx,
                    users.homepage,
                    users.uid,
                    users.nickname,
                    users.username
-            from qrs
-                     left join users on qrs.uid = users.uid
-                        where qrs.hash = '${req.query.hash}' and is_public = 1`)
+            from ${CURRENT_TABLE}
+                     left join users on ${CURRENT_TABLE}.uid = users.uid
+                        where ${CURRENT_TABLE}.hash = '${req.query.hash}' and is_public = 1`)
     // 1. 先查询出 QR 结果
-    getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( DB_NAME, sqlArray, true)
         .then(dataQr => {
             if (dataQr) { // 没有记录时会返回  undefined
                 // decode unicode
@@ -47,7 +51,7 @@ router.get('/', (req, res) => {
 
                 getDataFromDB(
                         'diary',
-                        [`select hash, car_name, car_plate, imgs from qrs 
+                        [`select hash, car_name, car_plate, imgs from ${CURRENT_TABLE} 
                                   where 
                                      uid = ${dataQr.uid} 
                                      and is_public = 1 
@@ -75,7 +79,7 @@ router.get('/', (req, res) => {
 })
 
 function countPlusOne(hash: string){
-    getDataFromDB( 'diary', [`update qrs set visit_count = visit_count + 1 where hash = '${hash}'`])
+    getDataFromDB( DB_NAME, [`update ${CURRENT_TABLE} set visit_count = visit_count + 1 where hash = '${hash}'`])
         .then()
 }
 

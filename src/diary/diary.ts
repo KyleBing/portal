@@ -6,9 +6,14 @@ import {
     dateFormatter,
     getDataFromDB,
     updateUserLastLoginTime,
-    verifyAuthorization, processBillOfDay
+    verifyAuthorization, processBillOfDay, operate_db_and_return_added_id, operate_db_without_return
 } from "../utility";
+import {Diary} from "entity/Diary";
 const router = express.Router()
+
+const DB_NAME = 'diary'
+const DATA_NAME = '日记'
+const CURRENT_TABLE = 'diaries'
 
 router.get('/list', (req, res) => {
     verifyAuthorization(req)
@@ -17,7 +22,7 @@ router.get('/list', (req, res) => {
 
             let sqlArray = []
             sqlArray.push(`SELECT *
-                  from diaries 
+                  from ${CURRENT_TABLE} 
                   where uid='${userInfo.uid}'`)
 
             // keywords
@@ -25,7 +30,8 @@ router.get('/list', (req, res) => {
                 let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
                 console.log(keywords)
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map((keyword: string) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray = keywords
+                        .map((keyword: string) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
                     sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
@@ -55,10 +61,10 @@ router.get('/list', (req, res) => {
             sqlArray.push(` order by date desc
                   limit ${startPoint}, ${req.query.pageSize}`)
 
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
-                    data.forEach((diary) => {
+                    data.forEach((diary: Diary) => {
                         // decode unicode
                         diary.title = unicodeDecode(diary.title)
                         diary.content = unicodeDecode(diary.content)
@@ -85,7 +91,7 @@ router.get('/export', (req, res) => {
             sqlArray.push(`SELECT *
                   from diaries 
                   where uid='${userInfo.uid}'`)
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     data.forEach(diary => {
@@ -132,10 +138,10 @@ router.get('/temperature', (req, res) => {
                 let month = (req.query.dateFilterString as string).substring(4,6)
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
-                    data.forEach(diary => {
+                    data.forEach((diary: Diary) => {
                         // decode unicode
                         diary.title = unicodeDecode(diary.title)
                         diary.content = unicodeDecode(diary.content)
@@ -155,7 +161,7 @@ router.get('/detail', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where id = ${req.query.diaryId}`)
     // 1. 先查询出日记结果
-    getDataFromDB( 'diary', sqlArray, true)
+    getDataFromDB( DB_NAME, sqlArray, true)
         .then(dataDiary => {
             // decode unicode
             dataDiary.title = unicodeDecode(dataDiary.title)
@@ -210,14 +216,7 @@ router.post('/add', (req, res) => {
                         '${parsedTitle}','${parsedContent}','${req.body.category}','${req.body.weather}',${req.body.temperature},
                         ${req.body.temperature_outside}, '${timeNow}','${timeNow}','${req.body.date}','${userInfo.uid}','${req.body.is_public || 0}', '${req.body.is_markdown || 0}')`
             )
-            getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的日记 id
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, '添加失败'))
-                })
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res,)
         })
         .catch(errInfo => {
             res.send(new ResponseError('', errInfo))
@@ -249,14 +248,7 @@ router.put('/modify', (req, res) => {
                                 diaries.is_markdown='${req.body.is_markdown}'
                             WHERE id='${req.body.id}' and uid='${userInfo.uid}'
                     `]
-            getDataFromDB( 'diary', sqlArray, true)
-                .then(data => {
-                    updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess(data, '修改成功'))
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, '修改失败'))
-                })
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改', res)
         })
         .catch(errInfo => {
             res.send(new ResponseError('', errInfo))
@@ -273,18 +265,7 @@ router.delete('/delete', (req, res) => {
                         WHERE id='${req.body.diaryId}'
                         and uid='${userInfo.uid}'
                     `)
-            getDataFromDB( 'diary', sqlArray)
-                .then(data => {
-                    if (data.affectedRows > 0) {
-                        updateUserLastLoginTime(userInfo.uid)
-                        res.send(new ResponseSuccess('', '删除成功'))
-                    } else {
-                        res.send(new ResponseError('', '删除失败'))
-                    }
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err,))
-                })
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res,)
         })
         .catch(errInfo => {
             res.send(new ResponseError('', errInfo))
@@ -336,7 +317,7 @@ router.post('/clear', (req, res) => {
             }
             let sqlArray = []
             sqlArray.push(`delete from diaries where uid=${userInfo.uid}`)
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, `清空成功：${data.affectedRows} 条日记`))

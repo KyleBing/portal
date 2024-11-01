@@ -6,13 +6,15 @@ import {
     dateFormatter,
     getDataFromDB,
     updateUserLastLoginTime,
-    verifyAuthorization,
+    verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return,
 } from "../utility";
 import {User} from "entity/User";
 import { Request, Response } from "express-serve-static-core";
 import {ResponseError, ResponseSuccess} from "../response/Response";
 const router = express.Router()
 
+const DB_NAME = 'diary'
+const DATA_NAME = '路书标记点'
 const CURRENT_TABLE = 'map_pointer'
 
 router.post('/list', (req, res) => {
@@ -185,18 +187,7 @@ router.post('/add', (req, res) => {
                                 '${Number(req.body.is_public)}'
                                 )
                         `)
-                        getDataFromDB('diary', sqlArray)
-                            .then(data => {
-                                updateUserLastLoginTime(userInfo.uid)
-                                res.send(new ResponseSuccess( // 添加成功之后，返回添加后的 路线  id
-                                    {id: data.insertId},
-                                    '信息添加成功',
-                                ))
-                            })
-                            .catch(err => {
-                                console.log(err)
-                                res.send(new ResponseError(err, '添加失败'))
-                            })
+                        operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res,)
                     }
                 })
                 .catch(err => {
@@ -242,15 +233,7 @@ router.put('/modify', (req, res) => {
                                
                             WHERE id='${req.body.id}'
                     `)
-                getDataFromDB('diary', sqlArray, true)
-                    .then(data => {
-                        updateUserLastLoginTime(req.body.email)
-                        res.send(new ResponseSuccess(data, '修改成功'))
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err, '修改失败'))
-                    })
-
+                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改', res,)
             } else {
                 res.send(new ResponseError('', '该路线信息不属于您，无权操作'))
             }
@@ -274,19 +257,7 @@ router.delete('/delete', (req, res) => {
                         DELETE from ${CURRENT_TABLE}
                         WHERE id='${req.body.id}'
                     `)
-                getDataFromDB('diary', sqlArray)
-                    .then(data => {
-                        if (data.affectedRows > 0) {
-                            updateUserLastLoginTime(userInfo.uid)
-                            res.send(new ResponseSuccess('', '删除成功'))
-                        } else {
-                            res.send(new ResponseError('', '删除失败'))
-                        }
-                    })
-                    .catch(err => {
-                        res.send(new ResponseError(err,))
-                    })
-
+                operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
             } else {
                 res.send(new ResponseError('', '该路线不属于您，无权操作'))
             }
