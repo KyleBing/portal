@@ -44,12 +44,13 @@ router.get('/sorted', (req, res) => {
     }
     verifyAuthorization(req)
         .then(userInfo => {
-            new Date().getFullYear();
             let sqlRequests = []
-            let sqlArray: Array<string>
-            (req.query.years as string).split(',').forEach(year => {
-                for (let month = 1; month <= 12; month ++ ){
-                    sqlArray.push(`
+            let sqlArray: string[]
+            (req.query.years as string)
+                .split(',')
+                .forEach((year: string) => {
+                    for (let month = 1; month <= 12; month++) {
+                        sqlArray.push(`
                         select *,
                         date_format(date,'%Y%m') as month_id,
                         date_format(date,'%m') as month
@@ -60,8 +61,8 @@ router.get('/sorted', (req, res) => {
                         and uid = ${userInfo.uid}
                         order by date asc;
                     `)
-                }
-            })
+                    }
+                })
 
             sqlRequests.push(getDataFromDB( 'diary', sqlArray))
 
