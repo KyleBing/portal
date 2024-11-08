@@ -1,5 +1,5 @@
 import express from "express"
-import configProject from "../../config/configProject";
+import configProject from "../../config/configProject.json"
 import {ResponseError, ResponseSuccess} from "../response/Response";
 import {
     unicodeDecode,

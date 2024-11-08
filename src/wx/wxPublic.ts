@@ -1,6 +1,6 @@
 import express from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import configProject from "../../config/configProject";
+import configProject from "../../config/configProject.json"
 const router = express.Router()
 import axios from "axios";
 

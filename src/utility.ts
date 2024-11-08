@@ -1,5 +1,5 @@
 import mysql from "mysql"
-import configDatabase from "../config/configDatabase";
+import configDatabase from "../config/configDatabase.json"
 import {Diary} from "entity/Diary";
 import express from "express";
 import {BillDay} from "entity/Bill";

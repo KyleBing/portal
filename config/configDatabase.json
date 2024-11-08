@@ -1,0 +1,8 @@
+{
+  "host":       "localhost",
+  "user":       "----",
+  "password":   "----",
+  "port":       3306,
+  "multipleStatements": true,
+  "timezone": ""
+}

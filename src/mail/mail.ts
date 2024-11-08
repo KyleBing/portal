@@ -1,7 +1,7 @@
 import {exec} from "node:child_process";
 import express from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import configProject from "../../config/configProject";
+import configProject from "../../config/configProject.json"
 import {
     verifyAuthorization,
 } from "../utility";

@@ -1,6 +1,6 @@
 import express from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import configProject from "../../config/configProject";
+import configProject from "../../config/configProject.json"
 import {
     dateFormatter,
     getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,

@@ -1,7 +1,7 @@
 import express from "express"
 import {ResponseError} from "../response/Response";
 import mysql from "mysql"
-import configDatabase from "../../config/configDatabase";
+import configDatabase from "../../config/configDatabase.json"
 import {
     dateFormatter,
 } from "../utility";
