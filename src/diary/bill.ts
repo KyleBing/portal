@@ -38,33 +38,37 @@ router.get('/', (req, res) => {
 })
 
 router.get('/sorted', (req, res) => {
-    if (!req.query.years){
+    let yearsStr = String(req.query.years)
+    if (!yearsStr){
         res.send(new ResponseError('', '未选择年份'))
         return
     }
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlRequests = []
-            let sqlArray: string[]
-            (req.query.years as string)
+            let sqlArray = []
+
+            yearsStr
                 .split(',')
                 .forEach((year: string) => {
                     for (let month = 1; month <= 12; month++) {
-                        sqlArray.push(`
-                        select *,
-                        date_format(date,'%Y%m') as month_id,
-                        date_format(date,'%m') as month
-                        from diaries 
-                        where year(date) = ${year}
-                        and month(date) = ${month}
-                        and category = 'bill'
-                        and uid = ${userInfo.uid}
-                        order by date asc;
-                    `)
+                        sqlArray.push(
+                            `
+                                select *,
+                                date_format(date,'%Y%m') as month_id,
+                                date_format(date,'%m') as month
+                                from diaries 
+                                where year(date) = ${year}
+                                and month(date) = ${month}
+                                and category = 'bill'
+                                and uid = ${userInfo.uid}
+                                order by date asc;
+                            `
+                        )
                     }
-                })
+                });
 
-            sqlRequests.push(getDataFromDB( 'diary', sqlArray))
+            sqlRequests.push(getDataFromDB('diary', sqlArray))
 
             // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
             Promise
@@ -89,38 +93,38 @@ router.get('/sorted', (req, res) => {
 
                         // 用一次循环处理完所有需要在循环中处理的事：合总额、map DayArray
                         let keywords: string[] = []
-                        if (req.query.keyword){
+                        if (req.query.keyword) {
                             keywords = (req.query.keyword as string).split(' ')
                         }
                         daysArray.forEach(diaryDay => {
                             let processedDayData = processBillOfDay(diaryDay, keywords)
                             // 当内容 items 的数量大于 0 时
-                            if (processedDayData.items.length > 0){
+                            if (processedDayData.items.length > 0) {
                                 daysData.push(processedDayData)
                                 monthSum = monthSum + processedDayData.sum
                                 monthSumIncome = monthSumIncome + processedDayData.sumIncome
                                 monthSumOutput = monthSumOutput + processedDayData.sumOutput
                                 food.breakfast = food.breakfast + processedDayData.items
                                     .filter(item => item.item.indexOf('早餐') > -1)
-                                    .reduce((sum,b) => sum || b.price || 0, 0)
+                                    .reduce((sum, b) => sum || b.price || 0, 0)
                                 food.launch = food.launch + processedDayData.items
                                     .filter(item => item.item.indexOf('午餐') > -1)
-                                    .reduce((sum,b) => sum || b.price || 0, 0)
+                                    .reduce((sum, b) => sum || b.price || 0, 0)
                                 food.dinner = food.dinner + processedDayData.items
                                     .filter(item => item.item.indexOf('晚餐') > -1)
-                                    .reduce((sum,b) => sum || b.price || 0, 0)
+                                    .reduce((sum, b) => sum || b.price || 0, 0)
                                 food.supermarket = food.supermarket + processedDayData.items
                                     .filter(item => item.item.indexOf('超市') > -1)
-                                    .reduce((sum,b) => sum || b.price || 0, 0)
+                                    .reduce((sum, b) => sum || b.price || 0, 0)
                                 food.fruit = food.fruit + processedDayData.items
                                     .filter(item => item.item.indexOf('水果') > -1)
-                                    .reduce((sum,b) => sum || b.price || 0, 0)
+                                    .reduce((sum, b) => sum || b.price || 0, 0)
                             }
                         })
 
                         let billMonthTop5 = getBillMonthTop5(daysData)
 
-                        if (daysData.length > 0){
+                        if (daysData.length > 0) {
                             responseData.push({
                                 id: daysArray[0].id,
                                 month_id: daysArray[0].month_id,
