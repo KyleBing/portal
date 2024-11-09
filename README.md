@@ -110,27 +110,42 @@
 - 已安装 `nginx`，需要用它进行路径映射，以供前端非跨域式访问后台
 - 已安装 `mysql` 或 `mariaDB`
 
+最终运行文件在 `/dist` 文件夹下，外面的只是 ts 源文件
+
 ### 1. clone 或 下载该项目文件
 下载到项目文件后，执行 `npm i` 或者 `yarn` 安装项目依赖
 
 ### 2. 修改数据库配置文件
-修改 `/config/configDatabase.ts` 文件内容，改成你的配置
-```js
-module.exports = {
-    host:       'localhost',
-    user:       '----',
-    password:   '----',
-    port:       '3306',
-    multipleStatements: true
+修改 `/dist/config/configDatabase.json` 文件内容，改成你的配置
+
+```json
+{
+   "host":       "localhost",
+   "user":       "----",
+   "password":   "----",
+   "port":       3306,
+   "multipleStatements": true,
+   "timezone": ""
 }
 ```
 
-和项目配置文件 `/config/configProject.js`
-```js
-module.exports = {
-   invitation: '----', // 万能邀请码，用于注册时使用
-   adminCount: 'kylebing@163.com', // 管理员帐户，该用户可以在统计页面中查看所有用户统计数据
+和项目配置文件 `/dist/config/configProject.json`
+
+```json
+{
+  "invitation": "----",
+  "adminCount": "xxxx@163.com",
+
+  "wxMiniAppId": "",
+  "wxMiniSecret": "",
+  "wxToken": "",
+  "wxPublicAppId": "",
+  "wxPublicSecret": "",
+
+  "qiniuAccessKey": "",
+  "qiniuSecretKey": ""
 }
+
 ```
 
 ### 3. 启动程序
@@ -138,7 +153,7 @@ module.exports = {
 > pm2 的使用方法： [https://blog.csdn.net/KimBing/article/details/124249590](https://blog.csdn.net/KimBing/article/details/124249590)
 
 ```bash
-pm2 start dist/bin/www --name diary
+pm2 start ./dist/bin/portal.js --name portal
 ```
 
 如果你实在不用 pm2，也可以直接使用 `npm` 原始方法启动
@@ -205,7 +220,7 @@ npm run serve
    ```
    然后添加以下内容到打开的窗口中，意思就是说第小时的 17 分统计并更新用户数据，下面的 js 路径改成自己系统中的 JS 路径。
    ```bash
-   17 * * * * node /var/www/html/portal/routes/cron/updateUserInfo.js
+   17 * * * * node /var/www/html/portal/dist/cron/updateUserInfo.js
    ```
    然后重启 cron 服务
    ```bash
@@ -286,4 +301,4 @@ npm run serve
 
 ## 四、历程
 - 始于 `2022-04-14`
-- 改成 ts 版本 `2024-10-31` - `2024-11-01`
+- 改成 ts 版本 `2024-10-31` - `2024-11-09`
