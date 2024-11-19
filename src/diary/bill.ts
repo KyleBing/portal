@@ -148,7 +148,7 @@ router.get('/sorted', (req, res) => {
                         }
                     })
                     // responseData.sort((a, b) => a.year > b.year ? 1 : -1)
-                    res.send(new ResponseSuccess(responseData))
+                    res.send(new ResponseSuccess(responseData.reverse()))
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))
