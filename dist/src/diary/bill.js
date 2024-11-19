@@ -133,7 +133,7 @@ router.get('/sorted', (req, res) => {
                 }
             });
             // responseData.sort((a, b) => a.year > b.year ? 1 : -1)
-            res.send(new Response_1.ResponseSuccess(responseData));
+            res.send(new Response_1.ResponseSuccess(responseData.reverse()));
         })
             .catch(err => {
             res.send(new Response_1.ResponseError(err, err.message));
