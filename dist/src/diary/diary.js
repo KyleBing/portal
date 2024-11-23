@@ -71,6 +71,66 @@ router.get('/list', (req, res) => {
         res.send(new Response_1.ResponseError('', errInfo));
     });
 });
+router.get('/list-title-only', (req, res) => {
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize); // 日记起点
+        let sqlArray = [];
+        sqlArray.push(`
+                    SELECT 
+                        id,date,title,category,
+                        uid,is_public,is_markdown
+                    from ${CURRENT_TABLE} 
+                    where uid='${userInfo.uid}'
+                  `);
+        // keywords
+        if (req.query.keywords) {
+            let keywords = JSON.parse(String(req.query.keywords)).map((item) => (0, utility_1.unicodeEncode)(item));
+            console.log(keywords);
+            if (keywords.length > 0) {
+                let keywordStrArray = keywords
+                    .map((keyword) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')`);
+                sqlArray.push(' and ' + keywordStrArray.join(' and ')); // 在每个 categoryString 中间添加 'or'
+            }
+        }
+        // categories
+        if (req.query.categories) {
+            let categories = JSON.parse(String(req.query.categories));
+            if (categories.length > 0) {
+                let categoryStrArray = categories.map((category) => `category='${category}'`);
+                let tempString = categoryStrArray.join(' or ');
+                sqlArray.push(` and (${tempString})`); // 在每个 categoryString 中间添加 'or'
+            }
+        }
+        // share
+        if (req.query.filterShared === '1') {
+            sqlArray.push(' and is_public = 1');
+        }
+        // date range
+        if (req.query.dateFilterString) {
+            let year = req.query.dateFilterString.substring(0, 4);
+            let month = req.query.dateFilterString.substring(4, 6);
+            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
+        }
+        sqlArray.push(` order by date desc
+                  limit ${startPoint}, ${req.query.pageSize}`);
+        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
+            .then(data => {
+            (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
+            data.forEach((diary) => {
+                // decode unicode
+                diary.title = (0, utility_1.unicodeDecode)(diary.title);
+            });
+            res.send(new Response_1.ResponseSuccess(data, '请求成功'));
+        })
+            .catch(err => {
+            res.send(new Response_1.ResponseError(err, err.message));
+        });
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
 router.get('/export', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
