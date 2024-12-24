@@ -366,7 +366,7 @@ router.get('/get-diary-content-with-keyword', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and uid = ${userInfo.id} order by id desc`)
+            sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and uid = ${userInfo.uid} order by id desc`)
 
             getDataFromDB('diary', sqlArray, true)
                 .then(dataDiary => {
