@@ -361,6 +361,30 @@ router.get('/latest-recommend', (req, res) => {
         })
 })
 
+// 获取标题中带有指定关键字的日记内容
+router.get('/get-diary-content-with-keyword', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and uid = ${userInfo.id} order by id desc`)
+
+            getDataFromDB('diary', sqlArray, true)
+                .then(dataDiary => {
+                    updateUserLastLoginTime(userInfo.uid)
+                    dataDiary.title = unicodeDecode(dataDiary.title)
+                    dataDiary.content = unicodeDecode(dataDiary.content)
+                    res.send(new ResponseSuccess(dataDiary))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, '查询错误'))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+
 router.get('/get-latest-public-diary-with-keyword', (req, res) => {
     let sqlArray = []
     sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`)

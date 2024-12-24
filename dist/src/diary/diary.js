@@ -332,6 +332,27 @@ router.get('/latest-recommend', (req, res) => {
         res.send(new Response_1.ResponseError(err, '查询错误'));
     });
 });
+// 获取标题中带有指定关键字的日记内容
+router.get('/get-diary-content-with-keyword', (req, res) => {
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let sqlArray = [];
+        sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and uid = ${userInfo.id} order by id desc`);
+        (0, utility_1.getDataFromDB)('diary', sqlArray, true)
+            .then(dataDiary => {
+            (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
+            dataDiary.title = (0, utility_1.unicodeDecode)(dataDiary.title);
+            dataDiary.content = (0, utility_1.unicodeDecode)(dataDiary.content);
+            res.send(new Response_1.ResponseSuccess(dataDiary));
+        })
+            .catch(err => {
+            res.send(new Response_1.ResponseError(err, '查询错误'));
+        });
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
 router.get('/get-latest-public-diary-with-keyword', (req, res) => {
     let sqlArray = [];
     sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`);
