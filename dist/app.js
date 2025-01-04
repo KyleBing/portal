@@ -27,18 +27,12 @@ app.use('/init', init_1.default);
 // 邀请码
 const invitation_1 = __importDefault(require("./src/user/invitation"));
 app.use('/invitation', invitation_1.default);
-// 微信小程序
-const wx_1 = __importDefault(require("./src/wx/wx"));
-app.use('/wx', wx_1.default);
-// 微信公众号
-const wxPublic_1 = __importDefault(require("./src/wx/wxPublic"));
-app.use('/wx-public', wxPublic_1.default);
 // 二维码-前端
 const qrFront_1 = __importDefault(require("./src/qr/qrFront"));
-app.use('/qr-front', qrFront_1.default); // QR 二维码
+app.use('/qr-front', qrFront_1.default);
 // 二维码-后台
 const qrManager_1 = __importDefault(require("./src/qr/qrManager"));
-app.use('/qr-manager', qrManager_1.default); // QR 二维码
+app.use('/qr-manager', qrManager_1.default);
 // 地图 - 路线
 const mapRoute_1 = __importDefault(require("./src/map/mapRoute"));
 app.use('/map-route', mapRoute_1.default);

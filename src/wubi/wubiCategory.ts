@@ -8,7 +8,8 @@ import {
 } from "../utility";
 const router = express.Router()
 
-const DB_NAME = 'diary'
+const DB_NAME = 'wubi'
+const DB_DIARY = 'diary'
 const DATA_NAME = '五笔码表类别'
 const CURRENT_TABLE = 'wubi_category'
 

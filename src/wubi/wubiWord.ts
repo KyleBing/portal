@@ -16,7 +16,8 @@ const uploadLocal = multer({dest: 'upload'})
 const storage = multer.memoryStorage()
 const uploadStorage = multer({ storage: storage })
 
-const DB_NAME = 'diary'
+const DB_WUBI = 'wubi'
+const DB_DIARY = 'diary'
 const DATA_NAME = '五笔词条'
 const CURRENT_TABLE = 'wubi_words'
 
@@ -39,7 +40,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res) => {
                 )
             })
 
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_WUBI, sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(null, '导入词条成功')) // 添加成功之后，返回添加后的 id
@@ -52,34 +53,38 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
+
 router.post('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            let sqlBase = `SELECT
-                               wubi_words.id,
-                               wubi_words.word,
-                               wubi_words.code,
-                               wubi_words.priority,
-                               wubi_words.up,
-                               wubi_words.down,
-                               wubi_words.date_create,
-                               wubi_words.date_modify,
-                               wubi_words.comment,
-                               wubi_category.id AS category_id,
-                               wubi_category.name as category_name,
-                               wubi_words.user_init, 
-                               wubi_words.user_modify, 
-                               wubi_words.approved, 
-                               users_init.uid as uid_init, 
-                               users_init.nickname as nickname_init, 
-                               users_init.group_id as group_id_init,
-                               users_modify.uid as uid_modify, 
-                               users_modify.nickname as nickname_modify, 
-                               users_modify.group_id as group_id_modify
-                                from ${CURRENT_TABLE} 
-                                LEFT JOIN wubi_category ON category_id = wubi_category.id
-                                LEFT JOIN users users_init ON wubi_words.user_init = users_init.uid
-                                LEFT JOIN users users_modify ON wubi_words.user_modify = users_modify.uid
+            let sqlBase = `
+                           SELECT
+                           wubi_words.id,
+                           wubi_words.word,
+                           wubi_words.code,
+                           wubi_words.priority,
+                           wubi_words.up,
+                           wubi_words.down,
+                           wubi_words.date_create,
+                           wubi_words.date_modify,
+                           wubi_words.comment,
+                           wubi_category.id AS category_id,
+                           wubi_category.name as category_name,
+                           wubi_words.user_init,
+                           wubi_words.user_modify,
+                           wubi_words.approved,
+                           users_init.uid as uid_init,
+                           users_init.nickname as nickname_init,
+                           users_init.group_id as group_id_init,
+                           users_modify.uid as uid_modify,
+                           users_modify.nickname as nickname_modify,
+                           users_modify.group_id as group_id_modify
+                           
+                           from ${DB_WUBI}.${CURRENT_TABLE}
+                           LEFT JOIN wubi_category ON category_id = wubi_category.id
+                           LEFT JOIN ${DB_DIARY}.users users_init ON wubi_words.user_init = users_init.uid
+                           LEFT JOIN ${DB_DIARY}.users users_modify ON wubi_words.user_modify = users_modify.uid
+
                             `
             let filterArray = []
 
@@ -87,7 +92,8 @@ router.post('/list', (req, res) => {
             if (req.body.keyword){
                 let keywords = req.body.keyword.split(' ').map(item => unicodeEncode(item))
                 if (keywords.length > 0){
-                    let keywordStrArray = keywords.map(keyword => `( wubi_words.word like '%${keyword}%' ESCAPE '/'  or  wubi_words.code like '%${keyword}%' ESCAPE '/' or wubi_words.comment like '%${keyword}%' ESCAPE '/')` )
+                    let keywordStrArray =
+                        keywords.map(keyword => `( wubi_words.word like '%${keyword}%' ESCAPE '/'  or  wubi_words.code like '%${keyword}%' ESCAPE '/' or wubi_words.comment like '%${keyword}%' ESCAPE '/')` )
                     filterArray.push( keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
                 }
             }
@@ -117,16 +123,16 @@ router.post('/list', (req, res) => {
                 filterArray.unshift('where')
             }
 
-            filterArray.push('order by wubi_words.code asc, wubi_words.priority asc')
+            filterArray.push(`order by wubi_words.code asc, wubi_words.priority asc`)
 
             let promisesAll = []
             let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
             promisesAll.push(getDataFromDB(
-                'diary',
+                DB_WUBI,
                 [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`])
             )
             promisesAll.push(getDataFromDB(
-                'diary',
+                DB_WUBI,
                 [`select count(*) as sum from ${CURRENT_TABLE} ${filterArray.join(' ')}`], true)
             )
 
@@ -157,6 +163,7 @@ router.post('/list', (req, res) => {
             res.send(new ResponseError('', errInfo))
         })
 })
+
 router.post('/export-extra', (req, res) => {
     verifyAuthorization(req)
         .then(() => {
@@ -180,7 +187,7 @@ router.post('/export-extra', (req, res) => {
                     wubi_category.sort_id, wubi_words.id ASC;
             `
 
-            getDataFromDB('diary',[sqlBase], false)
+            getDataFromDB(DB_WUBI,[sqlBase], false)
                 .then(wordList => {
                     wordList.forEach(item => {
                         item.word = unicodeDecode(item.word)
@@ -194,6 +201,7 @@ router.post('/export-extra', (req, res) => {
             res.send(new ResponseError('', errInfo))
         })
 })
+
 router.post('/check-exist', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
@@ -202,7 +210,7 @@ router.post('/check-exist', (req, res) => {
             sqlArray.push(`
                 select * from ${CURRENT_TABLE} where word like '%${parseWord}%' and code like '${req.body.code}%' limit 5`
             )
-            getDataFromDB( 'diary', sqlArray, false)
+            getDataFromDB( DB_WUBI, sqlArray, false)
                 .then(data => {
                     res.send(new ResponseSuccess(data, '查询成功'))
                     updateUserLastLoginTime(userInfo.uid)
@@ -215,6 +223,7 @@ router.post('/check-exist', (req, res) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
+
 router.post('/add', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
@@ -223,13 +232,20 @@ router.post('/add', (req, res) => {
             let parseWord = unicodeEncode(req.body.word) // !
             let timeNow = dateFormatter(new Date())
             let isApproved = userInfo.group_id === 1 ? 1: 0 // 管理员添加的词条默认就是已经 approved
-            sqlArray.push(`
-                    INSERT into ${CURRENT_TABLE}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id, approved )
+            sqlArray.push(
+                `
+                    INSERT into 
+                    ${CURRENT_TABLE}(
+                        word, code, priority, up, down, date_create, date_modify, 
+                        comment, user_init, user_modify, category_id, approved 
+                        )
                     VALUES(
                         '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
-                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}', ${isApproved})`
+                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}', 
+                        ${isApproved})
+                `
             )
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_WUBI, sqlArray)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess({id: data.insertId}, '添加成功')) // 添加成功之后，返回添加后的 id
@@ -242,6 +258,7 @@ router.post('/add', (req, res) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
+
 router.post('/add-batch', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
@@ -249,7 +266,7 @@ router.post('/add-batch', (req, res) => {
 
             Promise.all(
                 req.body.words.map(word => {
-                    return getDataFromDB('diary', [`select * from ${CURRENT_TABLE} where code = '${word.code}' and word = '${word.word}'`], true)
+                    return getDataFromDB(DB_WUBI, [`select * from ${CURRENT_TABLE} where code = '${word.code}' and word = '${word.word}'`], true)
                 })
             )
                 .then(results => {
@@ -281,7 +298,7 @@ router.post('/add-batch', (req, res) => {
                                         '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}','${userInfo.uid}',
                                         '${req.body.category_id || 1}', ${isApproved});`
                         })
-                        getDataFromDB( 'diary', sqlArray)
+                        getDataFromDB( DB_WUBI, sqlArray)
                             .then(() => {
                                 updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess(
@@ -332,7 +349,7 @@ router.put('/modify', (req, res) => {
             } else {
                 sqlArray.push(`and user_init = ${userInfo.uid}`)
             }
-            getDataFromDB( 'diary', sqlArray, true)
+            getDataFromDB( DB_WUBI, sqlArray, true)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '修改成功'))
@@ -345,6 +362,7 @@ router.put('/modify', (req, res) => {
             res.send(new ResponseError(err, '无权操作'))
         })
 })
+
 router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
@@ -361,7 +379,7 @@ router.delete('/delete', (req, res) => {
                 sqlArray.push(`and user_init = ${userInfo.uid}`)
             }
 
-            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
+            operate_db_without_return(userInfo.uid, DB_WUBI, DATA_NAME, sqlArray, '删除', res)
 
         })
         .catch(err => {
@@ -383,7 +401,7 @@ router.put('/modify-batch', (req, res) => {
                 sqlArray.push(`approved='${req.body.approved}'`)
             }
             sqlArray.push(`WHERE id in (${req.body.ids.join(',')})`)
-            getDataFromDB( 'diary', sqlArray, true)
+            getDataFromDB( DB_WUBI, sqlArray, true)
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     res.send(new ResponseSuccess(data, '修改成功'))
@@ -397,9 +415,10 @@ router.put('/modify-batch', (req, res) => {
         })
 })
 
-
 router.get('/statistic', (req, res) => {})
+
 router.get('/thumbs-up', (req, res) => {})
+
 router.get('/thumbs-down', (req, res) => {})
 
 

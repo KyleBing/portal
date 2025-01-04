@@ -12,7 +12,8 @@ const WubiDict_1 = require("../../src/entity/WubiDict");
 const uploadLocal = (0, multer_1.default)({ dest: 'upload' });
 const storage = multer_1.default.memoryStorage();
 const uploadStorage = (0, multer_1.default)({ storage: storage });
-const DB_NAME = 'diary';
+const DB_WUBI = 'wubi';
+const DB_DIARY = 'diary';
 const DATA_NAME = '五笔词条';
 const CURRENT_TABLE = 'wubi_words';
 // used for dict init
@@ -32,7 +33,7 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res) => {
                     VALUES(
                         '${word.word}','${word.code}',${word.priority || 0},'${timeNow}','${word.note}', '${userInfo.uid}', '${userInfo.uid}');`);
         });
-        (0, utility_1.getDataFromDB)('diary', sqlArray)
+        (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray)
             .then(data => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             res.send(new Response_1.ResponseSuccess(null, '导入词条成功')); // 添加成功之后，返回添加后的 id
@@ -48,31 +49,34 @@ router.post('/upload-dict', uploadStorage.single('dict'), (req, res) => {
 router.post('/list', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        let sqlBase = `SELECT
-                               wubi_words.id,
-                               wubi_words.word,
-                               wubi_words.code,
-                               wubi_words.priority,
-                               wubi_words.up,
-                               wubi_words.down,
-                               wubi_words.date_create,
-                               wubi_words.date_modify,
-                               wubi_words.comment,
-                               wubi_category.id AS category_id,
-                               wubi_category.name as category_name,
-                               wubi_words.user_init, 
-                               wubi_words.user_modify, 
-                               wubi_words.approved, 
-                               users_init.uid as uid_init, 
-                               users_init.nickname as nickname_init, 
-                               users_init.group_id as group_id_init,
-                               users_modify.uid as uid_modify, 
-                               users_modify.nickname as nickname_modify, 
-                               users_modify.group_id as group_id_modify
-                                from ${CURRENT_TABLE} 
-                                LEFT JOIN wubi_category ON category_id = wubi_category.id
-                                LEFT JOIN users users_init ON wubi_words.user_init = users_init.uid
-                                LEFT JOIN users users_modify ON wubi_words.user_modify = users_modify.uid
+        let sqlBase = `
+                           SELECT
+                           wubi_words.id,
+                           wubi_words.word,
+                           wubi_words.code,
+                           wubi_words.priority,
+                           wubi_words.up,
+                           wubi_words.down,
+                           wubi_words.date_create,
+                           wubi_words.date_modify,
+                           wubi_words.comment,
+                           wubi_category.id AS category_id,
+                           wubi_category.name as category_name,
+                           wubi_words.user_init,
+                           wubi_words.user_modify,
+                           wubi_words.approved,
+                           users_init.uid as uid_init,
+                           users_init.nickname as nickname_init,
+                           users_init.group_id as group_id_init,
+                           users_modify.uid as uid_modify,
+                           users_modify.nickname as nickname_modify,
+                           users_modify.group_id as group_id_modify
+                           
+                           from ${DB_WUBI}.${CURRENT_TABLE}
+                           LEFT JOIN wubi_category ON category_id = wubi_category.id
+                           LEFT JOIN ${DB_DIARY}.users users_init ON wubi_words.user_init = users_init.uid
+                           LEFT JOIN ${DB_DIARY}.users users_modify ON wubi_words.user_modify = users_modify.uid
+
                             `;
         let filterArray = [];
         // keywords
@@ -107,11 +111,11 @@ router.post('/list', (req, res) => {
         if (filterArray.length > 0) {
             filterArray.unshift('where');
         }
-        filterArray.push('order by wubi_words.code asc, wubi_words.priority asc');
+        filterArray.push(`order by wubi_words.code asc, wubi_words.priority asc`);
         let promisesAll = [];
         let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize);
-        promisesAll.push((0, utility_1.getDataFromDB)('diary', [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`]));
-        promisesAll.push((0, utility_1.getDataFromDB)('diary', [`select count(*) as sum from ${CURRENT_TABLE} ${filterArray.join(' ')}`], true));
+        promisesAll.push((0, utility_1.getDataFromDB)(DB_WUBI, [`${sqlBase} ${filterArray.join(' ')}  limit ${pointStart} , ${req.body.pageSize}`]));
+        promisesAll.push((0, utility_1.getDataFromDB)(DB_WUBI, [`select count(*) as sum from ${CURRENT_TABLE} ${filterArray.join(' ')}`], true));
         Promise
             .all(promisesAll)
             .then(([dataList, dataSum]) => {
@@ -159,7 +163,7 @@ router.post('/export-extra', (req, res) => {
                 ORDER BY 
                     wubi_category.sort_id, wubi_words.id ASC;
             `;
-        (0, utility_1.getDataFromDB)('diary', [sqlBase], false)
+        (0, utility_1.getDataFromDB)(DB_WUBI, [sqlBase], false)
             .then(wordList => {
             wordList.forEach(item => {
                 item.word = (0, utility_1.unicodeDecode)(item.word);
@@ -179,7 +183,7 @@ router.post('/check-exist', (req, res) => {
         let parseWord = (0, utility_1.unicodeEncode)(req.body.word); // !
         sqlArray.push(`
                 select * from ${CURRENT_TABLE} where word like '%${parseWord}%' and code like '${req.body.code}%' limit 5`);
-        (0, utility_1.getDataFromDB)('diary', sqlArray, false)
+        (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray, false)
             .then(data => {
             res.send(new Response_1.ResponseSuccess(data, '查询成功'));
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
@@ -201,11 +205,17 @@ router.post('/add', (req, res) => {
         let timeNow = (0, utility_1.dateFormatter)(new Date());
         let isApproved = userInfo.group_id === 1 ? 1 : 0; // 管理员添加的词条默认就是已经 approved
         sqlArray.push(`
-                    INSERT into ${CURRENT_TABLE}(word, code, priority, up, down, date_create, date_modify, comment, user_init, user_modify, category_id, approved )
+                    INSERT into 
+                    ${CURRENT_TABLE}(
+                        word, code, priority, up, down, date_create, date_modify, 
+                        comment, user_init, user_modify, category_id, approved 
+                        )
                     VALUES(
                         '${parseWord}','${req.body.code}','${req.body.priority || 0}','${req.body.up || 0}','${req.body.down || 0}',
-                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}', ${isApproved})`);
-        (0, utility_1.getDataFromDB)('diary', sqlArray)
+                        '${timeNow}','${timeNow}','${req.body.comment}','${userInfo.uid}','${userInfo.uid}','${req.body.category_id || 1}', 
+                        ${isApproved})
+                `);
+        (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray)
             .then(data => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             res.send(new Response_1.ResponseSuccess({ id: data.insertId }, '添加成功')); // 添加成功之后，返回添加后的 id
@@ -223,7 +233,7 @@ router.post('/add-batch', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
         Promise.all(req.body.words.map(word => {
-            return (0, utility_1.getDataFromDB)('diary', [`select * from ${CURRENT_TABLE} where code = '${word.code}' and word = '${word.word}'`], true);
+            return (0, utility_1.getDataFromDB)(DB_WUBI, [`select * from ${CURRENT_TABLE} where code = '${word.code}' and word = '${word.word}'`], true);
         }))
             .then(results => {
             // results : 所有 words 是否存在于数据库的结果值
@@ -251,7 +261,7 @@ router.post('/add-batch', (req, res) => {
                                         '${timeNow}', '${timeNow}', '${word.comment || ''}', '${userInfo.uid}','${userInfo.uid}',
                                         '${req.body.category_id || 1}', ${isApproved});`;
                 });
-                (0, utility_1.getDataFromDB)('diary', sqlArray)
+                (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray)
                     .then(() => {
                     (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
                     res.send(new Response_1.ResponseSuccess({
@@ -298,7 +308,7 @@ router.put('/modify', (req, res) => {
         else {
             sqlArray.push(`and user_init = ${userInfo.uid}`);
         }
-        (0, utility_1.getDataFromDB)('diary', sqlArray, true)
+        (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray, true)
             .then(data => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             res.send(new Response_1.ResponseSuccess(data, '修改成功'));
@@ -326,7 +336,7 @@ router.delete('/delete', (req, res) => {
         else {
             sqlArray.push(`and user_init = ${userInfo.uid}`);
         }
-        (0, utility_1.operate_db_without_return)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res);
+        (0, utility_1.operate_db_without_return)(userInfo.uid, DB_WUBI, DATA_NAME, sqlArray, '删除', res);
     })
         .catch(err => {
         res.send(new Response_1.ResponseError(err, '无权操作'));
@@ -346,7 +356,7 @@ router.put('/modify-batch', (req, res) => {
             sqlArray.push(`approved='${req.body.approved}'`);
         }
         sqlArray.push(`WHERE id in (${req.body.ids.join(',')})`);
-        (0, utility_1.getDataFromDB)('diary', sqlArray, true)
+        (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray, true)
             .then(data => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             res.send(new Response_1.ResponseSuccess(data, '修改成功'));

@@ -30,24 +30,20 @@ app.use('/init', routerInit)
 import routerInvitation from "./src/user/invitation"
 app.use('/invitation', routerInvitation)
 
-// 微信小程序
-import routerWx from './src/wx/wx'
-app.use('/wx', routerWx)
-
-// 微信公众号
-import routerWxPublic from './src/wx/wxPublic'
-app.use('/wx-public', routerWxPublic)
 
 // 二维码-前端
 import routerQr from './src/qr/qrFront'
-app.use('/qr-front', routerQr)            // QR 二维码
+app.use('/qr-front', routerQr)
+
 // 二维码-后台
 import routerQrManager from './src/qr/qrManager'
-app.use('/qr-manager', routerQrManager)     // QR 二维码
+app.use('/qr-manager', routerQrManager)
+
 
 // 地图 - 路线
 import routerMapRoute from './src/map/mapRoute'
 app.use('/map-route', routerMapRoute)
+
 // 地图 - 点图
 import routerMapPointer from './src/map/mapPointer'
 app.use('/map-pointer', routerMapPointer)
@@ -61,15 +57,19 @@ app.use('/statistic', routerStatistic)
 // 日记
 import routerDiary from './src/diary/diary'
 app.use('/diary', routerDiary)
+
 // 日记 - 类别
 import routerDiaryCategory from './src/diary/diaryCategory'
 app.use('/diary-category', routerDiaryCategory)
+
 // 日记 - 银行卡
 import routerBankCard from './src/diary/bankCard'
 app.use('/bank-card', routerBankCard)
+
 // 日记 - 账单
 import routerBill from './src/diary/bill'
 app.use('/bill', routerBill)
+
 
 // 点赞管理
 import routerThumbsUp from './src/thumbsUp/thumbsUp'
