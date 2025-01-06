@@ -92,12 +92,10 @@ router.get('/list-title-only', (req, res) => {
             let sqlArray = []
             sqlArray.push(`
                     SELECT 
-                        id,date,title,category,
-                        uid,is_public,is_markdown
+                        id,date,title,category
                     from ${CURRENT_TABLE} 
                     where uid='${userInfo.uid}'
                   `)
-
             // keywords
             if (req.query.keywords){
                 let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
@@ -383,7 +381,6 @@ router.get('/get-diary-content-with-keyword', (req, res) => {
             res.send(new ResponseError('', errInfo))
         })
 })
-
 
 router.get('/get-latest-public-diary-with-keyword', (req, res) => {
     let sqlArray = []
