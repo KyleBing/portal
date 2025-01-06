@@ -154,11 +154,11 @@ router.post('/export-extra', (req, res) => {
                        wubi_category.name as category_name,
                        wubi_words.user_init,
                        wubi_words.user_modify, 
-                       users.email,
-                       users.group_id
+                       ${DB_DIARY}.users.email,
+                       ${DB_DIARY}.users.group_id
                 FROM ${CURRENT_TABLE} 
                          LEFT JOIN wubi_category  ON category_id = wubi_category.id
-                         LEFT JOIN users ON wubi_words.user_init = users.uid
+                         LEFT JOIN ${DB_DIARY}.users ON wubi_words.user_init = ${DB_DIARY}.users.uid
                 WHERE category_id != 1 and approved = 1
                 ORDER BY 
                     wubi_category.sort_id, wubi_words.id ASC;
