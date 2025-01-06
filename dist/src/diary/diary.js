@@ -78,8 +78,7 @@ router.get('/list-title-only', (req, res) => {
         let sqlArray = [];
         sqlArray.push(`
                     SELECT 
-                        id,date,title,category,
-                        uid,is_public,is_markdown
+                        id,date,title,category
                     from ${CURRENT_TABLE} 
                     where uid='${userInfo.uid}'
                   `);
