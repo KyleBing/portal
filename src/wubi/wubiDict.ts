@@ -10,6 +10,8 @@ import {
 } from "../utility";
 const router = express.Router()
 
+const DB_WUBI = 'wubi'
+const DB_DIARY = 'diary'
 const DatabaseTableName = 'wubi_dict'
 
 // 下载码表文件
@@ -19,7 +21,7 @@ router.get('/pull', (req, res) => {
         .then(userInfo => {
             let sqlArray = [`select * from ${DatabaseTableName} where title = '${req.query.title}' and  uid='${userInfo.uid}'`]
             // 1. 先查询出码表结果
-            getDataFromDB( 'diary', sqlArray)
+            getDataFromDB( DB_WUBI, sqlArray)
                 .then(result => {
                     if (result.length > 0){
                         let data = result[0]
@@ -52,7 +54,7 @@ router.put('/push', (req, res) => {
             // 2. 检测是否存在内容
             let sqlArray = [`select * from ${DatabaseTableName} where title='${encodedTitle}' and uid='${userInfo.uid}'`]
             try {
-                const existData = await getDataFromDB('diary', sqlArray);
+                const existData = await getDataFromDB(DB_WUBI, sqlArray);
                 // console.log(existData)
                 if (existData.length > 0) {
                     // update content
@@ -69,7 +71,7 @@ router.put('/push', (req, res) => {
                             `);
                     sqlArray_1.push(`update users set sync_count=sync_count + 1 WHERE uid='${userInfo.uid}'`);
 
-                    getDataFromDB('diary', sqlArray_1, true)
+                    getDataFromDB(DB_WUBI, sqlArray_1, true)
                         .then(data => {
                             updateUserLastLoginTime(userInfo.uid);
                             res.send(new ResponseSuccess(data, '上传成功'));
@@ -86,7 +88,7 @@ router.put('/push', (req, res) => {
                             VALUES( '${encodedTitle}','${req.body.content}', '${req.body.contentSize}','${req.body.wordCount}','${timeNow}','${timeNow}','','${userInfo.uid}')`
                     );
 
-                    getDataFromDB('diary', sqlArray_2)
+                    getDataFromDB(DB_WUBI, sqlArray_2)
                         .then(data_1 => {
                             updateUserLastLoginTime(userInfo.uid);
                             res.send(new ResponseSuccess({id: data_1.insertId}, '上传成功')); // 添加成功之后，返回添加后的码表 id
@@ -110,7 +112,7 @@ router.post('/check-backup-exist', (req, res) => {
         .then(userInfo => {
             let sqlArray = [`select id,title,content_size,word_count, date_init, date_update, comment, uid, sync_count from ${DatabaseTableName} where title = '${req.body.fileName}' and  uid='${userInfo.uid}'`]
             // 1. 先查询出码表结果
-            getDataFromDB( 'diary', sqlArray, true)
+            getDataFromDB( DB_WUBI, sqlArray, true)
                 .then(result => {
                     res.send(new ResponseSuccess(result, '信息获取成功'))
                 })
