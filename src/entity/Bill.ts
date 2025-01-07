@@ -36,8 +36,15 @@ interface BillItem {
     price: number
 }
 
+interface  BillKey {
+    key: string, // 账单条目
+    count: number, // 数量
+    sort?: number, // 排序
+}
+
 export {
-    BillMonth, BillFood,
-    BillItem,
-    BillDay
+    type BillMonth, type BillFood,
+    type BillItem,
+    type BillDay,
+    type BillKey
 }

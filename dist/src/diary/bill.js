@@ -7,13 +7,14 @@ const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
 const utility_1 = require("../utility");
 const router = express_1.default.Router();
+const DB_NAME = 'diary';
 router.get('/', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
         // let startPoint = (req.query.pageNo - 1) * req.query.pageSize // 日记起点
         let sqlArray = [];
         sqlArray.push(`SELECT *from diaries where uid='${userInfo.uid}' and category = 'bill' order by date asc`);
-        (0, utility_1.getDataFromDB)('diary', sqlArray)
+        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
             .then(billDiaryList => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             let billResponse = [];
@@ -58,7 +59,7 @@ router.get('/sorted', (req, res) => {
                             `);
             }
         });
-        sqlRequests.push((0, utility_1.getDataFromDB)('diary', sqlArray));
+        sqlRequests.push((0, utility_1.getDataFromDB)(DB_NAME, sqlArray));
         // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
         Promise
             .all(sqlRequests)
@@ -183,7 +184,7 @@ router.get('/keys', (req, res) => {
                     `);
             }
         });
-        sqlRequests.push((0, utility_1.getDataFromDB)('diary', sqlArray));
+        sqlRequests.push((0, utility_1.getDataFromDB)(DB_NAME, sqlArray));
         // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
         let BillKeyMap = new Map();
         Promise
@@ -212,12 +213,13 @@ router.get('/keys', (req, res) => {
             BillKeyMap.forEach((_value, key) => {
                 if (BillKeyMap.get(key) >= 1) {
                     billKeyArray.push({
-                        item: key,
-                        value: BillKeyMap.get(key)
+                        key: key,
+                        count: BillKeyMap.get(key),
                     });
                 }
             });
-            billKeyArray.sort((a, b) => b.value - a.value);
+            billKeyArray.sort((a, b) => b.count - a.count);
+            console.log(billKeyArray);
             res.send(new Response_1.ResponseSuccess(billKeyArray));
         })
             .catch(err => {
@@ -231,7 +233,7 @@ router.get('/keys', (req, res) => {
 router.get('/day-sum', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        (0, utility_1.getDataFromDB)('diary', [`select content, date  from diaries where category = 'bill' and uid = '${userInfo.uid}'`])
+        (0, utility_1.getDataFromDB)(DB_NAME, [`select content, date  from diaries where category = 'bill' and uid = '${userInfo.uid}'`])
             .then(billData => {
             let finalData = billData.map(item => {
                 let originalData = (0, utility_1.processBillOfDay)(item);
@@ -273,7 +275,7 @@ router.get('/month-sum', (req, res) => {
                     `);
             }
         });
-        sqlRequests.push((0, utility_1.getDataFromDB)('diary', sqlArray));
+        sqlRequests.push((0, utility_1.getDataFromDB)(DB_NAME, sqlArray));
         // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
         Promise.all(sqlRequests)
             .then(yearDataArray => {
@@ -329,7 +331,7 @@ router.get('/borrow', (req, res) => {
         let sqlArray = [];
         sqlArray.push(`select * from diaries where title = '借还记录' and uid = ${userInfo.uid}`); // 固定 '借还记录' 为标题的日记作为存储借还记录
         // 2. 查询出日记结果
-        (0, utility_1.getDataFromDB)('diary', sqlArray, true)
+        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray, true)
             .then(dataDiary => {
             if (dataDiary) {
                 // decode unicode
