@@ -11,9 +11,6 @@
 
 ## 一、接口列表
 
-> 线上已运行的例子：  
-> http [http://kylebing.cn:3000/diary/detail?diaryId=6766](http://kylebing.cn:3000/diary/detail?diaryId=6766)
-
 ### 
 ```bash
 # 1. 统计信息
@@ -176,6 +173,8 @@ npm run serve
 2. 直接访问 `你服务器的域名或IP:3000/init` 这个路径即可将数据库初始化，初始化数据库会自动创建一个为名 `diary` 的数据库。
 3. 初始化后，会自动在项目目录中新建一个名为 `DATABASE_LOCK` 的文件，之后将不能再执行这个接口，如果想再次初始化，需要先删除这个文件。
 
+
+> **建议自行定时备份数据库**
 
 
 ### 5. 配置 nginx，映射 `localhost:3000` 路径到  `/portal` 路径
