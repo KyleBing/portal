@@ -72,7 +72,7 @@ router.put('/push', (req, res) => {
                                        date_update='${timeNow}'
                                     WHERE title='${encodedTitle}' and uid='${userInfo.uid}';
                             `);
-                sqlArray_1.push(`update users set sync_count=sync_count + 1 WHERE uid='${userInfo.uid}'`);
+                sqlArray_1.push(`update ${DB_DIARY}.users set sync_count=sync_count + 1 WHERE uid='${userInfo.uid}'`);
                 (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray_1, true)
                     .then(data => {
                     (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
@@ -110,7 +110,25 @@ router.post('/check-backup-exist', (req, res) => {
     // 1. 是否属于系统中的用户
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        let sqlArray = [`select id,title,content_size,word_count, date_init, date_update, comment, uid, sync_count from ${DatabaseTableName} where title = '${req.body.fileName}' and  uid='${userInfo.uid}'`];
+        let sqlArray = [
+            `select 
+                    id,
+                    title,
+                    content_size,
+                    word_count, 
+                    date_init, 
+                    date_update,
+                    comment, 
+                    uid, 
+                    sync_count 
+                     
+                from 
+                    ${DatabaseTableName} 
+                     
+                where 
+                    title = '${req.body.fileName}' and  uid='${userInfo.uid}'
+                `
+        ];
         // 1. 先查询出码表结果
         (0, utility_1.getDataFromDB)(DB_WUBI, sqlArray, true)
             .then(result => {
