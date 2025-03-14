@@ -7,7 +7,7 @@
  */
 
 import {getDataFromDB} from "../src/utility";
-import {User} from "../src/entity/User";
+import {User} from "entity/User";
 
 getDataFromDB('diary', [`select * from users`])
     .then(data => {
@@ -16,9 +16,9 @@ getDataFromDB('diary', [`select * from users`])
             sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_map_route = (SELECT count(*) from map_route where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_map_pointer = (SELECT count(*) from map_pointer where uid = ${user.uid}) where uid = ${user.uid};`)
-            sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
+            sqlArray.push(`update users set count_dict  = (SELECT count(*) from wubi.wubi_dict where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_qr    = (SELECT count(*) from qrs where uid = ${user.uid}) where uid = ${user.uid};`)
-            sqlArray.push(`update users set count_words = (SELECT count(*) from wubi_words where user_init = ${user.uid} and category_id != 1) where uid = ${user.uid};`)
+            sqlArray.push(`update users set count_words = (SELECT count(*) from wubi.wubi_words where user_init = ${user.uid} and category_id != 1) where uid = ${user.uid};`)
         })
         getDataFromDB('diary', sqlArray, true)
             .then(() => {
