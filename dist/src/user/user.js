@@ -254,6 +254,10 @@ router.put('/set-profile', (req, res) => {
     // 1. 验证用户信息是否正确
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
+        if (userInfo.email === 'test@163.com') {
+            res.send(new Response_1.ResponseError('', '演示帐户不允许修改资料哦'));
+            return;
+        }
         let avatar = req.body.avatar || '';
         let sqlArray = [];
         sqlArray.push(`
