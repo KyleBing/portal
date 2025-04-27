@@ -20,11 +20,10 @@ router.get('/', (req, res) => {
                           (SELECT COUNT(*) FROM users) as count_user,
                           (SELECT COUNT(*) FROM diary_category) as count_category,
                           (SELECT COUNT(*) FROM diaries where category = 'bill') as count_bill,
-                          (SELECT COUNT(*) FROM wubi_dict) as count_dict,
-                          (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words,
-                          (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved,
-                          (SELECT COUNT(*) FROM wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
-
+                          (SELECT COUNT(*) FROM wubi.wubi_dict) as count_dict,
+                          (SELECT COUNT(*) FROM wubi.wubi_words ) as count_wubi_words,
+                          (SELECT COUNT(*) FROM wubi.wubi_words where approved = 0) as count_wubi_words_unapproved,
+                          (SELECT COUNT(*) FROM wubi.wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
                     `);
         }
         else {
@@ -35,10 +34,10 @@ router.get('/', (req, res) => {
                               (SELECT COUNT(*) FROM users where uid = ${userInfo.uid}) as count_user,
                               (SELECT COUNT(*) FROM diary_category) as count_category,
                               (SELECT COUNT(*) FROM diaries where uid = ${userInfo.uid} and category = 'bill') as count_bill,
-                              (SELECT COUNT(*) FROM wubi_dict where uid = ${userInfo.uid}) as count_dict,
-                              (SELECT COUNT(*) FROM wubi_words ) as count_wubi_words,
-                              (SELECT COUNT(*) FROM wubi_words where approved = 0) as count_wubi_words_unapproved,
-                              (SELECT COUNT(*) FROM wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
+                              (SELECT COUNT(*) FROM wubi.wubi_dict where uid = ${userInfo.uid}) as count_dict,
+                              (SELECT COUNT(*) FROM wubi.wubi_words ) as count_wubi_words,
+                              (SELECT COUNT(*) FROM wubi.wubi_words where approved = 0) as count_wubi_words_unapproved,
+                              (SELECT COUNT(*) FROM wubi.wubi_words where approved = 0 and user_init = ${userInfo.uid} ) as count_wubi_words_unapproved_user
                         `);
         }
         (0, utility_1.getDataFromDB)('diary', sqlArray, true)
