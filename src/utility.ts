@@ -1,4 +1,4 @@
-import mysql from "mysql"
+import mysql from "mysql2"
 import configDatabase from "../config/configDatabase.json"
 import {Diary} from "entity/Diary";
 import express from "express";

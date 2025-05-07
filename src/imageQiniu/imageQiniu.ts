@@ -78,14 +78,14 @@ router.get('/list', (req, res) => {
 
             let promisesAll = []
 
-            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+            let pointStart = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize)
             promisesAll.push(getDataFromDB(
                 DB_NAME,
-                [`SELECT * from ${CURRENT_TABLE} ${filterSqlArray.join()} limit ${pointStart} , ${req.body.pageSize}`])
+                [`SELECT * from ${CURRENT_TABLE} ${filterSqlArray.join('')} limit ${pointStart} , ${req.query.pageSize}`])
             )
             promisesAll.push(getDataFromDB(
                 DB_NAME,
-                [`select count(*) as sum from ${CURRENT_TABLE} ${filterSqlArray.join()}` ], true)
+                [`select count(*) as sum from ${CURRENT_TABLE} ${filterSqlArray.join('')}` ], true)
             )
 
             Promise
@@ -95,8 +95,8 @@ router.get('/list', (req, res) => {
                     res.send(new ResponseSuccess({
                         list: imageList,
                         pager: {
-                            pageSize: Number(req.body.pageSize),
-                            pageNo: Number(req.body.pageNo),
+                            pageSize: Number(req.query.pageSize),
+                            pageNo: Number(req.query.pageNo),
                             total: dataSum.sum
                         }
                     }, '请求成功'))

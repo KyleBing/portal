@@ -106,10 +106,9 @@ router.post('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let promisesAll = []
-
+            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
             if (userInfo.group_id === 1){
                 // admin user
-                let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
                 promisesAll.push(getDataFromDB(
                     DB_NAME,
                     [`SELECT * from ${CURRENT_TABLE} limit ${pointStart} , ${req.body.pageSize}`])
@@ -120,7 +119,6 @@ router.post('/list', (req, res) => {
                 )
             } else {
                 // normal user
-                let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
                 promisesAll.push(getDataFromDB(
                     DB_NAME,
                     [`SELECT * from ${CURRENT_TABLE} where uid = '${userInfo.uid}' limit ${pointStart} , ${req.body.pageSize}`])
@@ -141,6 +139,7 @@ router.post('/list', (req, res) => {
                         diary.title = unicodeDecode(diary.title)
                         diary.content = unicodeDecode(diary.content)
                     })
+
                     res.send(new ResponseSuccess({
                         list: userList,
                         pager: {

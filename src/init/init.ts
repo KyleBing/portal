@@ -1,6 +1,6 @@
 import express from "express"
 import {ResponseError} from "../response/Response";
-import mysql from "mysql"
+import mysql from "mysql2"
 import configDatabase from "../../config/configDatabase.json"
 import {
     dateFormatter,
