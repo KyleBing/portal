@@ -3,7 +3,7 @@ import {ResponseError, ResponseSuccess} from "../response/Response";
 import configProject from "../../config/configProject.json"
 import {
     dateFormatter,
-    getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
+    getDataFromDB, operate_db_and_return_added_id, operate_db_without_return, unicodeDecode,
     updateUserLastLoginTime,
     verifyAuthorization
 } from "../utility";
@@ -50,13 +50,8 @@ function getQiniuToken(bucket: string){
 router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            // let startPoint = 0
-            // if (req.query.pageNo && req.query.pageSize){
-            //     startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize) // 文件起点
-            // }
-            //
-            let sqlArray = []
-            sqlArray.push(`SELECT * from ${CURRENT_TABLE} `)
+            let filterSqlArray = []
+            filterSqlArray.push('')
 
             let tempQueryArray = []
             // keywords
@@ -75,16 +70,37 @@ router.get('/list', (req, res) => {
             }
 
             if (tempQueryArray.length > 0){
-                sqlArray.push(' where ')
-                sqlArray.push(tempQueryArray.join(' and '))
+                filterSqlArray.push(' where ')
+                filterSqlArray.push(tempQueryArray.join(' and '))
             }
 
-            sqlArray.push(`order by date_create desc`)
+            filterSqlArray.push(`order by date_create desc`)
 
-            getDataFromDB( DB_NAME, sqlArray)
-                .then(data => {
+            let promisesAll = []
+
+            let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize)
+            promisesAll.push(getDataFromDB(
+                DB_NAME,
+                [`SELECT * from ${CURRENT_TABLE} ${filterSqlArray.join()} limit ${pointStart} , ${req.body.pageSize}`])
+            )
+            promisesAll.push(getDataFromDB(
+                DB_NAME,
+                [`select count(*) as sum from ${CURRENT_TABLE} ${filterSqlArray.join()}` ], true)
+            )
+
+            Promise
+                .all(promisesAll)
+                .then(([imageList, dataSum]) => {
                     updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess(data, '请求成功'))
+                    res.send(new ResponseSuccess({
+                        list: imageList,
+                        pager: {
+                            pageSize: Number(req.body.pageSize),
+                            pageNo: Number(req.body.pageNo),
+                            total: dataSum.sum
+                        }
+                    }, '请求成功'))
+
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))

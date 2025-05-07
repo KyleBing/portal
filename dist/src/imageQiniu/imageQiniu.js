@@ -46,13 +46,8 @@ function getQiniuToken(bucket) {
 router.get('/list', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        // let startPoint = 0
-        // if (req.query.pageNo && req.query.pageSize){
-        //     startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize) // 文件起点
-        // }
-        //
-        let sqlArray = [];
-        sqlArray.push(`SELECT * from ${CURRENT_TABLE} `);
+        let filterSqlArray = [];
+        filterSqlArray.push('');
         let tempQueryArray = [];
         // keywords
         if (req.query.keywords) {
@@ -68,14 +63,26 @@ router.get('/list', (req, res) => {
             tempQueryArray.push(` bucket = '${req.query.bucket}'`); // 在每个 categoryString 中间添加 'or'
         }
         if (tempQueryArray.length > 0) {
-            sqlArray.push(' where ');
-            sqlArray.push(tempQueryArray.join(' and '));
+            filterSqlArray.push(' where ');
+            filterSqlArray.push(tempQueryArray.join(' and '));
         }
-        sqlArray.push(`order by date_create desc`);
-        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
-            .then(data => {
+        filterSqlArray.push(`order by date_create desc`);
+        let promisesAll = [];
+        let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize);
+        promisesAll.push((0, utility_1.getDataFromDB)(DB_NAME, [`SELECT * from ${CURRENT_TABLE} ${filterSqlArray.join()} limit ${pointStart} , ${req.body.pageSize}`]));
+        promisesAll.push((0, utility_1.getDataFromDB)(DB_NAME, [`select count(*) as sum from ${CURRENT_TABLE} ${filterSqlArray.join()}`], true));
+        Promise
+            .all(promisesAll)
+            .then(([imageList, dataSum]) => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
-            res.send(new Response_1.ResponseSuccess(data, '请求成功'));
+            res.send(new Response_1.ResponseSuccess({
+                list: imageList,
+                pager: {
+                    pageSize: Number(req.body.pageSize),
+                    pageNo: Number(req.body.pageNo),
+                    total: dataSum.sum
+                }
+            }, '请求成功'));
         })
             .catch(err => {
             res.send(new Response_1.ResponseError(err, err.message));
