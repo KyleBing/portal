@@ -14,13 +14,13 @@ exports.operate_db_and_return_added_id = operate_db_and_return_added_id;
 exports.operate_db_without_return = operate_db_without_return;
 exports.processBillOfDay = processBillOfDay;
 exports.formatMoney = formatMoney;
-const mysql_1 = __importDefault(require("mysql"));
+const mysql2_1 = __importDefault(require("mysql2"));
 const configDatabase_json_1 = __importDefault(require("../config/configDatabase.json"));
 const Response_1 = require("./response/Response");
 // 运行 SQL 并返回 DB 结果
 function getDataFromDB(dbName, sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
-        let connection = mysql_1.default.createConnection({
+        let connection = mysql2_1.default.createConnection({
             host: configDatabase_json_1.default.host,
             user: configDatabase_json_1.default.user,
             password: configDatabase_json_1.default.password,
@@ -78,7 +78,7 @@ function verifyAuthorization(req) {
     });
 }
 function getMysqlConnection(dbName) {
-    let connection = mysql_1.default.createConnection({
+    let connection = mysql2_1.default.createConnection({
         host: configDatabase_json_1.default.host,
         user: configDatabase_json_1.default.user,
         password: configDatabase_json_1.default.password,

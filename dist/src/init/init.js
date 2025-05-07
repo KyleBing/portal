@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
-const mysql_1 = __importDefault(require("mysql"));
+const mysql2_1 = __importDefault(require("mysql2"));
 const configDatabase_json_1 = __importDefault(require("../../config/configDatabase.json"));
 const utility_1 = require("../utility");
 const router = express_1.default.Router();
@@ -24,7 +24,7 @@ router.get('/', (_req, res) => {
                 timezone: ''
             };
             Object.assign(tempConfigDatabase, configDatabase_json_1.default);
-            let connection = mysql_1.default.createConnection(tempConfigDatabase);
+            let connection = mysql2_1.default.createConnection(tempConfigDatabase);
             connection.connect();
             const sqlCreation = 'CREATE DATABASE IF NOT EXISTS diary';
             connection.query(sqlCreation, [], function (err) {
@@ -63,7 +63,7 @@ router.get('/', (_req, res) => {
 });
 function createTables() {
     return new Promise((resolve, reject) => {
-        let connection = mysql_1.default.createConnection(configDatabase_json_1.default);
+        let connection = mysql2_1.default.createConnection(configDatabase_json_1.default);
         console.log(configDatabase_json_1.default);
         connection.connect();
         const sqlCreateTables = `

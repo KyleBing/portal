@@ -68,9 +68,9 @@ router.get('/list', (req, res) => {
         }
         filterSqlArray.push(`order by date_create desc`);
         let promisesAll = [];
-        let pointStart = (Number(req.body.pageNo) - 1) * Number(req.body.pageSize);
-        promisesAll.push((0, utility_1.getDataFromDB)(DB_NAME, [`SELECT * from ${CURRENT_TABLE} ${filterSqlArray.join()} limit ${pointStart} , ${req.body.pageSize}`]));
-        promisesAll.push((0, utility_1.getDataFromDB)(DB_NAME, [`select count(*) as sum from ${CURRENT_TABLE} ${filterSqlArray.join()}`], true));
+        let pointStart = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize);
+        promisesAll.push((0, utility_1.getDataFromDB)(DB_NAME, [`SELECT * from ${CURRENT_TABLE} ${filterSqlArray.join('')} limit ${pointStart} , ${req.query.pageSize}`]));
+        promisesAll.push((0, utility_1.getDataFromDB)(DB_NAME, [`select count(*) as sum from ${CURRENT_TABLE} ${filterSqlArray.join('')}`], true));
         Promise
             .all(promisesAll)
             .then(([imageList, dataSum]) => {
@@ -78,8 +78,8 @@ router.get('/list', (req, res) => {
             res.send(new Response_1.ResponseSuccess({
                 list: imageList,
                 pager: {
-                    pageSize: Number(req.body.pageSize),
-                    pageNo: Number(req.body.pageNo),
+                    pageSize: Number(req.query.pageSize),
+                    pageNo: Number(req.query.pageNo),
                     total: dataSum.sum
                 }
             }, '请求成功'));
