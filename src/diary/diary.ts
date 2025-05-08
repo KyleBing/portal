@@ -272,9 +272,9 @@ router.post('/add', (req, res) => {
         .then(userInfo => {
             let sqlArray = []
             let parsedTitle = unicodeEncode(req.body.title) // !
-            parsedTitle = parsedTitle.replace(/'/, `''`)
+            parsedTitle = parsedTitle.replace(/'/g, `''`) // Replace all single quotes
             let parsedContent = unicodeEncode(req.body.content) || ''
-            parsedContent = parsedContent.replace(/'/, `''`)
+            parsedContent = parsedContent.replace(/'/g, `''`) // Replace all single quotes
             let timeNow = dateFormatter(new Date())
             sqlArray.push(`
                     INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public, is_markdown )
@@ -290,14 +290,13 @@ router.post('/add', (req, res) => {
 })
 
 router.put('/modify', (req, res) => {
-
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
             let parsedTitle = unicodeEncode(req.body.title) // !
-            parsedTitle = parsedTitle.replace(/'/, `''`)
+            parsedTitle = parsedTitle.replace(/'/g, `''`) // Replace all single quotes
             let parsedContent = unicodeEncode(req.body.content) || ''
-            parsedContent = parsedContent.replace(/'/, `''`)
+            parsedContent = parsedContent.replace(/'/g, `''`) // Replace all single quotes
             let timeNow = dateFormatter(new Date())
             let sqlArray = [`
                         update diaries
