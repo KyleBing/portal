@@ -11,6 +11,34 @@ import {
 import {Diary} from "entity/Diary";
 const router = express.Router()
 
+// Function to escape MySQL special characters
+function escapeMySQLString(str: string): string {
+    if (!str) return '';
+    return str
+        .replace(/\\/g, '\\\\')  // Backslash
+        .replace(/'/g, "\\'")    // Single quote
+        .replace(/"/g, '\\"')    // Double quote
+        .replace(/\n/g, '\\n')   // New line
+        .replace(/\r/g, '\\r')   // Carriage return
+        .replace(/\t/g, '\\t')   // Tab
+        .replace(/\0/g, '\\0')   // Null character
+        .replace(/\x1a/g, '\\Z'); // Ctrl+Z
+}
+
+// Function to unescape MySQL special characters
+function unescapeMySQLString(str: string): string {
+    if (!str) return '';
+    return str
+        .replace(/\\Z/g, '\x1a')  // Ctrl+Z
+        .replace(/\\0/g, '\0')    // Null character
+        .replace(/\\t/g, '\t')    // Tab
+        .replace(/\\r/g, '\r')    // Carriage return
+        .replace(/\\n/g, '\n')    // New line
+        .replace(/\\"/g, '"')     // Double quote
+        .replace(/\\'/g, "'")     // Single quote
+        .replace(/\\\\/g, '\\');  // Backslash
+}
+
 const DB_NAME = 'diary'
 const DATA_NAME = '日记'
 const CURRENT_TABLE = 'diaries'
@@ -65,9 +93,9 @@ router.get('/list', (req, res) => {
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     data.forEach((diary: Diary) => {
-                        // decode unicode
-                        diary.title = unicodeDecode(diary.title)
-                        diary.content = unicodeDecode(diary.content)
+                        // decode unicode and unescape MySQL
+                        diary.title = unescapeMySQLString(unicodeDecode(diary.title))
+                        diary.content = unescapeMySQLString(unicodeDecode(diary.content))
                         // 处理账单数据
                         if (diary.category === 'bill'){
                             diary.billData = processBillOfDay(diary, [])
@@ -161,9 +189,9 @@ router.get('/export', (req, res) => {
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     data.forEach(diary => {
-                        // decode unicode
-                        diary.title = unicodeDecode(diary.title)
-                        diary.content = unicodeDecode(diary.content)
+                        // decode unicode and unescape MySQL
+                        diary.title = unescapeMySQLString(unicodeDecode(diary.title))
+                        diary.content = unescapeMySQLString(unicodeDecode(diary.content))
                         // 处理账单数据
                         if (diary.category === 'bill'){
                             diary.billData = processBillOfDay(diary, [])
@@ -208,9 +236,9 @@ router.get('/temperature', (req, res) => {
                 .then(data => {
                     updateUserLastLoginTime(userInfo.uid)
                     data.forEach((diary: Diary) => {
-                        // decode unicode
-                        diary.title = unicodeDecode(diary.title)
-                        diary.content = unicodeDecode(diary.content)
+                        // decode unicode and unescape MySQL
+                        diary.title = unescapeMySQLString(unicodeDecode(diary.title))
+                        diary.content = unescapeMySQLString(unicodeDecode(diary.content))
                     })
                     res.send(new ResponseSuccess(data, '请求成功'))
                 })
@@ -229,9 +257,9 @@ router.get('/detail', (req, res) => {
     // 1. 先查询出日记结果
     getDataFromDB( DB_NAME, sqlArray, true)
         .then(dataDiary => {
-            // decode unicode
-            dataDiary.title = unicodeDecode(dataDiary.title)
-            dataDiary.content = unicodeDecode(dataDiary.content)
+            // decode unicode and unescape MySQL
+            dataDiary.title = unescapeMySQLString(unicodeDecode(dataDiary.title))
+            dataDiary.content = unescapeMySQLString(unicodeDecode(dataDiary.content))
 
             // 2. 判断是否为共享日记
             if (dataDiary.is_public === 1){
@@ -272,9 +300,9 @@ router.post('/add', (req, res) => {
         .then(userInfo => {
             let sqlArray = []
             let parsedTitle = unicodeEncode(req.body.title) // !
-            parsedTitle = parsedTitle.replace(/'/g, `''`) // Replace all single quotes
+            parsedTitle = escapeMySQLString(parsedTitle)
             let parsedContent = unicodeEncode(req.body.content) || ''
-            parsedContent = parsedContent.replace(/'/g, `''`) // Replace all single quotes
+            parsedContent = escapeMySQLString(parsedContent)
             let timeNow = dateFormatter(new Date())
             sqlArray.push(`
                     INSERT into diaries(title, content, category, weather, temperature, temperature_outside, date_create, date_modify, date, uid, is_public, is_markdown )
@@ -294,9 +322,9 @@ router.put('/modify', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let parsedTitle = unicodeEncode(req.body.title) // !
-            parsedTitle = parsedTitle.replace(/'/g, `''`) // Replace all single quotes
+            parsedTitle = escapeMySQLString(parsedTitle)
             let parsedContent = unicodeEncode(req.body.content) || ''
-            parsedContent = parsedContent.replace(/'/g, `''`) // Replace all single quotes
+            parsedContent = escapeMySQLString(parsedContent)
             let timeNow = dateFormatter(new Date())
             let sqlArray = [`
                         update diaries
@@ -368,8 +396,8 @@ router.get('/get-diary-content-with-keyword', (req, res) => {
             getDataFromDB('diary', sqlArray, true)
                 .then(dataDiary => {
                     updateUserLastLoginTime(userInfo.uid)
-                    dataDiary.title = unicodeDecode(dataDiary.title)
-                    dataDiary.content = unicodeDecode(dataDiary.content)
+                    dataDiary.title = unescapeMySQLString(unicodeDecode(dataDiary.title))
+                    dataDiary.content = unescapeMySQLString(unicodeDecode(dataDiary.content))
                     res.send(new ResponseSuccess(dataDiary))
                 })
                 .catch(err => {
@@ -387,8 +415,8 @@ router.get('/get-latest-public-diary-with-keyword', (req, res) => {
     // 1. 先查询出日记结果
     getDataFromDB('diary', sqlArray, true)
         .then(dataDiary => {
-            dataDiary.title = unicodeDecode(dataDiary.title)
-            dataDiary.content = unicodeDecode(dataDiary.content)
+            dataDiary.title = unescapeMySQLString(unicodeDecode(dataDiary.title))
+            dataDiary.content = unescapeMySQLString(unicodeDecode(dataDiary.content))
             res.send(new ResponseSuccess(dataDiary))
         })
         .catch(err => {
