@@ -6,8 +6,8 @@ import express from "express"
 const app = express()
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'pug')
+// app.set('views', path.join(__dirname, 'views'))
+// app.set('view engine', 'pug')
 
 app.use(logger('dev'))
 app.use(express.json({limit: '50mb'}))  // 上传文件内容的大小限制
@@ -113,12 +113,15 @@ app.use((req, res, next) => {
 // ERROR HANDLER
 app.use((err, req, res, next) => {
     // set locals, only providing error in development
-    res.locals.message = err.message
-    res.locals.error = req.app.get('env') === 'development' ? err : {}
-
-    // render the error page
+    const error = req.app.get('env') === 'development' ? err : {}
+    
+    // return JSON error response
     res.status(err.status || 500)
-    res.render('error')
+    res.json({
+        status: 'error',
+        message: err.message,
+        error: error
+    })
 })
 
 export default app
