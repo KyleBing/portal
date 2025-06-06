@@ -7,6 +7,10 @@ const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
 /* GET home page. */
 router.get('/', function (req, res) {
-    res.render('index', { title: 'Portal for Diary' });
+    res.json({
+        status: 'success',
+        message: 'Portal API is running',
+        title: 'Portal for Diary'
+    });
 });
 exports.default = router;
