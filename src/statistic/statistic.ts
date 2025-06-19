@@ -146,7 +146,7 @@ router.get('/year', (req, res) => {
                 from diaries 
                 where year(date) = ${year}
                 and uid = ${userInfo.uid}
-                group by month
+                group by month, id
                 order by month desc
         `)
                 sqlRequests.push(getDataFromDB('diary', sqlArray))

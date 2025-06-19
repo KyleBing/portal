@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
 const utility_1 = require("../utility");
-const User_1 = require("entity/User");
+const User_1 = require("../entity/User");
 const router = express_1.default.Router();
 const DB_NAME = 'diary';
 const DATA_NAME = '点赞';

@@ -131,7 +131,6 @@
 ```json
 {
   "invitation": "----",
-  "adminAccount": "xxxx@163.com",
 
   "wxMiniAppId": "",
   "wxMiniSecret": "",
