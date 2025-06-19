@@ -1,3 +1,4 @@
+import 'module-alias/register'
 import createError from "http-errors"
 import path from "path"
 import logger from "morgan"
