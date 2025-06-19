@@ -8,7 +8,7 @@ import {
     getDataFromDB,
     verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return
 } from "../utility";
-import {User} from "entity/User";
+import {EntityUser, EnumUserGroup} from "../entity/User";
 const router = express.Router()
 
 const DB_NAME = 'diary'
@@ -29,7 +29,7 @@ router.post('/list', (req, res) => {
         })
 })
 
-function getRouteLineList(userInfo: User, req, res){
+function getRouteLineList(userInfo: EntityUser, req, res){
     let sqlBase = `select  
                                 ${CURRENT_TABLE}.id, 
                                 ${CURRENT_TABLE}.name, 
@@ -60,7 +60,7 @@ function getRouteLineList(userInfo: User, req, res){
         if (req.body.isMine === "1"){
             filterArray.push(`${CURRENT_TABLE}.uid = ${userInfo.uid}`)
         } else {
-            if (userInfo.email === configProject.adminAccount){
+            if (userInfo.group_id === EnumUserGroup.ADMIN){
                 filterArray.push(`${CURRENT_TABLE}.uid != ${userInfo.uid}`)
             } else {
                 filterArray.push(`is_public = 1 and ${CURRENT_TABLE}.uid != ${userInfo.uid}`)

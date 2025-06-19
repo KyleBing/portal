@@ -5,18 +5,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
-const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const utility_1 = require("../utility");
 const router = express_1.default.Router();
 const DB_NAME = 'diary';
 const DATA_NAME = '邀请码';
 const CURRENT_TABLE = 'invitations';
 const crypto_1 = __importDefault(require("crypto"));
+const User_1 = require("entity/User");
 router.get('/list', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
         let sqlArray = [];
-        if (userInfo.email === configProject_json_1.default.adminCount) { //
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
             sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null order by date_create desc ;`);
         }
         else {
@@ -47,7 +47,7 @@ router.get('/list', (req, res) => {
 router.post('/generate', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === configProject_json_1.default.adminCount) { // admin
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) { // admin
             let timeNow = (0, utility_1.dateFormatter)(new Date());
             let sqlArray = [];
             crypto_1.default.randomBytes(12, (err, buffer) => {
@@ -71,7 +71,7 @@ router.post('/generate', (req, res) => {
 router.post('/mark-shared', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === configProject_json_1.default.adminCount) { // admin
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) { // admin
             let sqlArray = [];
             sqlArray.push(`
                         update ${CURRENT_TABLE} set is_shared = 1 where id = '${req.body.id}' `);
@@ -93,7 +93,7 @@ router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === configProject_json_1.default.adminCount) {
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
             let sqlArray = [];
             sqlArray.push(` DELETE from ${CURRENT_TABLE} WHERE id='${req.query.id}' `);
             (0, utility_1.operate_db_and_return_added_id)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res);

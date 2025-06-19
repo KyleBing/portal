@@ -5,8 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
-const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const utility_1 = require("../utility");
+const User_1 = require("entity/User");
 const router = express_1.default.Router();
 const DB_NAME = 'diary';
 const DATA_NAME = '路书路径';
@@ -54,7 +54,7 @@ function getRouteLineList(userInfo, req, res) {
             filterArray.push(`${CURRENT_TABLE}.uid = ${userInfo.uid}`);
         }
         else {
-            if (userInfo.email === configProject_json_1.default.adminCount) {
+            if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
                 filterArray.push(`${CURRENT_TABLE}.uid != ${userInfo.uid}`);
             }
             else {

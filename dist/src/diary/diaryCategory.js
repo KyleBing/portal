@@ -5,8 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
-const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const utility_1 = require("../utility");
+const User_1 = require("entity/User");
 const router = express_1.default.Router();
 const DB_NAME = 'diary';
 const DATA_NAME = '日记类别';
@@ -38,7 +38,7 @@ router.post('/add', (req, res) => {
         else {
             (0, utility_1.verifyAuthorization)(req)
                 .then(userInfo => {
-                if (userInfo.email === configProject_json_1.default.adminCount) {
+                if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
                     let timeNow = (0, utility_1.dateFormatter)(new Date());
                     // query.name_en
                     let sqlArray = [];
@@ -60,7 +60,7 @@ router.post('/add', (req, res) => {
 router.put('/modify', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === configProject_json_1.default.adminCount) {
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
             let timeNow = (0, utility_1.dateFormatter)(new Date());
             // query.name_en
             let sqlArray = [];
@@ -85,7 +85,7 @@ router.put('/modify', (req, res) => {
 router.delete('/delete', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === configProject_json_1.default.adminCount) {
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
             // query.name_en
             let sqlArray = [];
             sqlArray.push(` delete from ${CURRENT_TABLE} where name_en = '${req.body.name_en}' `);

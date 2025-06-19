@@ -3,12 +3,12 @@ import {ResponseError, ResponseSuccess} from "../response/Response";
 import configProject from "../../config/configProject.json"
 import {
     dateFormatter,
-    getDataFromDB, operate_db_and_return_added_id, operate_db_without_return, unicodeDecode,
+    getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
     updateUserLastLoginTime,
     verifyAuthorization
 } from "../utility";
 import qiniu from 'qiniu'
-
+import { EnumUserGroup } from "entity/User";
 const router = express.Router()
 
 /**
@@ -160,7 +160,7 @@ router.get('/list', (req, res) => {
 router.post('/add', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminAccount ){
+            if (userInfo.group_id === EnumUserGroup.ADMIN){
                 let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 sqlArray.push(`
@@ -180,7 +180,7 @@ router.post('/add', (req, res) => {
 router.delete('/delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email !== configProject.adminAccount) {
+            if (userInfo.group_id !== EnumUserGroup.ADMIN) {
                 return res.send(new ResponseError('', '无权操作'));
             }
 
@@ -217,7 +217,7 @@ router.delete('/delete', (req, res) => {
 router.delete('/batch-delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email !== configProject.adminAccount) {
+            if (userInfo.group_id !== EnumUserGroup.ADMIN) {
                 return res.send(new ResponseError('', '无权操作'));
             }
 
@@ -261,7 +261,7 @@ router.delete('/batch-delete', (req, res) => {
 router.put('/update', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email !== configProject.adminAccount) {
+            if (userInfo.group_id !== EnumUserGroup.ADMIN) {
                 return res.send(new ResponseError('', '无权操作'));
             }
 

@@ -6,7 +6,7 @@ import {
     getDataFromDB,
     verifyAuthorization, operate_db_and_return_added_id, operate_db_without_return,
 } from "../utility";
-import {User} from "entity/User";
+import {EntityUser} from "../entity/User";
 import { Request, Response } from "express-serve-static-core";
 import {ResponseError, ResponseSuccess} from "../response/Response";
 const router = express.Router()
@@ -28,7 +28,7 @@ router.post('/list', (req, res) => {
         })
 })
 
-function getPointerList(userInfo: User, req: Request<{}>, res: Response){
+function getPointerList(userInfo: EntityUser, req: Request<{}>, res: Response){
     let sqlBase = `select  
                         ${CURRENT_TABLE}.id, 
                         ${CURRENT_TABLE}.name, 

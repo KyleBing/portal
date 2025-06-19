@@ -17,6 +17,7 @@ const Response_1 = require("../response/Response");
 const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const utility_1 = require("../utility");
 const qiniu_1 = __importDefault(require("qiniu"));
+const User_1 = require("entity/User");
 const router = express_1.default.Router();
 /**
  * 七牛云图片 处理
@@ -146,7 +147,7 @@ router.get('/list', (req, res) => {
 router.post('/add', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === configProject_json_1.default.adminCount) {
+        if (userInfo.group_id === User_1.EnumUserGroup.ADMIN) {
             let timeNow = (0, utility_1.dateFormatter)(new Date());
             let sqlArray = [];
             sqlArray.push(`
@@ -165,7 +166,7 @@ router.post('/add', (req, res) => {
 router.delete('/delete', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email !== configProject_json_1.default.adminCount) {
+        if (userInfo.group_id !== User_1.EnumUserGroup.ADMIN) {
             return res.send(new Response_1.ResponseError('', '无权操作'));
         }
         (0, utility_1.getDataFromDB)(DB_NAME, [`SELECT * from ${CURRENT_TABLE} where id='${req.body.id}'`], true).then(fileInfo => {
@@ -196,7 +197,7 @@ router.delete('/delete', (req, res) => {
 router.delete('/batch-delete', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email !== configProject_json_1.default.adminCount) {
+        if (userInfo.group_id !== User_1.EnumUserGroup.ADMIN) {
             return res.send(new Response_1.ResponseError('', '无权操作'));
         }
         const { ids, bucket } = req.body;
@@ -232,7 +233,7 @@ router.delete('/batch-delete', (req, res) => {
 router.put('/update', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email !== configProject_json_1.default.adminCount) {
+        if (userInfo.group_id !== User_1.EnumUserGroup.ADMIN) {
             return res.send(new Response_1.ResponseError('', '无权操作'));
         }
         const { id, description } = req.body;

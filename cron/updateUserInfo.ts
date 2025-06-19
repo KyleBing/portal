@@ -7,12 +7,12 @@
  */
 
 import {getDataFromDB} from "../src/utility";
-import {User} from "entity/User";
+import {EntityUser} from "entity/User";
 
 getDataFromDB('diary', [`select * from users`])
     .then(data => {
         let sqlArray = []
-        data.forEach((user: User) => {
+        data.forEach((user: EntityUser) => {
             sqlArray.push(`update users set count_diary = (SELECT count(*) from diaries where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_map_route = (SELECT count(*) from map_route where uid = ${user.uid}) where uid = ${user.uid};`)
             sqlArray.push(`update users set count_map_pointer = (SELECT count(*) from map_pointer where uid = ${user.uid}) where uid = ${user.uid};`)

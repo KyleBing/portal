@@ -1,6 +1,5 @@
 import express from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import configProject from "../../config/configProject.json"
 import {
     dateFormatter,
     getDataFromDB, operate_db_and_return_added_id,
@@ -14,12 +13,13 @@ const DATA_NAME = '邀请码'
 const CURRENT_TABLE = 'invitations'
 
 import crypto from 'crypto'
+import { EnumUserGroup } from "entity/User";
 
 router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            if (userInfo.email === configProject.adminAccount ) { //
+            if (userInfo.group_id === EnumUserGroup.ADMIN) {
                 sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null order by date_create desc ;`)
             } else {
                 sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null and is_shared = 0 order by date_create desc  ;`)
@@ -50,7 +50,7 @@ router.get('/list', (req, res) => {
 router.post('/generate', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminAccount){ // admin
+            if (userInfo.group_id === EnumUserGroup.ADMIN){ // admin
                 let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 crypto.randomBytes(12, (err, buffer) => {
@@ -75,7 +75,7 @@ router.post('/generate', (req, res) => {
 router.post('/mark-shared', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminAccount){ // admin
+            if (userInfo.group_id === EnumUserGroup.ADMIN){ // admin
                 let sqlArray = []
                 sqlArray.push(`
                         update ${CURRENT_TABLE} set is_shared = 1 where id = '${req.body.id}' `)
@@ -98,7 +98,7 @@ router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminAccount){
+            if (userInfo.group_id === EnumUserGroup.ADMIN){
                 let sqlArray = []
                 sqlArray.push(` DELETE from ${CURRENT_TABLE} WHERE id='${req.query.id}' `)
 

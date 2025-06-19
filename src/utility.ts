@@ -6,6 +6,7 @@ import {BillDay} from "entity/Bill";
 import {ResponseError, ResponseSuccess} from "./response/Response";
 
 import {Response} from "express-serve-static-core";
+import { EntityUser } from "entity/User";
 
 // 运行 SQL 并返回 DB 结果
 export function getDataFromDB(
@@ -45,7 +46,7 @@ export function getDataFromDB(
 
 
 // 验证用户是否有权限
-export function verifyAuthorization(req: express.Request): Promise<any>{
+export function verifyAuthorization(req: express.Request): Promise<EntityUser>{
     let token = req.get('Diary-Token') || req.query.token
     let uid = req.get('Diary-Uid')
     return new Promise((resolve, reject) => {

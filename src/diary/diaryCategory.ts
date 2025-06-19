@@ -1,11 +1,11 @@
 import express from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import configProject from "../../config/configProject.json"
 import {
     dateFormatter,
     getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
     verifyAuthorization
 } from "../utility";
+import { EnumUserGroup } from "entity/User";
 const router = express.Router()
 
 const DB_NAME = 'diary'
@@ -37,7 +37,7 @@ router.post('/add', (req, res) => {
             } else {
                 verifyAuthorization(req)
                     .then(userInfo => {
-                        if (userInfo.email === configProject.adminAccount ){
+                        if (userInfo.group_id === EnumUserGroup.ADMIN){
                             let timeNow = dateFormatter(new Date())
                             // query.name_en
                             let sqlArray = []
@@ -62,7 +62,7 @@ router.post('/add', (req, res) => {
 router.put('/modify', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminAccount ){
+            if (userInfo.group_id === EnumUserGroup.ADMIN){
                 let timeNow = dateFormatter(new Date())
                 // query.name_en
                 let sqlArray = []
@@ -88,7 +88,7 @@ router.put('/modify', (req, res) => {
 router.delete('/delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminAccount ){
+            if (userInfo.group_id === EnumUserGroup.ADMIN){
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(` delete from ${CURRENT_TABLE} where name_en = '${req.body.name_en}' `)

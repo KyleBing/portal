@@ -57,9 +57,6 @@ app.use('/bill', bill_1.default);
 // 点赞管理
 const thumbsUp_1 = __importDefault(require("./src/thumbsUp/thumbsUp"));
 app.use('/thumbs-up', thumbsUp_1.default);
-// 邮件操作
-const mail_1 = __importDefault(require("./src/mail/mail"));
-app.use('/mail', mail_1.default);
 // 图片、文件操作
 const fileManager_1 = __importDefault(require("./src/file/fileManager"));
 app.use('/file-manager', fileManager_1.default);
