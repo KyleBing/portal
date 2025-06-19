@@ -37,7 +37,7 @@ router.post('/add', (req, res) => {
             } else {
                 verifyAuthorization(req)
                     .then(userInfo => {
-                        if (userInfo.email === configProject.adminCount ){
+                        if (userInfo.email === configProject.adminAccount ){
                             let timeNow = dateFormatter(new Date())
                             // query.name_en
                             let sqlArray = []
@@ -62,7 +62,7 @@ router.post('/add', (req, res) => {
 router.put('/modify', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
+            if (userInfo.email === configProject.adminAccount ){
                 let timeNow = dateFormatter(new Date())
                 // query.name_en
                 let sqlArray = []
@@ -88,7 +88,7 @@ router.put('/modify', (req, res) => {
 router.delete('/delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
+            if (userInfo.email === configProject.adminAccount ){
                 // query.name_en
                 let sqlArray = []
                 sqlArray.push(` delete from ${CURRENT_TABLE} where name_en = '${req.body.name_en}' `)

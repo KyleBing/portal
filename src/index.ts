@@ -1,5 +1,4 @@
 import express from "express"
-import exp from "node:constants";
 const router = express.Router()
 
 /* GET home page. */

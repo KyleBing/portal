@@ -19,7 +19,7 @@ router.get('/list', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
             let sqlArray = []
-            if (userInfo.email === configProject.adminCount ) { //
+            if (userInfo.email === configProject.adminAccount ) { //
                 sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null order by date_create desc ;`)
             } else {
                 sqlArray.push(`SELECT * from ${CURRENT_TABLE} where binding_uid is null and is_shared = 0 order by date_create desc  ;`)
@@ -50,7 +50,7 @@ router.get('/list', (req, res) => {
 router.post('/generate', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount){ // admin
+            if (userInfo.email === configProject.adminAccount){ // admin
                 let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 crypto.randomBytes(12, (err, buffer) => {
@@ -75,7 +75,7 @@ router.post('/generate', (req, res) => {
 router.post('/mark-shared', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount){ // admin
+            if (userInfo.email === configProject.adminAccount){ // admin
                 let sqlArray = []
                 sqlArray.push(`
                         update ${CURRENT_TABLE} set is_shared = 1 where id = '${req.body.id}' `)
@@ -98,7 +98,7 @@ router.delete('/delete', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount){
+            if (userInfo.email === configProject.adminAccount){
                 let sqlArray = []
                 sqlArray.push(` DELETE from ${CURRENT_TABLE} WHERE id='${req.query.id}' `)
 

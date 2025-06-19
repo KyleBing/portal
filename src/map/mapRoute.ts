@@ -60,7 +60,7 @@ function getRouteLineList(userInfo: User, req, res){
         if (req.body.isMine === "1"){
             filterArray.push(`${CURRENT_TABLE}.uid = ${userInfo.uid}`)
         } else {
-            if (userInfo.email === configProject.adminCount){
+            if (userInfo.email === configProject.adminAccount){
                 filterArray.push(`${CURRENT_TABLE}.uid != ${userInfo.uid}`)
             } else {
                 filterArray.push(`is_public = 1 and ${CURRENT_TABLE}.uid != ${userInfo.uid}`)

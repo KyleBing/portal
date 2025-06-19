@@ -160,7 +160,7 @@ router.get('/list', (req, res) => {
 router.post('/add', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === configProject.adminCount ){
+            if (userInfo.email === configProject.adminAccount ){
                 let timeNow = dateFormatter(new Date())
                 let sqlArray = []
                 sqlArray.push(`
@@ -180,7 +180,7 @@ router.post('/add', (req, res) => {
 router.delete('/delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email !== configProject.adminCount) {
+            if (userInfo.email !== configProject.adminAccount) {
                 return res.send(new ResponseError('', '无权操作'));
             }
 
@@ -217,7 +217,7 @@ router.delete('/delete', (req, res) => {
 router.delete('/batch-delete', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email !== configProject.adminCount) {
+            if (userInfo.email !== configProject.adminAccount) {
                 return res.send(new ResponseError('', '无权操作'));
             }
 
@@ -261,7 +261,7 @@ router.delete('/batch-delete', (req, res) => {
 router.put('/update', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email !== configProject.adminCount) {
+            if (userInfo.email !== configProject.adminAccount) {
                 return res.send(new ResponseError('', '无权操作'));
             }
 

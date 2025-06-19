@@ -75,10 +75,6 @@ app.use('/bill', routerBill)
 import routerThumbsUp from './src/thumbsUp/thumbsUp'
 app.use('/thumbs-up', routerThumbsUp)
 
-// 邮件操作
-import routerMail from './src/mail/mail'
-app.use('/mail', routerMail)
-
 // 图片、文件操作
 import routerFileManager from './src/file/fileManager'
 app.use('/file-manager', routerFileManager)

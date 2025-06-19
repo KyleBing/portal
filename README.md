@@ -131,7 +131,7 @@
 ```json
 {
   "invitation": "----",
-  "adminCount": "xxxx@163.com",
+  "adminAccount": "xxxx@163.com",
 
   "wxMiniAppId": "",
   "wxMiniSecret": "",
@@ -305,5 +305,6 @@ npm run serve
 
 # TODO
 - [ ] 后台配置引导
-- [ ] 去除 build 过程，脱离 node_modules 直接使用
+- [x] 去除 build 过程，脱离 node_modules 直接使用
+    - 无法实现，想要使用 TS 就必须面对这个问题
 - [ ] 单独分离出日记功能
