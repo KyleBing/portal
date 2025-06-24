@@ -28,7 +28,7 @@ const CURRENT_TABLE = 'image_qiniu';
 // Initialize Qiniu Service
 class QiniuService {
     constructor() {
-        this.mac = new qiniu_1.default.auth.digest.Mac(configProject_json_1.default.qiniuAccessKey, configProject_json_1.default.qiniuSecretKey);
+        this.mac = new qiniu_1.default.auth.digest.Mac(configProject_json_1.default.qiniu_access_key, configProject_json_1.default.qiniu_secret_key);
         this.config = new qiniu_1.default.conf.Config();
         this.bucketManager = new qiniu_1.default.rs.BucketManager(this.mac, this.config);
     }

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
 const utility_1 = require("../utility");
+const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const router = express_1.default.Router();
 // 统计数据，后台用的
 router.get('/', (req, res) => {
@@ -134,31 +135,36 @@ router.get('/year', (req, res) => {
         .then(userInfo => {
         let yearNow = new Date().getFullYear();
         let sqlRequests = [];
-        for (let year = 1991; year <= yearNow; year++) {
+        for (let year = configProject_json_1.default.year_data_start; year <= yearNow; year++) {
             let sqlArray = [];
             sqlArray.push(`
                 select 
-                date_format(date,'%Y%m') as id,
-                date_format(date,'%m') as month,
-                count(*) as 'count'
-                from diaries 
+                    date_format(date,'%m') as month,
+                    count(*) as 'count',
+                    ${year} as year
+                    from diaries 
                 where year(date) = ${year}
-                and uid = ${userInfo.uid}
-                group by month, id
+                    and uid = ${userInfo.uid}
+                group by month
                 order by month desc
         `);
             sqlRequests.push((0, utility_1.getDataFromDB)('diary', sqlArray));
         }
         // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
-        Promise.all(sqlRequests)
-            .then(values => {
+        Promise
+            .all(sqlRequests)
+            .then(results => {
             let response = [];
-            values.forEach(data => {
-                if (data.length > 0) { // 只统计有数据的年份
+            results.forEach(monthDataArray => {
+                if (monthDataArray.length > 0) { // 只统计有数据的年份
                     response.push({
-                        year: data[0].id.substring(0, 4),
-                        count: data.map(item => item.count).reduce((a, b) => a + b),
-                        months: data
+                        year: monthDataArray[0].year,
+                        count: monthDataArray.map(item => item.count).reduce((a, b) => a + b),
+                        months: monthDataArray.map(item => {
+                            item.id = `${item.year}${item.month}`;
+                            delete item.year;
+                            return item;
+                        })
                     });
                 }
             });

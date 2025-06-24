@@ -27,8 +27,8 @@ class QiniuService {
 
     constructor() {
         this.mac = new qiniu.auth.digest.Mac(
-            configProject.qiniuAccessKey,
-            configProject.qiniuSecretKey
+            configProject.qiniu_access_key,
+            configProject.qiniu_secret_key
         );
         this.config = new qiniu.conf.Config();
         this.bucketManager = new qiniu.rs.BucketManager(this.mac, this.config);

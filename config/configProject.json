@@ -1,12 +1,8 @@
 {
-  "invitation": "----",
+  "invitation_code": "----",
 
-  "wxMiniAppId": "",
-  "wxMiniSecret": "",
-  "wxToken": "",
-  "wxPublicAppId": "",
-  "wxPublicSecret": "",
+  "year_data_start": 1991,
 
-  "qiniuAccessKey": "",
-  "qiniuSecretKey": ""
+  "qiniu_access_key": "",
+  "qiniu_secret_key": ""
 }

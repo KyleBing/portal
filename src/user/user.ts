@@ -20,7 +20,7 @@ import bcrypt from "bcrypt"
 /* GET users listing. */
 router.post('/register', (req, res) => {
     // TODO: 验证传过来的数据库必填项
-    if (req.body.invitationCode === configProject.invitation){ // 万能全局邀请码
+    if (req.body.invitationCode === configProject.invitation_code){ // 万能全局邀请码
         registerUser(req, res)
     } else {
         getDataFromDB(DB_NAME, [`select * from invitations where id = '${req.body.invitationCode}'`], true)

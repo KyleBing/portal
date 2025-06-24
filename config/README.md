@@ -2,22 +2,12 @@
 
 ### `configProject.json`
 ```bash
-invitation: '----',         # 万能注册邀请码，用这个不需要使用系统生成的邀请码
+"invitation_code": "----",  // 万能注册邀请码
 
-# 七牛云密钥
-qiniuAccessKey: '',
-qiniuSecretKey: '',
+"year_data_start": 1991,    // 数据库数据开始时间
 
-
-# 以下信息未启用
-# 微信小程序开发者信息
-wxMiniAppId: '',
-wxMiniSecret: '',
-
-# 微信公众号
-wxToken: '',
-wxPublicAppId: '',
-wxPublicSecret: '',
+"qiniu_access_key": "",     // 七牛云 access_key
+"qiniu_secret_key": ""      // 七牛云 secret_key
 ```
 
 ### `configDatabase.json`
