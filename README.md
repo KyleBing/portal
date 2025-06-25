@@ -2,7 +2,7 @@
 
 该后台服务的前端项目：
 
-- [《标题日记》](https://github.com/KyleBing/diary-vue)
+- [《标题日记》](https://github.com/KyleBing/diary-vue) `v9.20`
 - [《路书》](https://github.com/KyleBing/map)
 - 《五笔相关》
 - 《二维码》
@@ -156,7 +156,7 @@ npm run serve
 
 项目启动后会运行在 `localhost:3000`，直接访问这个地址应该能看到：
 
-<img width="539" alt="Screen Shot 2022-04-19 at 21 47 25" src="https://user-images.githubusercontent.com/12215982/164018379-bb497ec3-53e4-46c5-969a-c5b3ca4c0c31.png">
+![server started successfully](https://github.com/user-attachments/assets/4c6272ad-2f0c-4518-b533-8a017e38510e)
 
 
 ### 4. 初始化数据库
@@ -165,18 +165,18 @@ npm run serve
 
 
 1. 删除后台目录中的 `DATABASE_LOCK` 这个文件。  
-2. 直接访问 `你服务器的域名或IP:3000/init` 这个路径即可将数据库初始化，初始化数据库会自动创建一个为名 `diary` 的数据库。
+2. 直接访问 `你服务器的域名或IP:3000/init` 这个路径即可将数据库初始化，初始化数据库会自动创建一个名为 `diary` 的数据库。
 3. 初始化后，会自动在项目目录中新建一个名为 `DATABASE_LOCK` 的文件，之后将不能再执行这个接口，如果想再次初始化，需要先删除这个文件。
 
 
-> **建议自行定时备份数据库**
+> **建议定期自行备份数据库**
 
 
 ### 5. 配置 nginx，映射 `localhost:3000` 路径到  `/portal` 路径
 
 1. 打开 nginx 的配置文件，
    - CentOS 的 nginx 配置文件在 `/etc/nginx/conf.d/` 目录下。
-   - Ubuntu 的 nginx 配置文件在 `/etc/nginx/site-avilable/default` 中。
+   - Ubuntu 的 nginx 配置文件在 `/etc/nginx/sites-available/default` 中。
 
 2. 打开 `default.conf` 或 `default` 文件
     ```bash
@@ -207,16 +207,15 @@ npm run serve
     ```
 7. 添加 cron 定时任务
    用户数据里有对用户的日记和其它信息的统计，这个统计过程耗时稍长，所以将其设成定时任务，每小时执行一次。
-   以 Ubuntu 为例
-   执行
+   以 Ubuntu 为例，执行
    ```bash
    crontab -e
    ```
-   然后添加以下内容到打开的窗口中，意思就是说第小时的 17 分统计并更新用户数据，下面的 js 路径改成自己系统中的 JS 路径。
+   然后添加以下内容到打开的窗口中，意思是每小时的第 17 分钟统计并更新用户数据，下面的 js 路径改成自己系统中的 JS 路径。
    ```bash
    17 * * * * node /var/www/html/portal/dist/cron/updateUserInfo.js
    ```
-   然后重启 cron 服务
+   然后重启 cron 服务：
    ```bash
    systemctl restart cron
    ```
@@ -224,21 +223,21 @@ npm run serve
 ### 6. 设置管理员账户
 1. 用上面设置的通用邀请码注册之后
 2. 从数据库中直接修改对应用户的 `users.group_id`  改为 `1` (管理员)
-3. 网页上重新登录该用户，就能看到 **邀请码** 菜单了。
+3. 网页上重新登录该用户，就能看到“邀请码”菜单了。
 
 ### 7. 配置前端项目
 1. 下载 [https://github.com/KyleBing/diary-vue](https://github.com/KyleBing/diary-vue)
 2. 安装依赖，执行 `npm i` 或者 `yarn`
 3. 如果你需要修改前端请求后台的路径，修改 `/src/request.js` 中的 `BASE_URL` 即可
-4. 执行 `npm build` 会生成前端项目的生产环境的文件，就这个项目而言，它会在生成在 `./dist/` 目录，也会在 `./archive` 目录下生成一个名为 `diary-2023-06-xx.zip` 的压缩包，这个压缩包的内容就是 `../diary` 的内容，但不包含外层 `diary` 目录。
+4. 执行 `npm run build` 会生成前端项目的生产环境文件，就这个项目而言，它会生成在 `./dist/` 目录，也会在 `./archive` 目录下生成一个名为 `diary-2023-06-xx.zip` 的压缩包，这个压缩包的内容就是 `../diary` 的内容，但不包含外层 `diary` 目录。
 5. 将项目文件放置于服务器 nginx 主目录的 `/diary/` 下
-6. 此时后台项目在 `/portal/` 目录下，前端项目在 `/dairy/` 下，这样就能直接使用了
+6. 此时后台项目在 `/portal/` 目录下，前端项目在 `/diary/` 下，这样就可以直接使用了
 
-最终的目录结构应该是这样的：
+最终的目录结构应该如下：
 
 ```bash
 [ nginx 文档根目录 ]
-      ├── diary-vue  # 日记前端源码，这个不需要放到服务器上，它的主要作用就是生成下方的 ./diary/ 目录下的前端项目文件
+      ├── diary-vue  # 日记前端源码，这个不需要放到服务器上，它的主要作用就是生成下方 ./diary/ 目录下的前端项目文件
       │   ├── dist
       │   ├── archive
       │   ├── src
@@ -300,6 +299,3 @@ npm run serve
 
 # TODO
 - [ ] 后台配置引导
-- [x] 去除 build 过程，脱离 node_modules 直接使用
-    - 无法实现，想要使用 TS 就必须面对这个问题
-- [ ] 单独分离出日记功能
