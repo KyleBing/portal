@@ -8,6 +8,16 @@ import {ResponseError, ResponseSuccess} from "./response/Response";
 import {Response} from "express-serve-static-core";
 import { EntityUser } from "entity/User";
 
+// 检测是否在 Docker 环境中运行
+function isDockerEnvironment(): boolean {
+    return process.env.NODE_ENV === 'docker' || process.env.DOCKER_ENV === 'true';
+}
+
+// 获取数据库主机地址
+function getDatabaseHost(): string {
+    return isDockerEnvironment() ? 'mysql' : configDatabase.host;
+}
+
 // 运行 SQL 并返回 DB 结果
 export function getDataFromDB(
     dbName: string,
@@ -16,7 +26,7 @@ export function getDataFromDB(
 ): Promise<any> {
     return new Promise((resolve, reject) => {
         let connection = mysql.createConnection({
-            host               : configDatabase.host,
+            host               : getDatabaseHost(),
             user               : configDatabase.user,
             password           : configDatabase.password,
             port               : configDatabase.port,
@@ -74,7 +84,7 @@ export function verifyAuthorization(req: express.Request): Promise<EntityUser>{
 
 export function getMysqlConnection(dbName: string){
     let connection = mysql.createConnection({
-        host               : configDatabase.host,
+        host               : getDatabaseHost(),
         user               : configDatabase.user,
         password           : configDatabase.password,
         port               : configDatabase.port,

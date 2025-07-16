@@ -48,45 +48,61 @@ function registerUser(req, res){
             if (dataEmailExistArray.length > 0){
                 return res.send(new ResponseError('', '邮箱或用户名已被注册'))
             } else {
-                let sqlArray = []
-                let timeNow = dateFormatter(new Date())
-                // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
-                bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
-                    sqlArray.push(
-                        // 注册的用户默认为普通用户
-                        `insert into ${CURRENT_TABLE}(email, nickname, username, password, register_time, last_visit_time, comment, 
-                                                wx, phone, homepage, gaode, group_id)
-                                    VALUES (
-                                    '${req.body.email}', 
-                                    '${req.body.nickname || ''}', 
-                                    '${req.body.username || ''}', 
-                                    '${encryptPassword}', 
-                                    '${timeNow}',
-                                    '${timeNow}',
-                                    '${req.body.comment || ''}', 
-                                    '${req.body.wx || ''}', 
-                                    '${req.body.phone || ''}', 
-                                    '${req.body.homepage || ''}', 
-                                    '${req.body.gaode || ''}', 
-                                    '2'
-                                    )`
-                    )
-                    getDataFromDB( DB_NAME, sqlArray)
-                        .then(data => {
-                            let lastInsertedUid = data.insertId
-                            getDataFromDB(DB_NAME, [`update invitations set binding_uid = ${lastInsertedUid}, date_register = '${timeNow}' where id = '${req.body.invitationCode}'`])
-                                .then(resInvitation => {
-                                    res.send(new ResponseSuccess('', '注册成功'))
+                // 检查是否是第一个用户（系统初始化）
+                getDataFromDB(DB_NAME, [`select count(*) as userCount from ${CURRENT_TABLE}`], true)
+                    .then(userCountResult => {
+                        let isFirstUser = userCountResult.userCount === 0
+                        let groupId = isFirstUser ? 1 : 2 // 1 = admin, 2 = normal user
+                        
+                        let sqlArray = []
+                        let timeNow = dateFormatter(new Date())
+                        // 明文密码通过 bcrypt 加密，对比密码也是通过  bcrypt
+                        bcrypt.hash(req.body.password, 10, (err, encryptPassword) => {
+                            sqlArray.push(
+                                `insert into ${CURRENT_TABLE}(email, nickname, username, password, register_time, last_visit_time, comment, 
+                                                        wx, phone, homepage, gaode, group_id)
+                                            VALUES (
+                                            '${req.body.email}', 
+                                            '${req.body.nickname || ''}', 
+                                            '${req.body.username || ''}', 
+                                            '${encryptPassword}', 
+                                            '${timeNow}',
+                                            '${timeNow}',
+                                            '${req.body.comment || ''}', 
+                                            '${req.body.wx || ''}', 
+                                            '${req.body.phone || ''}', 
+                                            '${req.body.homepage || ''}', 
+                                            '${req.body.gaode || ''}', 
+                                            '${groupId}'
+                                            )`
+                            )
+                            getDataFromDB( DB_NAME, sqlArray)
+                                .then(data => {
+                                    let lastInsertedUid = data.insertId
+                                    // 如果有邀请码，更新邀请码信息
+                                    if (req.body.invitationCode) {
+                                        getDataFromDB(DB_NAME, [`update invitations set binding_uid = ${lastInsertedUid}, date_register = '${timeNow}' where id = '${req.body.invitationCode}'`])
+                                            .then(resInvitation => {
+                                                const message = isFirstUser ? '注册成功！您已成为系统管理员。' : '注册成功'
+                                                res.send(new ResponseSuccess('', message))
+                                            })
+                                            .catch(err => {
+                                                const message = isFirstUser ? '注册成功！您已成为系统管理员。邀请码信息更新失败' : '注册成功，邀请码信息更新失败'
+                                                res.send(new ResponseError('', message))
+                                            })
+                                    } else {
+                                        const message = isFirstUser ? '注册成功！您已成为系统管理员。' : '注册成功'
+                                        res.send(new ResponseSuccess('', message))
+                                    }
                                 })
                                 .catch(err => {
-                                    res.send(new ResponseError('', '注册成功，邀请码信息更新失败'))
+                                    res.send(new ResponseError('', '注册失败'))
                                 })
                         })
-                        .catch(err => {
-                            res.send(new ResponseError('', '注册失败'))
-                        })
-                })
-
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError('', '检查用户数量失败'))
+                    })
             }
         })
         .catch(errEmailExist => {
