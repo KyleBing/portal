@@ -112,18 +112,13 @@ router.get('/list', (req, res) => {
         })
 })
 
+
+// 只获取日记的类别、日期、ID、标题
 router.get('/list-title-only', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            let startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize) // 日记起点
-
             let sqlArray = []
-            sqlArray.push(`
-                    SELECT 
-                        id,date,title,category
-                    from ${CURRENT_TABLE} 
-                    where uid='${userInfo.uid}'
-                  `)
+            sqlArray.push(` SELECT id,date,title,category from ${CURRENT_TABLE} where uid='${userInfo.uid}' `)
             // keywords
             if (req.query.keywords){
                 let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
@@ -157,8 +152,17 @@ router.get('/list-title-only', (req, res) => {
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
 
-            sqlArray.push(` order by date desc
-                  limit ${startPoint}, ${req.query.pageSize}`)
+            // filter date range
+            if (req.query.dateStart){
+                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
+            }
+            if (req.query.dateEnd){
+                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
+            }
+
+            sqlArray.push(` order by date desc`)
+
+            console.log(sqlArray.join(''))
 
             getDataFromDB( DB_NAME, sqlArray)
                 .then(data => {
@@ -177,6 +181,79 @@ router.get('/list-title-only', (req, res) => {
             res.send(new ResponseError('', errInfo))
         })
 })
+
+// 只获取日记的类别、日期、ID
+router.get('/list-category-only', (req, res) => {
+    // res as {
+    //     dateStart: string, // date string, format: YYYYMMDD
+    //     dateEnd: string, // date string, format: YYYYMMDD
+    //     categories: string[],
+    //     keywords: string[],
+    //     filterShared: string,
+    // }
+    verifyAuthorization(req)
+        .then(userInfo => {
+            
+            let sqlArray = []
+            sqlArray.push(`SELECT id,DATE_FORMAT(date,'%Y-%m-%d') as date,category from ${CURRENT_TABLE} where uid='${userInfo.uid}' `)
+            // filter keywords
+            if (req.query.keywords){
+                let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
+                console.log(keywords)
+                if (keywords.length > 0){
+                    let keywordStrArray = keywords
+                        .map((keyword: string) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
+                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+                }
+            }
+
+            // filter categories
+            if (req.query.categories){
+                let categories = JSON.parse(String(req.query.categories))
+                if (categories.length > 0) {
+                    let categoryStrArray = categories.map((category: string) => `category='${category}'`)
+                    let tempString = categoryStrArray.join(' or ')
+                    sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
+                }
+            }
+
+            // filter share
+            if (req.query.filterShared === '1'){
+                sqlArray.push(' and is_public = 1')
+            }
+
+            // filter date range
+            if (req.query.dateFilterString){
+                let year = (req.query.dateFilterString as string).substring(0,4)
+                let month = (req.query.dateFilterString as string).substring(4,6)
+                sqlArray.push(` and YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+            }
+
+            // filter date range
+            if (req.query.dateStart){
+                sqlArray.push(` and date >= '${req.query.dateStart}'`)
+            }
+            if (req.query.dateEnd){
+                sqlArray.push(` and date <= '${req.query.dateEnd}'`)
+            }
+
+            sqlArray.push(` order by date desc`)
+
+            getDataFromDB( DB_NAME, sqlArray)
+                .then(data => {
+                    updateUserLastLoginTime(userInfo.uid)
+                    res.send(new ResponseSuccess(data, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+
 
 router.get('/export', (req, res) => {
     verifyAuthorization(req)

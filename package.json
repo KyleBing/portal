@@ -7,6 +7,7 @@
   "scripts": {
     "serve": "node dist/bin/portal.js",
     "dev": "npx ts-node -r tsconfig-paths/register bin/portal.ts",
+    "dev:watch": "nodemon --exec \"npx ts-node -r tsconfig-paths/register bin/portal.ts\" --watch src --ext ts,js",
     "original_start": "node bin/portal",
     "ws": "node bin/ws.js",
     "build": "npx tsc"
@@ -36,6 +37,7 @@
     "@types/node": "^22.8.4",
     "@types/ws": "^8.5.12",
     "@types/xml2json": "^0.11.6",
+    "nodemon": "^3.1.10",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.3"
   },
