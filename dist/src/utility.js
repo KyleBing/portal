@@ -17,11 +17,19 @@ exports.formatMoney = formatMoney;
 const mysql2_1 = __importDefault(require("mysql2"));
 const configDatabase_json_1 = __importDefault(require("../config/configDatabase.json"));
 const Response_1 = require("./response/Response");
+// 检测是否在 Docker 环境中运行
+function isDockerEnvironment() {
+    return process.env.NODE_ENV === 'docker' || process.env.DOCKER_ENV === 'true';
+}
+// 获取数据库主机地址
+function getDatabaseHost() {
+    return isDockerEnvironment() ? 'mysql' : configDatabase_json_1.default.host;
+}
 // 运行 SQL 并返回 DB 结果
 function getDataFromDB(dbName, sqlArray, isSingleValue) {
     return new Promise((resolve, reject) => {
         let connection = mysql2_1.default.createConnection({
-            host: configDatabase_json_1.default.host,
+            host: getDatabaseHost(),
             user: configDatabase_json_1.default.user,
             password: configDatabase_json_1.default.password,
             port: configDatabase_json_1.default.port,
@@ -79,7 +87,7 @@ function verifyAuthorization(req) {
 }
 function getMysqlConnection(dbName) {
     let connection = mysql2_1.default.createConnection({
-        host: configDatabase_json_1.default.host,
+        host: getDatabaseHost(),
         user: configDatabase_json_1.default.user,
         password: configDatabase_json_1.default.password,
         port: configDatabase_json_1.default.port,

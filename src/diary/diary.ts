@@ -114,6 +114,90 @@ router.get('/list', (req, res) => {
 
 
 // 只获取日记的类别、日期、ID、标题
+router.get('/list-all', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            sqlArray.push(` SELECT * from ${CURRENT_TABLE} where uid='${userInfo.uid}' `)
+            // keywords
+            if (req.query.keywords){
+                let keywords = JSON.parse(String(req.query.keywords)).map((item: string) => unicodeEncode(item))
+                console.log(keywords)
+                if (keywords.length > 0){
+                    let keywordStrArray = keywords
+                        .map((keyword: string) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')` )
+                    sqlArray.push(' and ' + keywordStrArray.join(' and ')) // 在每个 categoryString 中间添加 'or'
+                }
+            }
+
+            // categories
+            if (req.query.categories){
+                let categories = JSON.parse(String(req.query.categories))
+                if (categories.length > 0) {
+                    let categoryStrArray = categories.map((category: string) => `category='${category}'`)
+                    let tempString = categoryStrArray.join(' or ')
+                    sqlArray.push(` and (${tempString})`) // 在每个 categoryString 中间添加 'or'
+                }
+            }
+
+            // share
+            if (req.query.filterShared === '1'){
+                sqlArray.push(' and is_public = 1')
+            }
+
+            // date range
+            if (req.query.dateFilterString){
+                let year = (req.query.dateFilterString as string).substring(0,4)
+                let month = (req.query.dateFilterString as string).substring(4,6)
+                sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+            }
+
+            // filter date range - unified approach for both single day and date range
+            if (req.query.dateStart && req.query.dateEnd) {
+                // Date range query
+                if (req.query.dateStart === req.query.dateEnd) {
+                    // Single day query - use DATE() function for better performance
+                    sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`)
+                } else {
+                    // Date range query
+                    sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
+                    sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
+                }
+            } else if (req.query.dateStart) {
+                // Only start date provided
+                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
+            } else if (req.query.dateEnd) {
+                // Only end date provided
+                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
+            }
+
+            sqlArray.push(` order by date desc`)
+
+            console.log(sqlArray.join(''))
+
+            getDataFromDB( DB_NAME, sqlArray)
+                .then(data => {
+                    updateUserLastLoginTime(userInfo.uid)
+                    data.forEach((diary: Diary) => {
+                        // decode unicode and unescape MySQL
+                        diary.title = unescapeMySQLString(unicodeDecode(diary.title))
+                        diary.content = unescapeMySQLString(unicodeDecode(diary.content))
+                        // 处理账单数据
+                        if (diary.category === 'bill'){
+                            diary.billData = processBillOfDay(diary, [])
+                        }
+                    })
+                    res.send(new ResponseSuccess(data, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+// 只获取日记的类别、日期、ID、标题
 router.get('/list-title-only', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
@@ -152,11 +236,22 @@ router.get('/list-title-only', (req, res) => {
                 sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
 
-            // filter date range
-            if (req.query.dateStart){
+            // filter date range - unified approach for both single day and date range
+            if (req.query.dateStart && req.query.dateEnd) {
+                // Date range query
+                if (req.query.dateStart === req.query.dateEnd) {
+                    // Single day query - use DATE() function for better performance
+                    sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`)
+                } else {
+                    // Date range query
+                    sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
+                    sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
+                }
+            } else if (req.query.dateStart) {
+                // Only start date provided
                 sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
-            }
-            if (req.query.dateEnd){
+            } else if (req.query.dateEnd) {
+                // Only end date provided
                 sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
             }
 
@@ -229,12 +324,23 @@ router.get('/list-category-only', (req, res) => {
                 sqlArray.push(` and YEAR(date)='${year}' AND MONTH(date)='${month}'`)
             }
 
-            // filter date range
-            if (req.query.dateStart){
-                sqlArray.push(` and date >= '${req.query.dateStart}'`)
-            }
-            if (req.query.dateEnd){
-                sqlArray.push(` and date <= '${req.query.dateEnd}'`)
+            // filter date range - unified approach for both single day and date range
+            if (req.query.dateStart && req.query.dateEnd) {
+                // Date range query
+                if (req.query.dateStart === req.query.dateEnd) {
+                    // Single day query - use DATE() function for better performance
+                    sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`)
+                } else {
+                    // Date range query
+                    sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
+                    sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
+                }
+            } else if (req.query.dateStart) {
+                // Only start date provided
+                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`)
+            } else if (req.query.dateEnd) {
+                // Only end date provided
+                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`)
             }
 
             sqlArray.push(` order by date desc`)
