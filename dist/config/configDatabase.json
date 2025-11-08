@@ -1,7 +1,7 @@
 {
     "host": "localhost",
-    "user": "----",
-    "password": "----",
+    "user": "root",
+    "password": "rootpassword",
     "port": 3306,
     "multipleStatements": true,
     "timezone": ""

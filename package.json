@@ -9,7 +9,7 @@
     "dev": "npx ts-node -r tsconfig-paths/register bin/portal.ts",
     "original_start": "node bin/portal",
     "ws": "node bin/ws.js",
-    "build": "npx tsc"
+    "build": "npx tsc && node scripts/copy-static.js"
   },
   "dependencies": {
     "axios": "1.7.4",
