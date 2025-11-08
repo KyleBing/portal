@@ -99,17 +99,12 @@ router.get('/list', (req, res) => {
         res.send(new Response_1.ResponseError('', errInfo));
     });
 });
-router.get('/list-title-only', (req, res) => {
+// 只获取日记的类别、日期、ID、标题
+router.get('/list-all', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        let startPoint = (Number(req.query.pageNo) - 1) * Number(req.query.pageSize); // 日记起点
         let sqlArray = [];
-        sqlArray.push(`
-                    SELECT 
-                        id,date,title,category
-                    from ${CURRENT_TABLE} 
-                    where uid='${userInfo.uid}'
-                  `);
+        sqlArray.push(` SELECT * from ${CURRENT_TABLE} where uid='${userInfo.uid}' `);
         // keywords
         if (req.query.keywords) {
             let keywords = JSON.parse(String(req.query.keywords)).map((item) => (0, utility_1.unicodeEncode)(item));
@@ -139,8 +134,109 @@ router.get('/list-title-only', (req, res) => {
             let month = req.query.dateFilterString.substring(4, 6);
             sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
         }
-        sqlArray.push(` order by date desc
-                  limit ${startPoint}, ${req.query.pageSize}`);
+        // filter date range - unified approach for both single day and date range
+        if (req.query.dateStart && req.query.dateEnd) {
+            // Date range query
+            if (req.query.dateStart === req.query.dateEnd) {
+                // Single day query - use DATE() function for better performance
+                sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`);
+            }
+            else {
+                // Date range query
+                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
+                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
+            }
+        }
+        else if (req.query.dateStart) {
+            // Only start date provided
+            sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
+        }
+        else if (req.query.dateEnd) {
+            // Only end date provided
+            sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
+        }
+        sqlArray.push(` order by date desc`);
+        console.log(sqlArray.join(''));
+        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
+            .then(data => {
+            (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
+            data.forEach((diary) => {
+                // decode unicode and unescape MySQL
+                diary.title = unescapeMySQLString((0, utility_1.unicodeDecode)(diary.title));
+                diary.content = unescapeMySQLString((0, utility_1.unicodeDecode)(diary.content));
+                // 处理账单数据
+                if (diary.category === 'bill') {
+                    diary.billData = (0, utility_1.processBillOfDay)(diary, []);
+                }
+            });
+            res.send(new Response_1.ResponseSuccess(data, '请求成功'));
+        })
+            .catch(err => {
+            res.send(new Response_1.ResponseError(err, err.message));
+        });
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
+// 只获取日记的类别、日期、ID、标题
+router.get('/list-title-only', (req, res) => {
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let sqlArray = [];
+        sqlArray.push(` SELECT id,date,title,category from ${CURRENT_TABLE} where uid='${userInfo.uid}' `);
+        // keywords
+        if (req.query.keywords) {
+            let keywords = JSON.parse(String(req.query.keywords)).map((item) => (0, utility_1.unicodeEncode)(item));
+            console.log(keywords);
+            if (keywords.length > 0) {
+                let keywordStrArray = keywords
+                    .map((keyword) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')`);
+                sqlArray.push(' and ' + keywordStrArray.join(' and ')); // 在每个 categoryString 中间添加 'or'
+            }
+        }
+        // categories
+        if (req.query.categories) {
+            let categories = JSON.parse(String(req.query.categories));
+            if (categories.length > 0) {
+                let categoryStrArray = categories.map((category) => `category='${category}'`);
+                let tempString = categoryStrArray.join(' or ');
+                sqlArray.push(` and (${tempString})`); // 在每个 categoryString 中间添加 'or'
+            }
+        }
+        // share
+        if (req.query.filterShared === '1') {
+            sqlArray.push(' and is_public = 1');
+        }
+        // date range
+        if (req.query.dateFilterString) {
+            let year = req.query.dateFilterString.substring(0, 4);
+            let month = req.query.dateFilterString.substring(4, 6);
+            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
+        }
+        // filter date range - unified approach for both single day and date range
+        if (req.query.dateStart && req.query.dateEnd) {
+            // Date range query
+            if (req.query.dateStart === req.query.dateEnd) {
+                // Single day query - use DATE() function for better performance
+                sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`);
+            }
+            else {
+                // Date range query
+                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
+                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
+            }
+        }
+        else if (req.query.dateStart) {
+            // Only start date provided
+            sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
+        }
+        else if (req.query.dateEnd) {
+            // Only end date provided
+            sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
+        }
+        sqlArray.push(` order by date desc`);
+        console.log(sqlArray.join(''));
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
             .then(data => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
@@ -148,6 +244,83 @@ router.get('/list-title-only', (req, res) => {
                 // decode unicode
                 diary.title = (0, utility_1.unicodeDecode)(diary.title);
             });
+            res.send(new Response_1.ResponseSuccess(data, '请求成功'));
+        })
+            .catch(err => {
+            res.send(new Response_1.ResponseError(err, err.message));
+        });
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
+// 只获取日记的类别、日期、ID
+router.get('/list-category-only', (req, res) => {
+    // res as {
+    //     dateStart: string, // date string, format: YYYYMMDD
+    //     dateEnd: string, // date string, format: YYYYMMDD
+    //     categories: string[],
+    //     keywords: string[],
+    //     filterShared: string,
+    // }
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let sqlArray = [];
+        sqlArray.push(`SELECT id,DATE_FORMAT(date,'%Y-%m-%d') as date,category from ${CURRENT_TABLE} where uid='${userInfo.uid}' `);
+        // filter keywords
+        if (req.query.keywords) {
+            let keywords = JSON.parse(String(req.query.keywords)).map((item) => (0, utility_1.unicodeEncode)(item));
+            console.log(keywords);
+            if (keywords.length > 0) {
+                let keywordStrArray = keywords
+                    .map((keyword) => `( title like '%${keyword}%' ESCAPE '/'  or content like '%${keyword}%' ESCAPE '/')`);
+                sqlArray.push(' and ' + keywordStrArray.join(' and ')); // 在每个 categoryString 中间添加 'or'
+            }
+        }
+        // filter categories
+        if (req.query.categories) {
+            let categories = JSON.parse(String(req.query.categories));
+            if (categories.length > 0) {
+                let categoryStrArray = categories.map((category) => `category='${category}'`);
+                let tempString = categoryStrArray.join(' or ');
+                sqlArray.push(` and (${tempString})`); // 在每个 categoryString 中间添加 'or'
+            }
+        }
+        // filter share
+        if (req.query.filterShared === '1') {
+            sqlArray.push(' and is_public = 1');
+        }
+        // filter date range
+        if (req.query.dateFilterString) {
+            let year = req.query.dateFilterString.substring(0, 4);
+            let month = req.query.dateFilterString.substring(4, 6);
+            sqlArray.push(` and YEAR(date)='${year}' AND MONTH(date)='${month}'`);
+        }
+        // filter date range - unified approach for both single day and date range
+        if (req.query.dateStart && req.query.dateEnd) {
+            // Date range query
+            if (req.query.dateStart === req.query.dateEnd) {
+                // Single day query - use DATE() function for better performance
+                sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`);
+            }
+            else {
+                // Date range query
+                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
+                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
+            }
+        }
+        else if (req.query.dateStart) {
+            // Only start date provided
+            sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
+        }
+        else if (req.query.dateEnd) {
+            // Only end date provided
+            sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
+        }
+        sqlArray.push(` order by date desc`);
+        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
+            .then(data => {
+            (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             res.send(new Response_1.ResponseSuccess(data, '请求成功'));
         })
             .catch(err => {
