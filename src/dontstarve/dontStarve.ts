@@ -42,6 +42,22 @@ const ListGet = [
         path: '/thing/list',
         sqlArray: [` select * from things`]
     },
+    {
+        path: '/material/list',
+        sqlArray: [` select * from materials`]
+    },
+    {
+        path: '/craft/list',
+        sqlArray: [` select * from crafts`]
+    },
+    {
+        path: '/cookreceipe/list',
+        sqlArray: [` select * from cookreceipes`]
+    },
+    {
+        path: '/coder/list',
+        sqlArray: [` select * from coders`]
+    },
 ]
 
 ListGet.forEach(item => {
@@ -71,6 +87,22 @@ const ListGetInfo = [
     {
         path: '/thing/info',
         tableName: 'things'
+    },
+    {
+        path: '/material/info',
+        tableName: 'materials'
+    },
+    {
+        path: '/craft/info',
+        tableName: 'crafts'
+    },
+    {
+        path: '/cookreceipe/info',
+        tableName: 'cookreceipes'
+    },
+    {
+        path: '/coder/info',
+        tableName: 'coders'
     },
 ]
 
