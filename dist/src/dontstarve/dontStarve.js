@@ -54,8 +54,8 @@ const ListGet = [
         sqlArray: [` select * from crafts`]
     },
     {
-        path: '/cookreceipe/list',
-        sqlArray: [` select * from cookreceipes`]
+        path: '/cookingrecipe/list',
+        sqlArray: [` select * from cookingrecipes`]
     },
     {
         path: '/coder/list',
