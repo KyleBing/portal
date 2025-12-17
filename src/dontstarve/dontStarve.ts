@@ -1,6 +1,12 @@
 import express from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import {getDataFromDB,} from "../utility";
+import {
+    getDataFromDB,
+    verifyAuthorization,
+    operate_db_and_return_added_id,
+    operate_db_without_return,
+    unicodeEncode
+} from "../utility";
 const router = express.Router()
 
 // get list
@@ -131,5 +137,105 @@ function getDataInfo(tableName: string, path: string){
     })
 
 }
+
+// SQL 转义函数
+function escapeMySQLString(str: string): string {
+    if (!str) return '';
+    return str
+        .replace(/\\/g, '\\\\')  // Backslash
+        .replace(/'/g, "\\'")    // Single quote
+        .replace(/"/g, '\\"')    // Double quote
+        .replace(/\n/g, '\\n')   // New line
+        .replace(/\r/g, '\\r')   // Carriage return
+        .replace(/\t/g, '\\t')   // Tab
+        .replace(/\0/g, '\\0')   // Null character
+        .replace(/\x1a/g, '\\Z'); // Ctrl+Z
+}
+
+const DB_NAME = 'starve'
+const DATA_NAME = 'logs'
+
+// logs 表的相关接口
+// 添加日志
+router.post('/log/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            let parsedDetail = escapeMySQLString(unicodeEncode(req.body.detail || ''))
+            let date = req.body.date || ''
+            
+            if (!date || !req.body.detail) {
+                res.send(new ResponseError('', '日期和详情不能为空'))
+                return
+            }
+            
+            sqlArray.push(`
+                INSERT INTO logs(date, detail)
+                VALUES('${date}', '${parsedDetail}')
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 编辑日志
+router.put('/log/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            let parsedDetail = escapeMySQLString(unicodeEncode(req.body.detail || ''))
+            let date = req.body.date || ''
+            let id = req.body.id
+            
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            if (!date || !req.body.detail) {
+                res.send(new ResponseError('', '日期和详情不能为空'))
+                return
+            }
+            
+            sqlArray.push(`
+                UPDATE logs
+                SET date = '${date}',
+                    detail = '${parsedDetail}'
+                WHERE id = ${id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 删除日志
+router.delete('/log/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                DELETE FROM logs
+                WHERE id = ${id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
 
 export default router
