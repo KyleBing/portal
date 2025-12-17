@@ -123,4 +123,90 @@ function getDataInfo(tableName, path) {
         });
     });
 }
+// SQL 转义函数
+function escapeMySQLString(str) {
+    if (!str)
+        return '';
+    return str
+        .replace(/\\/g, '\\\\') // Backslash
+        .replace(/'/g, "\\'") // Single quote
+        .replace(/"/g, '\\"') // Double quote
+        .replace(/\n/g, '\\n') // New line
+        .replace(/\r/g, '\\r') // Carriage return
+        .replace(/\t/g, '\\t') // Tab
+        .replace(/\0/g, '\\0') // Null character
+        .replace(/\x1a/g, '\\Z'); // Ctrl+Z
+}
+const DB_NAME = 'starve';
+const DATA_NAME = 'logs';
+// logs 表的相关接口
+// 添加日志
+router.post('/log/add', (req, res) => {
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let sqlArray = [];
+        let parsedDetail = escapeMySQLString((0, utility_1.unicodeEncode)(req.body.detail || ''));
+        let date = req.body.date || '';
+        if (!date || !req.body.detail) {
+            res.send(new Response_1.ResponseError('', '日期和详情不能为空'));
+            return;
+        }
+        sqlArray.push(`
+                INSERT INTO logs(date, detail)
+                VALUES('${date}', '${parsedDetail}')
+            `);
+        (0, utility_1.operate_db_and_return_added_id)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '添加', res);
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
+// 编辑日志
+router.put('/log/modify', (req, res) => {
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let sqlArray = [];
+        let parsedDetail = escapeMySQLString((0, utility_1.unicodeEncode)(req.body.detail || ''));
+        let date = req.body.date || '';
+        let id = req.body.id;
+        if (!id) {
+            res.send(new Response_1.ResponseError('', 'ID不能为空'));
+            return;
+        }
+        if (!date || !req.body.detail) {
+            res.send(new Response_1.ResponseError('', '日期和详情不能为空'));
+            return;
+        }
+        sqlArray.push(`
+                UPDATE logs
+                SET date = '${date}',
+                    detail = '${parsedDetail}'
+                WHERE id = ${id}
+            `);
+        (0, utility_1.operate_db_without_return)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改', res);
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
+// 删除日志
+router.delete('/log/delete', (req, res) => {
+    (0, utility_1.verifyAuthorization)(req)
+        .then(userInfo => {
+        let id = req.body.id || req.query.id;
+        if (!id) {
+            res.send(new Response_1.ResponseError('', 'ID不能为空'));
+            return;
+        }
+        let sqlArray = [];
+        sqlArray.push(`
+                DELETE FROM logs
+                WHERE id = ${id}
+            `);
+        (0, utility_1.operate_db_without_return)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '删除', res);
+    })
+        .catch(errInfo => {
+        res.send(new Response_1.ResponseError('', errInfo));
+    });
+});
 exports.default = router;
