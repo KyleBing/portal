@@ -29,6 +29,12 @@ function getDataList(tableName: string, path: string, searchFields?: string[], h
             whereConditions.push(`version = '${version}'`)
         }
         
+        // 处理 is_active 筛选（all=1 时获取所有，否则只获取 is_active=1）
+        let all = req.query.all
+        if (all !== '1') {
+            whereConditions.push(`is_active = 1`)
+        }
+        
         // 构建 WHERE 子句
         let whereClause = ''
         if (whereConditions.length > 0) {

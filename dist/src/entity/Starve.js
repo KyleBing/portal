@@ -10,7 +10,8 @@ var VersionEnum;
     VersionEnum["NORMAL"] = "NORMAL";
     VersionEnum["GIANT"] = "GIANT";
     VersionEnum["SEA"] = "SEA";
-    VersionEnum["TOGETHER"] = "TOGETHER"; // 联机版
+    VersionEnum["TOGETHER"] = "TOGETHER";
+    VersionEnum["HAMLET"] = "HAMLET"; // 小镇版本
 })(VersionEnum || (exports.VersionEnum = VersionEnum = {}));
 /**
  * 制作标签枚举
@@ -35,7 +36,8 @@ var CraftTabEnum;
     CraftTabEnum["Shadow"] = "Shadow";
     CraftTabEnum["Nautical"] = "Nautical";
     CraftTabEnum["Volcanic"] = "Volcanic";
-    CraftTabEnum["Offering"] = "Offering"; // 献祭
+    CraftTabEnum["Offering"] = "Offering";
+    CraftTabEnum["Tinkering"] = "Tinkering"; // 修理
 })(CraftTabEnum || (exports.CraftTabEnum = CraftTabEnum = {}));
 /**
  * 制作等级枚举

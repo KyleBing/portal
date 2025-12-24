@@ -7,7 +7,8 @@ export enum VersionEnum {
   NORMAL = 'NORMAL', // 普通版本
   GIANT = 'GIANT', // 巨人统治版本
   SEA = 'SEA', // 海难版本
-  TOGETHER = 'TOGETHER' // 联机版
+  TOGETHER = 'TOGETHER', // 联机版
+  HAMLET = 'HAMLET' // 小镇版本
 }
 
 /**
@@ -32,7 +33,8 @@ export enum CraftTabEnum {
   Shadow = 'Shadow', // 暗影
   Nautical = 'Nautical', // 航海
   Volcanic = 'Volcanic', // 火山
-  Offering = 'Offering' // 献祭
+  Offering = 'Offering', // 献祭
+  Tinkering = 'Tinkering' // 修理
 }
 
 /**
@@ -100,6 +102,7 @@ export interface Character {
   special_item?: string | null; // 特殊物品
   starting_item?: string | null; // 起始物品
   version: VersionEnum; // 游戏版本
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -110,6 +113,7 @@ export interface Coder {
   usage: string; // 用途说明
   code: string; // 代码内容
   note?: string | null; // 备注
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -122,6 +126,7 @@ export interface Command {
   desc: string; // 描述（中文）
   desc_en: string; // 描述（英文）
   category: string; // 分类
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -145,6 +150,7 @@ export interface CookingRecipe {
   debugspawn?: string | null; // 调试生成代码
   pic?: string | null; // 图片路径
   thumb?: string | null; // 缩略图路径
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -167,6 +173,7 @@ export interface Craft {
   debugspawn?: string | null; // 调试生成代码
   pic?: string | null; // 图片路径
   thumb?: string | null; // 缩略图路径
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -189,6 +196,7 @@ export interface Material {
   stack?: string; // 堆叠数量
   debugspawn?: string | null; // 调试生成代码
   version: VersionEnum; // 游戏版本
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -215,6 +223,7 @@ export interface Mob {
   version: VersionEnum; // 游戏版本
   kind: MobKindEnum; // 生物类型
   size: MobSizeEnum; // 生物大小
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -231,6 +240,7 @@ export interface Plant {
   pic?: string | null; // 图片路径
   thumb?: string | null; // 缩略图路径
   version: VersionEnum; // 游戏版本
+  is_active: number; // 1 | 0
 }
 
 /**
@@ -245,4 +255,5 @@ export interface Thing {
   pic?: string | null; // 图片路径
   thumb?: string | null; // 缩略图路径
   version: VersionEnum; // 游戏版本
+  is_active: number; // 1 | 0
 }
