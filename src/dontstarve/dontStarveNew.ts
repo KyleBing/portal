@@ -1,0 +1,1538 @@
+import express from "express"
+import {ResponseError, ResponseSuccess} from "../response/Response";
+import {
+    getDataFromDB,
+    verifyAuthorization,
+    operate_db_and_return_added_id,
+    operate_db_without_return,
+    unicodeEncode,
+    updateUserLastLoginTime
+} from "../utility";
+const router = express.Router()
+
+// SQL 转义函数
+function escapeMySQLString(str: string): string {
+    if (!str) return '';
+    return str
+        .replace(/\\/g, '\\\\')  // Backslash
+        .replace(/'/g, "\\'")    // Single quote
+        .replace(/"/g, '\\"')    // Double quote
+        .replace(/\n/g, '\\n')   // New line
+        .replace(/\r/g, '\\r')   // Carriage return
+        .replace(/\t/g, '\\t')   // Tab
+        .replace(/\0/g, '\\0')   // Null character
+        .replace(/\x1a/g, '\\Z'); // Ctrl+Z
+}
+
+const DB_NAME = 'starve_advance'
+
+// 辅助函数：处理字符串值（转义和编码）
+function processStringValue(value: any): string {
+    if (value === null || value === undefined || value === '') {
+        return 'NULL'  // SQL NULL 值
+    }
+    const strValue = String(value)
+    if (strValue.trim() === '') {
+        return 'NULL'  // SQL NULL 值
+    }
+    return `'${escapeMySQLString(unicodeEncode(strValue))}'`
+}
+
+// 辅助函数：处理数值（包括null）
+function processNumberValue(value: any): string {
+    if (value === null || value === undefined || value === '') {
+        return 'NULL'
+    }
+    return String(value)
+}
+
+// 辅助函数：获取版本ID（通过版本代码）
+async function getVersionId(versionCode: string): Promise<number | null> {
+    try {
+        const result = await getDataFromDB(DB_NAME, [
+            `SELECT id FROM versions WHERE code = '${escapeMySQLString(versionCode)}' AND is_active = 1`
+        ], true)
+        return result?.id || null
+    } catch (err) {
+        return null
+    }
+}
+
+// 辅助函数：获取标签ID（通过标签代码）
+async function getTabId(tabCode: string): Promise<number | null> {
+    try {
+        const result = await getDataFromDB(DB_NAME, [
+            `SELECT id FROM craft_tabs WHERE code = '${escapeMySQLString(tabCode)}' AND is_active = 1`
+        ], true)
+        return result?.id || null
+    } catch (err) {
+        return null
+    }
+}
+
+// get list
+function getDataList(tableName: string, path: string, searchFields?: string[], hasVersion?: boolean) {
+    router.get(path, (req, res) => {
+        let whereConditions: string[] = []
+        let joinClause = ''
+        let selectFields = `${tableName}.*`
+        
+        // 处理 version 筛选和 JOIN
+        if (hasVersion) {
+            // 映射表名到版本关系表名
+            const versionTableMap: { [key: string]: string } = {
+                'characters': 'character_versions',
+                'mobs': 'mob_versions',
+                'plants': 'plant_versions',
+                'things': 'thing_versions',
+                'crafts': 'craft_versions'
+            }
+            // 映射表名到版本关系表的ID字段名
+            const versionIdFieldMap: { [key: string]: string } = {
+                'characters': 'character_id',
+                'mobs': 'mob_id',
+                'plants': 'plant_id',
+                'things': 'thing_id',
+                'crafts': 'craft_id'
+            }
+            const versionTable = versionTableMap[tableName] || `${tableName}_versions`
+            const versionIdField = versionIdFieldMap[tableName] || `${tableName.slice(0, -1)}_id`
+            
+            // 如果指定了版本筛选，JOIN versions 表
+            if (req.query.version) {
+                let version = escapeMySQLString(String(req.query.version))
+                joinClause = `
+                    INNER JOIN ${versionTable} ON ${tableName}.id = ${versionTable}.${versionIdField}
+                    INNER JOIN versions ON ${versionTable}.version_id = versions.id
+                `
+                whereConditions.push(`versions.code = '${version}'`)
+                selectFields = `${tableName}.*, versions.code as version, versions.name as version_name, versions.name_en as version_name_en`
+            } else {
+                // 即使没有版本筛选，也JOIN以获取版本信息
+                joinClause = `
+                    LEFT JOIN ${versionTable} ON ${tableName}.id = ${versionTable}.${versionIdField} AND ${versionTable}.is_primary = 1
+                    LEFT JOIN versions ON ${versionTable}.version_id = versions.id
+                `
+                selectFields = `${tableName}.*, versions.code as version, versions.name as version_name, versions.name_en as version_name_en`
+            }
+        }
+        
+        // 处理 keyword 搜索
+        if (req.query.keyword && searchFields && searchFields.length > 0) {
+            let keyword = escapeMySQLString(unicodeEncode(String(req.query.keyword)))
+            let keywordConditions = searchFields.map(field => 
+                `${tableName}.${field} LIKE '%${keyword}%' ESCAPE '/'`
+            ).join(' OR ')
+            whereConditions.push(`(${keywordConditions})`)
+        }
+        
+        // 处理 is_active 筛选（all=1 时获取所有，否则只获取 is_active=1）
+        let all = req.query.all
+        if (all !== '1') {
+            whereConditions.push(`${tableName}.is_active = 1`)
+        }
+        
+        // 构建 WHERE 子句
+        let whereClause = ''
+        if (whereConditions.length > 0) {
+            whereClause = `WHERE ${whereConditions.join(' AND ')}`
+        }
+        
+        // 处理分页参数（可选）
+        let pageNo = req.query.pageNo ? Number(req.query.pageNo) : null
+        let pageSize = req.query.pageSize ? Number(req.query.pageSize) : null
+        let usePagination = pageNo !== null && pageSize !== null
+        
+        if (usePagination) {
+            // 使用分页：并行查询列表和总数
+            let startPoint = (pageNo - 1) * pageSize
+            let promisesAll = []
+            
+            // 查询列表数据
+            promisesAll.push(
+                getDataFromDB(DB_NAME, [
+                    `SELECT ${selectFields} FROM ${tableName} ${joinClause} ${whereClause} LIMIT ${startPoint}, ${pageSize}`
+                ])
+            )
+            
+            // 查询总数
+            promisesAll.push(
+                getDataFromDB(DB_NAME, [
+                    `SELECT COUNT(*) as sum FROM ${tableName} ${joinClause} ${whereClause}`
+                ], true)
+            )
+            
+            Promise.all(promisesAll)
+                .then(([dataList, dataSum]) => {
+                    res.send(new ResponseSuccess({
+                        list: dataList || [],
+                        pager: {
+                            pageSize: pageSize,
+                            pageNo: pageNo,
+                            total: dataSum?.sum || 0
+                        }
+                    }, '请求成功'))
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        } else {
+            // 不使用分页：返回所有数据
+            getDataFromDB(DB_NAME, [
+                `SELECT ${selectFields} FROM ${tableName} ${joinClause} ${whereClause}`
+            ])
+                .then(data => {
+                    if (data) {
+                        res.send(new ResponseSuccess(data))
+                    } else {
+                        res.send(new ResponseError('', '无数据'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        }
+    })
+}
+
+const ListGet = [
+    {
+        path: '/character/list',
+        tableName: 'characters',
+        searchFields: ['name', 'name_en'],
+        hasVersion: true
+    },
+    {
+        path: '/mob/list',
+        tableName: 'mobs',
+        searchFields: ['name', 'name_en'],
+        hasVersion: true
+    },
+    {
+        path: '/log/list',
+        tableName: 'logs',
+        searchFields: ['detail'],
+        hasVersion: false
+    },
+    {
+        path: '/plant/list',
+        tableName: 'plants',
+        searchFields: ['name', 'name_en'],
+        hasVersion: true
+    },
+    {
+        path: '/thing/list',
+        tableName: 'things',
+        searchFields: ['name', 'name_en'],
+        hasVersion: true
+    },
+    {
+        path: '/material/list',
+        tableName: 'materials',
+        searchFields: ['name', 'name_en'],
+        hasVersion: false  // materials 表在新结构中可能没有版本关系表
+    },
+    {
+        path: '/craft/list',
+        tableName: 'crafts',
+        searchFields: ['name', 'name_en'],
+        hasVersion: true
+    },
+    {
+        path: '/cookingrecipe/list',
+        tableName: 'cookingrecipes',
+        searchFields: ['name', 'name_en'],
+        hasVersion: false  // cookingrecipes 表在新结构中可能没有版本关系表
+    },
+    {
+        path: '/coder/list',
+        tableName: 'coders',
+        searchFields: ['usage', 'code', 'note'],
+        hasVersion: false
+    },
+]
+
+ListGet.forEach(item => {
+    getDataList(item.tableName, item.path, item.searchFields, item.hasVersion)
+})
+
+// get infos
+const ListGetInfo = [
+    {
+        path: '/character/info',
+        tableName: 'characters',
+        hasVersion: true
+    },
+    {
+        path: '/mob/info',
+        tableName: 'mobs',
+        hasVersion: true
+    },
+    {
+        path: '/log/info',
+        tableName: 'logs',
+        hasVersion: false
+    },
+    {
+        path: '/plant/info',
+        tableName: 'plants',
+        hasVersion: true
+    },
+    {
+        path: '/thing/info',
+        tableName: 'things',
+        hasVersion: true
+    },
+    {
+        path: '/material/info',
+        tableName: 'materials',
+        hasVersion: false  // materials 表在新结构中可能没有版本关系表
+    },
+    {
+        path: '/craft/info',
+        tableName: 'crafts',
+        hasVersion: true
+    },
+    {
+        path: '/cookingrecipe/info',
+        tableName: 'cookingrecipes',
+        hasVersion: false
+    },
+    {
+        path: '/coder/info',
+        tableName: 'coders',
+        hasVersion: false
+    },
+]
+
+ListGetInfo.forEach(item => {
+    getDataInfo(item.tableName, item.path, item.hasVersion)
+})
+
+function getDataInfo(tableName: string, path: string, hasVersion?: boolean) {
+    router.get(path, (req, res) => {
+        let joinClause = ''
+        let selectFields = `${tableName}.*`
+        
+        if (hasVersion) {
+            // 映射表名到版本关系表名
+            const versionTableMap: { [key: string]: string } = {
+                'characters': 'character_versions',
+                'mobs': 'mob_versions',
+                'plants': 'plant_versions',
+                'things': 'thing_versions',
+                'crafts': 'craft_versions'
+            }
+            // 映射表名到版本关系表的ID字段名
+            const versionIdFieldMap: { [key: string]: string } = {
+                'characters': 'character_id',
+                'mobs': 'mob_id',
+                'plants': 'plant_id',
+                'things': 'thing_id',
+                'crafts': 'craft_id'
+            }
+            const versionTable = versionTableMap[tableName] || `${tableName}_versions`
+            const versionIdField = versionIdFieldMap[tableName] || `${tableName.slice(0, -1)}_id`
+            joinClause = `
+                LEFT JOIN ${versionTable} ON ${tableName}.id = ${versionTable}.${versionIdField} AND ${versionTable}.is_primary = 1
+                LEFT JOIN versions ON ${versionTable}.version_id = versions.id
+            `
+            selectFields = `${tableName}.*, versions.code as version, versions.name as version_name, versions.name_en as version_name_en`
+        }
+        
+        getDataFromDB(
+            DB_NAME,
+            [`SELECT ${selectFields} FROM ${tableName} ${joinClause} WHERE ${tableName}.id = ${req.query.id}`],
+            true
+        )
+            .then(data => {
+                if (data) {
+                    res.send(new ResponseSuccess(data))
+                } else {
+                    res.send(new ResponseError('', '无数据'))
+                }
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, err.message))
+            })
+    })
+}
+
+// ==================== logs 表接口 ====================
+const DATA_NAME_LOG = 'logs'
+
+router.post('/log/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            let parsedDetail = escapeMySQLString(unicodeEncode(req.body.detail || ''))
+            let date = req.body.date || ''
+            
+            if (!date || !req.body.detail) {
+                res.send(new ResponseError('', '日期和详情不能为空'))
+                return
+            }
+            
+            sqlArray.push(`
+                INSERT INTO logs(date, detail)
+                VALUES('${date}', '${parsedDetail}')
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME_LOG, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/log/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let sqlArray = []
+            let parsedDetail = escapeMySQLString(unicodeEncode(req.body.detail || ''))
+            let date = req.body.date || ''
+            let id = req.body.id
+            
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            if (!date || !req.body.detail) {
+                res.send(new ResponseError('', '日期和详情不能为空'))
+                return
+            }
+            
+            sqlArray.push(`
+                UPDATE logs
+                SET date = '${date}',
+                    detail = '${parsedDetail}'
+                WHERE id = ${id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_LOG, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/log/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`DELETE FROM logs WHERE id = ${id}`)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_LOG, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== characters 表接口 ====================
+const DATA_NAME_CHARACTER = 'characters'
+
+router.post('/character/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.health || !req.body.hunger || !req.body.sanity || !req.body.version) {
+                res.send(new ResponseError('', '生命值、饥饿值、理智值和版本不能为空'))
+                return
+            }
+            
+            // 获取版本ID
+            const versionId = await getVersionId(req.body.version)
+            if (!versionId) {
+                res.send(new ResponseError('', '无效的版本代码'))
+                return
+            }
+            
+            let sqlArray = []
+            // 插入角色数据
+            sqlArray.push(`
+                INSERT INTO characters(
+                    name, name_en, nick_name, motto, perk, health, hunger, sanity,
+                    hunger_modifier, sanity_modifier, wetness_modifier,
+                    health_range, damage_range, hunger_range, sanity_range, speed_range,
+                    debugspawn, pic, thumb, special_item, starting_item, is_active
+                ) VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processStringValue(req.body.nick_name)},
+                    ${processStringValue(req.body.motto)},
+                    ${processStringValue(req.body.perk)},
+                    '${escapeMySQLString(String(req.body.health))}',
+                    '${escapeMySQLString(String(req.body.hunger))}',
+                    '${escapeMySQLString(String(req.body.sanity))}',
+                    ${processStringValue(req.body.hunger_modifier)},
+                    ${processStringValue(req.body.sanity_modifier)},
+                    ${processStringValue(req.body.wetness_modifier)},
+                    ${processStringValue(req.body.health_range)},
+                    ${processStringValue(req.body.damage_range)},
+                    ${processStringValue(req.body.hunger_range)},
+                    ${processStringValue(req.body.sanity_range)},
+                    ${processStringValue(req.body.speed_range)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.thumb)},
+                    ${processStringValue(req.body.special_item)},
+                    ${processStringValue(req.body.starting_item)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            // 获取插入的ID并创建版本关系
+            getDataFromDB(DB_NAME, sqlArray)
+                .then(async (result: any) => {
+                    const characterId = result.insertId
+                    if (!characterId) {
+                        res.send(new ResponseError('', '插入失败'))
+                        return
+                    }
+                    
+                    // 插入版本关系
+                    let relationSql = `
+                        INSERT INTO character_versions(character_id, version_id, is_primary)
+                        VALUES(${characterId}, ${versionId}, 1)
+                    `
+                    
+                    getDataFromDB(DB_NAME, [relationSql])
+                        .then(() => {
+                            updateUserLastLoginTime(userInfo.uid)
+                            res.send(new ResponseSuccess({ id: characterId }, '添加成功'))
+                        })
+                        .catch(err => {
+                            res.send(new ResponseError(err, '添加版本关系失败'))
+                        })
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/character/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            // 更新角色数据
+            sqlArray.push(`
+                UPDATE characters SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    nick_name = ${processStringValue(req.body.nick_name)},
+                    motto = ${processStringValue(req.body.motto)},
+                    perk = ${processStringValue(req.body.perk)},
+                    health = '${escapeMySQLString(String(req.body.health || ''))}',
+                    hunger = '${escapeMySQLString(String(req.body.hunger || ''))}',
+                    sanity = '${escapeMySQLString(String(req.body.sanity || ''))}',
+                    hunger_modifier = ${processStringValue(req.body.hunger_modifier)},
+                    sanity_modifier = ${processStringValue(req.body.sanity_modifier)},
+                    wetness_modifier = ${processStringValue(req.body.wetness_modifier)},
+                    health_range = ${processStringValue(req.body.health_range)},
+                    damage_range = ${processStringValue(req.body.damage_range)},
+                    hunger_range = ${processStringValue(req.body.hunger_range)},
+                    sanity_range = ${processStringValue(req.body.sanity_range)},
+                    speed_range = ${processStringValue(req.body.speed_range)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    pic = ${processStringValue(req.body.pic)},
+                    thumb = ${processStringValue(req.body.thumb)},
+                    special_item = ${processStringValue(req.body.special_item)},
+                    starting_item = ${processStringValue(req.body.starting_item)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            // 如果提供了版本，更新版本关系
+            if (req.body.version) {
+                const versionId = await getVersionId(req.body.version)
+                if (versionId) {
+                    // 先删除旧的primary关系
+                    sqlArray.push(`
+                        UPDATE character_versions 
+                        SET is_primary = 0 
+                        WHERE character_id = ${req.body.id} AND is_primary = 1
+                    `)
+                    // 检查是否已存在该版本关系
+                    const existing = await getDataFromDB(DB_NAME, [
+                        `SELECT id FROM character_versions WHERE character_id = ${req.body.id} AND version_id = ${versionId}`
+                    ], true)
+                    
+                    if (existing) {
+                        // 更新为primary
+                        sqlArray.push(`
+                            UPDATE character_versions 
+                            SET is_primary = 1 
+                            WHERE character_id = ${req.body.id} AND version_id = ${versionId}
+                        `)
+                    } else {
+                        // 插入新关系
+                        sqlArray.push(`
+                            INSERT INTO character_versions(character_id, version_id, is_primary)
+                            VALUES(${req.body.id}, ${versionId}, 1)
+                        `)
+                    }
+                }
+            }
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CHARACTER, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/character/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            // CASCADE 会自动删除关联的版本关系
+            let sqlArray = [`DELETE FROM characters WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CHARACTER, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== coders 表接口 ====================
+const DATA_NAME_CODER = 'coders'
+
+router.post('/coder/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.usage || !req.body.code) {
+                res.send(new ResponseError('', '用途和代码不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO coders(usage, code, note, is_active)
+                VALUES(
+                    ${processStringValue(req.body.usage)},
+                    ${processStringValue(req.body.code)},
+                    ${processStringValue(req.body.note)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME_CODER, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/coder/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE coders SET
+                    usage = ${processStringValue(req.body.usage)},
+                    code = ${processStringValue(req.body.code)},
+                    note = ${processStringValue(req.body.note)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CODER, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/coder/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            let sqlArray = [`DELETE FROM coders WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CODER, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== cookingrecipes 表接口 ====================
+const DATA_NAME_COOKINGRECIPE = 'cookingrecipes'
+
+router.post('/cookingrecipe/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.name || !req.body.name_en) {
+                res.send(new ResponseError('', '名称和英文名称不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO cookingrecipes(
+                    name, name_en, health_value, hungry_value, sanity_value,
+                    duration, cook_time, priority, requirements, restrictions,
+                    perk, stacks, debugspawn, pic, thumb, is_active
+                ) VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processNumberValue(req.body.health_value)},
+                    ${processNumberValue(req.body.hungry_value)},
+                    ${processNumberValue(req.body.sanity_value)},
+                    ${processNumberValue(req.body.duration)},
+                    ${processStringValue(req.body.cook_time)},
+                    ${processStringValue(req.body.priority)},
+                    ${processStringValue(req.body.requirements)},
+                    ${processStringValue(req.body.restrictions)},
+                    ${processStringValue(req.body.perk)},
+                    ${processStringValue(req.body.stacks)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.thumb)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME_COOKINGRECIPE, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/cookingrecipe/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE cookingrecipes SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    health_value = ${processNumberValue(req.body.health_value)},
+                    hungry_value = ${processNumberValue(req.body.hungry_value)},
+                    sanity_value = ${processNumberValue(req.body.sanity_value)},
+                    duration = ${processNumberValue(req.body.duration)},
+                    cook_time = ${processStringValue(req.body.cook_time)},
+                    priority = ${processStringValue(req.body.priority)},
+                    requirements = ${processStringValue(req.body.requirements)},
+                    restrictions = ${processStringValue(req.body.restrictions)},
+                    perk = ${processStringValue(req.body.perk)},
+                    stacks = ${processStringValue(req.body.stacks)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    pic = ${processStringValue(req.body.pic)},
+                    thumb = ${processStringValue(req.body.thumb)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_COOKINGRECIPE, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/cookingrecipe/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            let sqlArray = [`DELETE FROM cookingrecipes WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_COOKINGRECIPE, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== crafts 表接口 ====================
+const DATA_NAME_CRAFT = 'crafts'
+
+router.post('/craft/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.name || !req.body.name_en || !req.body.crafting) {
+                res.send(new ResponseError('', '名称、英文名称和制作材料不能为空'))
+                return
+            }
+            
+            // 获取版本ID（如果提供）
+            let versionId = null
+            if (req.body.version) {
+                versionId = await getVersionId(req.body.version)
+                if (!versionId) {
+                    res.send(new ResponseError('', '无效的版本代码'))
+                    return
+                }
+            }
+            
+            let sqlArray = []
+            // 插入制作数据
+            sqlArray.push(`
+                INSERT INTO crafts(
+                    name, name_en, sortid, crafting, tier,
+                    damage, sideeffect, durability, perk, stacks,
+                    debugspawn, pic, thumb, is_active
+                ) VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processNumberValue(req.body.sortid)},
+                    ${processStringValue(req.body.crafting)},
+                    ${processStringValue(req.body.tier)},
+                    ${processStringValue(req.body.damage)},
+                    ${processStringValue(req.body.sideeffect)},
+                    ${processStringValue(req.body.durability)},
+                    ${processStringValue(req.body.perk)},
+                    ${processStringValue(req.body.stacks)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.thumb)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            // 获取插入的ID并创建版本和标签关系
+            getDataFromDB(DB_NAME, sqlArray)
+                .then(async (result: any) => {
+                    const craftId = result.insertId
+                    if (!craftId) {
+                        res.send(new ResponseError('', '插入失败'))
+                        return
+                    }
+                    
+                    let relationSqls: string[] = []
+                    
+                    // 插入版本关系
+                    if (versionId) {
+                        relationSqls.push(`
+                            INSERT INTO craft_versions(craft_id, version_id, is_primary)
+                            VALUES(${craftId}, ${versionId}, 1)
+                        `)
+                    }
+                    
+                    // 插入标签关系
+                    if (req.body.tab) {
+                        const tabId = await getTabId(req.body.tab)
+                        if (tabId) {
+                            relationSqls.push(`
+                                INSERT INTO craft_tab_relations(craft_id, tab_id, is_primary)
+                                VALUES(${craftId}, ${tabId}, 1)
+                            `)
+                        }
+                    }
+                    
+                    if (relationSqls.length > 0) {
+                        getDataFromDB(DB_NAME, relationSqls)
+                            .then(() => {
+                                updateUserLastLoginTime(userInfo.uid)
+                                res.send(new ResponseSuccess({ id: craftId }, '添加成功'))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err, '添加关系失败'))
+                            })
+                    } else {
+                        updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess({ id: craftId }, '添加成功'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/craft/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            // 更新制作数据
+            sqlArray.push(`
+                UPDATE crafts SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    sortid = ${processNumberValue(req.body.sortid)},
+                    crafting = ${processStringValue(req.body.crafting)},
+                    tier = ${processStringValue(req.body.tier)},
+                    damage = ${processStringValue(req.body.damage)},
+                    sideeffect = ${processStringValue(req.body.sideeffect)},
+                    durability = ${processStringValue(req.body.durability)},
+                    perk = ${processStringValue(req.body.perk)},
+                    stacks = ${processStringValue(req.body.stacks)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    pic = ${processStringValue(req.body.pic)},
+                    thumb = ${processStringValue(req.body.thumb)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            // 如果提供了版本，更新版本关系
+            if (req.body.version) {
+                const versionId = await getVersionId(req.body.version)
+                if (versionId) {
+                    sqlArray.push(`
+                        UPDATE craft_versions 
+                        SET is_primary = 0 
+                        WHERE craft_id = ${req.body.id} AND is_primary = 1
+                    `)
+                    const existing = await getDataFromDB(DB_NAME, [
+                        `SELECT id FROM craft_versions WHERE craft_id = ${req.body.id} AND version_id = ${versionId}`
+                    ], true)
+                    
+                    if (existing) {
+                        sqlArray.push(`
+                            UPDATE craft_versions 
+                            SET is_primary = 1 
+                            WHERE craft_id = ${req.body.id} AND version_id = ${versionId}
+                        `)
+                    } else {
+                        sqlArray.push(`
+                            INSERT INTO craft_versions(craft_id, version_id, is_primary)
+                            VALUES(${req.body.id}, ${versionId}, 1)
+                        `)
+                    }
+                }
+            }
+            
+            // 如果提供了标签，更新标签关系
+            if (req.body.tab) {
+                const tabId = await getTabId(req.body.tab)
+                if (tabId) {
+                    sqlArray.push(`
+                        UPDATE craft_tab_relations 
+                        SET is_primary = 0 
+                        WHERE craft_id = ${req.body.id} AND is_primary = 1
+                    `)
+                    const existing = await getDataFromDB(DB_NAME, [
+                        `SELECT id FROM craft_tab_relations WHERE craft_id = ${req.body.id} AND tab_id = ${tabId}`
+                    ], true)
+                    
+                    if (existing) {
+                        sqlArray.push(`
+                            UPDATE craft_tab_relations 
+                            SET is_primary = 1 
+                            WHERE craft_id = ${req.body.id} AND tab_id = ${tabId}
+                        `)
+                    } else {
+                        sqlArray.push(`
+                            INSERT INTO craft_tab_relations(craft_id, tab_id, is_primary)
+                            VALUES(${req.body.id}, ${tabId}, 1)
+                        `)
+                    }
+                }
+            }
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CRAFT, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/craft/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            // CASCADE 会自动删除关联的版本和标签关系
+            let sqlArray = [`DELETE FROM crafts WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CRAFT, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== materials 表接口 ====================
+const DATA_NAME_MATERIAL = 'materials'
+
+router.post('/material/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.name || !req.body.name_en) {
+                res.send(new ResponseError('', '名称和英文名称不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO materials(name, name_en, pic, stack, debugspawn, is_active)
+                VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.stack)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME_MATERIAL, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/material/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE materials SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    pic = ${processStringValue(req.body.pic)},
+                    stack = ${processStringValue(req.body.stack)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            // 如果提供了版本，更新版本关系（注意：materials可能没有自己的版本表，需要确认）
+            // 这里假设materials使用thing_versions表，实际需要根据数据库结构调整
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_MATERIAL, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/material/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            let sqlArray = [`DELETE FROM materials WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_MATERIAL, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== mobs 表接口 ====================
+const DATA_NAME_MOB = 'mobs'
+
+router.post('/mob/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.name || !req.body.name_en || !req.body.kind || !req.body.size) {
+                res.send(new ResponseError('', '名称、英文名称、类型和大小不能为空'))
+                return
+            }
+            
+            // 获取版本ID（如果提供）
+            let versionId = null
+            if (req.body.version) {
+                versionId = await getVersionId(req.body.version)
+                if (!versionId) {
+                    res.send(new ResponseError('', '无效的版本代码'))
+                    return
+                }
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO mobs(
+                    name, name_en, health, damage, attack_period, attack_range,
+                    walking_speed, running_speed, sanityaura, special_ability,
+                    detail, loot, spawns_from, debugspawn, pic, thumb,
+                    kind, size, is_active
+                ) VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processStringValue(req.body.health)},
+                    ${processStringValue(req.body.damage)},
+                    ${processStringValue(req.body.attack_period)},
+                    ${processStringValue(req.body.attack_range)},
+                    ${processStringValue(req.body.walking_speed)},
+                    ${processStringValue(req.body.running_speed)},
+                    ${processStringValue(req.body.sanityaura)},
+                    ${processStringValue(req.body.special_ability)},
+                    ${processStringValue(req.body.detail)},
+                    ${processStringValue(req.body.loot)},
+                    ${processStringValue(req.body.spawns_from)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.thumb)},
+                    '${escapeMySQLString(String(req.body.kind))}',
+                    '${escapeMySQLString(String(req.body.size))}',
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            // 获取插入的ID并创建版本关系
+            getDataFromDB(DB_NAME, sqlArray)
+                .then(async (result: any) => {
+                    const mobId = result.insertId
+                    if (!mobId) {
+                        res.send(new ResponseError('', '插入失败'))
+                        return
+                    }
+                    
+                    if (versionId) {
+                        let relationSql = `
+                            INSERT INTO mob_versions(mob_id, version_id, is_primary)
+                            VALUES(${mobId}, ${versionId}, 1)
+                        `
+                        getDataFromDB(DB_NAME, [relationSql])
+                            .then(() => {
+                                updateUserLastLoginTime(userInfo.uid)
+                                res.send(new ResponseSuccess({ id: mobId }, '添加成功'))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err, '添加版本关系失败'))
+                            })
+                    } else {
+                        updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess({ id: mobId }, '添加成功'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/mob/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE mobs SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    health = ${processStringValue(req.body.health)},
+                    damage = ${processStringValue(req.body.damage)},
+                    attack_period = ${processStringValue(req.body.attack_period)},
+                    attack_range = ${processStringValue(req.body.attack_range)},
+                    walking_speed = ${processStringValue(req.body.walking_speed)},
+                    running_speed = ${processStringValue(req.body.running_speed)},
+                    sanityaura = ${processStringValue(req.body.sanityaura)},
+                    special_ability = ${processStringValue(req.body.special_ability)},
+                    detail = ${processStringValue(req.body.detail)},
+                    loot = ${processStringValue(req.body.loot)},
+                    spawns_from = ${processStringValue(req.body.spawns_from)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    pic = ${processStringValue(req.body.pic)},
+                    thumb = ${processStringValue(req.body.thumb)},
+                    kind = '${escapeMySQLString(String(req.body.kind || ''))}',
+                    size = '${escapeMySQLString(String(req.body.size || ''))}',
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            // 如果提供了版本，更新版本关系
+            if (req.body.version) {
+                const versionId = await getVersionId(req.body.version)
+                if (versionId) {
+                    sqlArray.push(`
+                        UPDATE mob_versions 
+                        SET is_primary = 0 
+                        WHERE mob_id = ${req.body.id} AND is_primary = 1
+                    `)
+                    const existing = await getDataFromDB(DB_NAME, [
+                        `SELECT id FROM mob_versions WHERE mob_id = ${req.body.id} AND version_id = ${versionId}`
+                    ], true)
+                    
+                    if (existing) {
+                        sqlArray.push(`
+                            UPDATE mob_versions 
+                            SET is_primary = 1 
+                            WHERE mob_id = ${req.body.id} AND version_id = ${versionId}
+                        `)
+                    } else {
+                        sqlArray.push(`
+                            INSERT INTO mob_versions(mob_id, version_id, is_primary)
+                            VALUES(${req.body.id}, ${versionId}, 1)
+                        `)
+                    }
+                }
+            }
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_MOB, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/mob/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            // CASCADE 会自动删除关联的版本关系
+            let sqlArray = [`DELETE FROM mobs WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_MOB, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== plants 表接口 ====================
+const DATA_NAME_PLANT = 'plants'
+
+router.post('/plant/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.name || !req.body.name_en) {
+                res.send(new ResponseError('', '名称和英文名称不能为空'))
+                return
+            }
+            
+            // 获取版本ID（如果提供）
+            let versionId = null
+            if (req.body.version) {
+                versionId = await getVersionId(req.body.version)
+                if (!versionId) {
+                    res.send(new ResponseError('', '无效的版本代码'))
+                    return
+                }
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO plants(
+                    name, name_en, resources, spawns, debugspawn,
+                    perk, pic, thumb, is_active
+                ) VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processStringValue(req.body.resources)},
+                    ${processStringValue(req.body.spawns)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${processStringValue(req.body.perk)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.thumb)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            // 获取插入的ID并创建版本关系
+            getDataFromDB(DB_NAME, sqlArray)
+                .then(async (result: any) => {
+                    const plantId = result.insertId
+                    if (!plantId) {
+                        res.send(new ResponseError('', '插入失败'))
+                        return
+                    }
+                    
+                    if (versionId) {
+                        let relationSql = `
+                            INSERT INTO plant_versions(plant_id, version_id, is_primary)
+                            VALUES(${plantId}, ${versionId}, 1)
+                        `
+                        getDataFromDB(DB_NAME, [relationSql])
+                            .then(() => {
+                                updateUserLastLoginTime(userInfo.uid)
+                                res.send(new ResponseSuccess({ id: plantId }, '添加成功'))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err, '添加版本关系失败'))
+                            })
+                    } else {
+                        updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess({ id: plantId }, '添加成功'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/plant/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE plants SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    resources = ${processStringValue(req.body.resources)},
+                    spawns = ${processStringValue(req.body.spawns)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    perk = ${processStringValue(req.body.perk)},
+                    pic = ${processStringValue(req.body.pic)},
+                    thumb = ${processStringValue(req.body.thumb)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            // 如果提供了版本，更新版本关系
+            if (req.body.version) {
+                const versionId = await getVersionId(req.body.version)
+                if (versionId) {
+                    sqlArray.push(`
+                        UPDATE plant_versions 
+                        SET is_primary = 0 
+                        WHERE plant_id = ${req.body.id} AND is_primary = 1
+                    `)
+                    const existing = await getDataFromDB(DB_NAME, [
+                        `SELECT id FROM plant_versions WHERE plant_id = ${req.body.id} AND version_id = ${versionId}`
+                    ], true)
+                    
+                    if (existing) {
+                        sqlArray.push(`
+                            UPDATE plant_versions 
+                            SET is_primary = 1 
+                            WHERE plant_id = ${req.body.id} AND version_id = ${versionId}
+                        `)
+                    } else {
+                        sqlArray.push(`
+                            INSERT INTO plant_versions(plant_id, version_id, is_primary)
+                            VALUES(${req.body.id}, ${versionId}, 1)
+                        `)
+                    }
+                }
+            }
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_PLANT, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/plant/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            // CASCADE 会自动删除关联的版本关系
+            let sqlArray = [`DELETE FROM plants WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_PLANT, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== things 表接口 ====================
+const DATA_NAME_THING = 'things'
+
+router.post('/thing/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.name || !req.body.name_en) {
+                res.send(new ResponseError('', '名称和英文名称不能为空'))
+                return
+            }
+            
+            // 获取版本ID（如果提供）
+            let versionId = null
+            if (req.body.version) {
+                versionId = await getVersionId(req.body.version)
+                if (!versionId) {
+                    res.send(new ResponseError('', '无效的版本代码'))
+                    return
+                }
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO things(
+                    name, name_en, note, debugspawn, pic, thumb, is_active
+                ) VALUES(
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processStringValue(req.body.note)},
+                    ${processStringValue(req.body.debugspawn)},
+                    ${processStringValue(req.body.pic)},
+                    ${processStringValue(req.body.thumb)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                )
+            `)
+            
+            // 获取插入的ID并创建版本关系
+            getDataFromDB(DB_NAME, sqlArray)
+                .then(async (result: any) => {
+                    const thingId = result.insertId
+                    if (!thingId) {
+                        res.send(new ResponseError('', '插入失败'))
+                        return
+                    }
+                    
+                    if (versionId) {
+                        let relationSql = `
+                            INSERT INTO thing_versions(thing_id, version_id, is_primary)
+                            VALUES(${thingId}, ${versionId}, 1)
+                        `
+                        getDataFromDB(DB_NAME, [relationSql])
+                            .then(() => {
+                                updateUserLastLoginTime(userInfo.uid)
+                                res.send(new ResponseSuccess({ id: thingId }, '添加成功'))
+                            })
+                            .catch(err => {
+                                res.send(new ResponseError(err, '添加版本关系失败'))
+                            })
+                    } else {
+                        updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess({ id: thingId }, '添加成功'))
+                    }
+                })
+                .catch(err => {
+                    res.send(new ResponseError(err, err.message))
+                })
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.put('/thing/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(async userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE things SET
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    note = ${processStringValue(req.body.note)},
+                    debugspawn = ${processStringValue(req.body.debugspawn)},
+                    pic = ${processStringValue(req.body.pic)},
+                    thumb = ${processStringValue(req.body.thumb)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 0}
+                WHERE id = ${req.body.id}
+            `)
+            
+            // 如果提供了版本，更新版本关系
+            if (req.body.version) {
+                const versionId = await getVersionId(req.body.version)
+                if (versionId) {
+                    sqlArray.push(`
+                        UPDATE thing_versions 
+                        SET is_primary = 0 
+                        WHERE thing_id = ${req.body.id} AND is_primary = 1
+                    `)
+                    const existing = await getDataFromDB(DB_NAME, [
+                        `SELECT id FROM thing_versions WHERE thing_id = ${req.body.id} AND version_id = ${versionId}`
+                    ], true)
+                    
+                    if (existing) {
+                        sqlArray.push(`
+                            UPDATE thing_versions 
+                            SET is_primary = 1 
+                            WHERE thing_id = ${req.body.id} AND version_id = ${versionId}
+                        `)
+                    } else {
+                        sqlArray.push(`
+                            INSERT INTO thing_versions(thing_id, version_id, is_primary)
+                            VALUES(${req.body.id}, ${versionId}, 1)
+                        `)
+                    }
+                }
+            }
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_THING, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+router.delete('/thing/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            // CASCADE 会自动删除关联的版本关系
+            let sqlArray = [`DELETE FROM things WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_THING, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+export default router
+
