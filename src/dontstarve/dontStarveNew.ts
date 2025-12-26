@@ -8,6 +8,23 @@ import {
     unicodeEncode,
     updateUserLastLoginTime
 } from "../utility";
+import {
+    CharacterNew,
+    CoderNew,
+    CommandNew,
+    CookingRecipeNew,
+    CraftNew,
+    LogNew,
+    MaterialNew,
+    MobNew,
+    PlantNew,
+    ThingNew,
+    VersionNew,
+    CraftTabNew,
+    CraftTierEnum,
+    MobKindEnum,
+    MobSizeEnum
+} from "../entity/StarveNew";
 const router = express.Router()
 
 // SQL 转义函数
@@ -70,8 +87,234 @@ async function getTabId(tabCode: string): Promise<number | null> {
     }
 }
 
+// 辅助函数：获取实体的所有版本信息（包含 id, code, name, name_en）
+async function getEntityVersions(tableName: string, entityId: number): Promise<any[]> {
+    const versionTableMap: { [key: string]: string } = {
+        'characters': 'character_versions',
+        'mobs': 'mob_versions',
+        'plants': 'plant_versions',
+        'things': 'thing_versions',
+        'crafts': 'craft_versions'
+    }
+    const versionIdFieldMap: { [key: string]: string } = {
+        'characters': 'character_id',
+        'mobs': 'mob_id',
+        'plants': 'plant_id',
+        'things': 'thing_id',
+        'crafts': 'craft_id'
+    }
+    const versionTable = versionTableMap[tableName]
+    const versionIdField = versionIdFieldMap[tableName]
+    
+    if (!versionTable || !versionIdField) {
+        return []
+    }
+    
+    try {
+        const results = await getDataFromDB(DB_NAME, [
+            `SELECT v.id, v.code, v.name, v.name_en 
+             FROM ${versionTable} cv
+             INNER JOIN versions v ON cv.version_id = v.id
+             WHERE cv.${versionIdField} = ${entityId}
+             ORDER BY cv.is_primary DESC, v.sort_order ASC`
+        ])
+        return results ? results.map((r: any) => ({
+            id: r.id,
+            code: r.code,
+            name: r.name,
+            name_en: r.name_en
+        })) : []
+    } catch (err) {
+        return []
+    }
+}
+
+// 辅助函数：获取craft的所有标签信息（包含 id, code, name, name_en）
+async function getCraftTabs(craftId: number): Promise<any[]> {
+    try {
+        const results = await getDataFromDB(DB_NAME, [
+            `SELECT t.id, t.code, t.name, t.name_en 
+             FROM craft_tab_relations ctr
+             INNER JOIN craft_tabs t ON ctr.tab_id = t.id
+             WHERE ctr.craft_id = ${craftId}
+             ORDER BY ctr.is_primary DESC, t.sort_order ASC`
+        ])
+        return results ? results.map((r: any) => ({
+            id: r.id,
+            code: r.code,
+            name: r.name,
+            name_en: r.name_en
+        })) : []
+    } catch (err) {
+        return []
+    }
+}
+
+// 辅助函数：批量获取多个实体的版本信息（包含 id, code, name, name_en）
+async function getBatchEntityVersions(tableName: string, entityIds: number[]): Promise<{ [key: number]: any[] }> {
+    if (entityIds.length === 0) {
+        return {}
+    }
+    
+    const versionTableMap: { [key: string]: string } = {
+        'characters': 'character_versions',
+        'mobs': 'mob_versions',
+        'plants': 'plant_versions',
+        'things': 'thing_versions',
+        'crafts': 'craft_versions'
+    }
+    const versionIdFieldMap: { [key: string]: string } = {
+        'characters': 'character_id',
+        'mobs': 'mob_id',
+        'plants': 'plant_id',
+        'things': 'thing_id',
+        'crafts': 'craft_id'
+    }
+    const versionTable = versionTableMap[tableName]
+    const versionIdField = versionIdFieldMap[tableName]
+    
+    if (!versionTable || !versionIdField) {
+        return {}
+    }
+    
+    try {
+        const results = await getDataFromDB(DB_NAME, [
+            `SELECT cv.${versionIdField}, v.id, v.code, v.name, v.name_en, cv.is_primary
+             FROM ${versionTable} cv
+             INNER JOIN versions v ON cv.version_id = v.id
+             WHERE cv.${versionIdField} IN (${entityIds.join(',')})
+             ORDER BY cv.${versionIdField}, cv.is_primary DESC, v.sort_order ASC`
+        ])
+        
+        const versionMap: { [key: number]: any[] } = {}
+        entityIds.forEach(id => {
+            versionMap[id] = []
+        })
+        
+        if (results) {
+            results.forEach((r: any) => {
+                const entityId = r[versionIdField]
+                if (!versionMap[entityId]) {
+                    versionMap[entityId] = []
+                }
+                versionMap[entityId].push({
+                    id: r.id,
+                    code: r.code,
+                    name: r.name,
+                    name_en: r.name_en
+                })
+            })
+        }
+        
+        return versionMap
+    } catch (err) {
+        return {}
+    }
+}
+
+// 辅助函数：批量获取多个craft的标签信息（包含 id, code, name, name_en）
+async function getBatchCraftTabs(craftIds: number[]): Promise<{ [key: number]: any[] }> {
+    if (craftIds.length === 0) {
+        return {}
+    }
+    
+    try {
+        const results = await getDataFromDB(DB_NAME, [
+            `SELECT ctr.craft_id, t.id, t.code, t.name, t.name_en, ctr.is_primary
+             FROM craft_tab_relations ctr
+             INNER JOIN craft_tabs t ON ctr.tab_id = t.id
+             WHERE ctr.craft_id IN (${craftIds.join(',')})
+             ORDER BY ctr.craft_id, ctr.is_primary DESC, t.sort_order ASC`
+        ])
+        
+        const tabMap: { [key: number]: any[] } = {}
+        craftIds.forEach(id => {
+            tabMap[id] = []
+        })
+        
+        if (results) {
+            results.forEach((r: any) => {
+                const craftId = r.craft_id
+                if (!tabMap[craftId]) {
+                    tabMap[craftId] = []
+                }
+                tabMap[craftId].push({
+                    id: r.id,
+                    code: r.code,
+                    name: r.name,
+                    name_en: r.name_en
+                })
+            })
+        }
+        
+        return tabMap
+    } catch (err) {
+        return {}
+    }
+}
+
+// 辅助函数：将 Buffer 类型的 is_active 转换为数字
+function convertIsActive(item: any): any {
+    if (item && item.is_active) {
+        // 如果是 Buffer 类型，转换为数字
+        if (Buffer.isBuffer(item.is_active)) {
+            item.is_active = item.is_active[0] || 0
+        } else if (item.is_active.type === 'Buffer' && Array.isArray(item.is_active.data)) {
+            item.is_active = item.is_active.data[0] || 0
+        }
+    }
+    return item
+}
+
+// 辅助函数：处理列表数据，添加版本和标签数组（使用批量查询优化）
+async function enrichListData(tableName: string, dataList: any[]): Promise<any[]> {
+    if (!dataList || dataList.length === 0) {
+        return dataList
+    }
+    
+    const entityIds = dataList.map(item => item.id).filter(id => id != null)
+    
+    // 批量获取版本和标签
+    let versionMap: { [key: number]: number[] } = {}
+    let tabMap: { [key: number]: number[] } = {}
+    
+    if (['characters', 'mobs', 'plants', 'things', 'crafts'].includes(tableName) && entityIds.length > 0) {
+        versionMap = await getBatchEntityVersions(tableName, entityIds)
+    }
+    
+    if (tableName === 'crafts' && entityIds.length > 0) {
+        tabMap = await getBatchCraftTabs(entityIds)
+    }
+    
+    // 组装数据
+    const enrichedList = dataList.map((item) => {
+        const enriched = { ...item }
+        
+        // 转换 is_active Buffer 为数字
+        convertIsActive(enriched)
+        
+        // 添加版本数组
+        if (['characters', 'mobs', 'plants', 'things', 'crafts'].includes(tableName)) {
+            enriched.version = versionMap[item.id] || []
+        }
+        
+        // 对于crafts，添加标签数组
+        if (tableName === 'crafts') {
+            enriched.tab = tabMap[item.id] || []
+        }
+        
+        // 移除临时的version字段（如果存在）
+        delete enriched.version_name
+        delete enriched.version_name_en
+        
+        return enriched
+    })
+    
+    return enrichedList
+}
+
 // get list
-function getDataList(tableName: string, path: string, searchFields?: string[], hasVersion?: boolean) {
+function getDataList(tableName: string, path: string, searchFields?: string[], hasVersion?: boolean, hasTab?: boolean) {
     router.get(path, (req, res) => {
         let whereConditions: string[] = []
         let joinClause = ''
@@ -114,6 +357,26 @@ function getDataList(tableName: string, path: string, searchFields?: string[], h
                     LEFT JOIN versions ON ${versionTable}.version_id = versions.id
                 `
                 selectFields = `${tableName}.*, versions.code as version, versions.name as version_name, versions.name_en as version_name_en`
+            }
+        }
+        
+        // 处理 tab 筛选（仅对 crafts 表）
+        if (hasTab && tableName === 'crafts') {
+            if (req.query.tab) {
+                let tab = escapeMySQLString(String(req.query.tab))
+                // 如果已经有 JOIN，追加 tab 的 JOIN
+                if (joinClause) {
+                    joinClause += `
+                        INNER JOIN craft_tab_relations ctr ON crafts.id = ctr.craft_id
+                        INNER JOIN craft_tabs ct ON ctr.tab_id = ct.id
+                    `
+                } else {
+                    joinClause = `
+                        INNER JOIN craft_tab_relations ctr ON crafts.id = ctr.craft_id
+                        INNER JOIN craft_tabs ct ON ctr.tab_id = ct.id
+                    `
+                }
+                whereConditions.push(`ct.code = '${tab}'`)
             }
         }
         
@@ -163,9 +426,11 @@ function getDataList(tableName: string, path: string, searchFields?: string[], h
             )
             
             Promise.all(promisesAll)
-                .then(([dataList, dataSum]) => {
+                .then(async ([dataList, dataSum]) => {
+                    // 处理数据，添加版本和标签数组
+                    const enrichedList = await enrichListData(tableName, dataList || [])
                     res.send(new ResponseSuccess({
-                        list: dataList || [],
+                        list: enrichedList,
                         pager: {
                             pageSize: pageSize,
                             pageNo: pageNo,
@@ -181,9 +446,11 @@ function getDataList(tableName: string, path: string, searchFields?: string[], h
             getDataFromDB(DB_NAME, [
                 `SELECT ${selectFields} FROM ${tableName} ${joinClause} ${whereClause}`
             ])
-                .then(data => {
+                .then(async (data) => {
                     if (data) {
-                        res.send(new ResponseSuccess(data))
+                        // 处理数据，添加版本和标签数组
+                        const enrichedList = await enrichListData(tableName, data)
+                        res.send(new ResponseSuccess(enrichedList))
                     } else {
                         res.send(new ResponseError('', '无数据'))
                     }
@@ -236,7 +503,8 @@ const ListGet = [
         path: '/craft/list',
         tableName: 'crafts',
         searchFields: ['name', 'name_en'],
-        hasVersion: true
+        hasVersion: true,
+        hasTab: true  // 支持 tab 筛选
     },
     {
         path: '/cookingrecipe/list',
@@ -253,7 +521,7 @@ const ListGet = [
 ]
 
 ListGet.forEach(item => {
-    getDataList(item.tableName, item.path, item.searchFields, item.hasVersion)
+    getDataList(item.tableName, item.path, item.searchFields, item.hasVersion, item.hasTab)
 })
 
 // get infos
@@ -310,7 +578,7 @@ ListGetInfo.forEach(item => {
 })
 
 function getDataInfo(tableName: string, path: string, hasVersion?: boolean) {
-    router.get(path, (req, res) => {
+    router.get(path, async (req, res) => {
         let joinClause = ''
         let selectFields = `${tableName}.*`
         
@@ -340,21 +608,40 @@ function getDataInfo(tableName: string, path: string, hasVersion?: boolean) {
             selectFields = `${tableName}.*, versions.code as version, versions.name as version_name, versions.name_en as version_name_en`
         }
         
-        getDataFromDB(
-            DB_NAME,
-            [`SELECT ${selectFields} FROM ${tableName} ${joinClause} WHERE ${tableName}.id = ${req.query.id}`],
-            true
-        )
-            .then(data => {
+            try {
+                const data = await getDataFromDB(
+                    DB_NAME,
+                    [`SELECT ${selectFields} FROM ${tableName} ${joinClause} WHERE ${tableName}.id = ${req.query.id}`],
+                    true
+                )
+                
                 if (data) {
-                    res.send(new ResponseSuccess(data))
+                    const enriched = { ...data }
+                    
+                    // 转换 is_active Buffer 为数字
+                    convertIsActive(enriched)
+                    
+                    // 添加版本数组
+                    if (hasVersion && data.id) {
+                        enriched.version = await getEntityVersions(tableName, data.id)
+                    }
+                    
+                    // 对于crafts，添加标签数组
+                    if (tableName === 'crafts' && data.id) {
+                        enriched.tab = await getCraftTabs(data.id)
+                    }
+                    
+                    // 移除临时的version字段（如果存在）
+                    delete enriched.version_name
+                    delete enriched.version_name_en
+                    
+                    res.send(new ResponseSuccess(enriched))
                 } else {
                     res.send(new ResponseError('', '无数据'))
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 res.send(new ResponseError(err, err.message))
-            })
+            }
     })
 }
 
@@ -448,10 +735,13 @@ router.post('/character/add', (req, res) => {
                 return
             }
             
-            // 获取版本ID
-            const versionId = await getVersionId(req.body.version)
-            if (!versionId) {
-                res.send(new ResponseError('', '无效的版本代码'))
+            // 处理版本数组：支持 number[] 或单个 number
+            const versionIds: number[] = Array.isArray(req.body.version) 
+                ? req.body.version 
+                : [req.body.version].filter(v => v != null)
+            
+            if (versionIds.length === 0) {
+                res.send(new ResponseError('', '版本不能为空'))
                 return
             }
             
@@ -498,13 +788,16 @@ router.post('/character/add', (req, res) => {
                         return
                     }
                     
-                    // 插入版本关系
-                    let relationSql = `
-                        INSERT INTO character_versions(character_id, version_id, is_primary)
-                        VALUES(${characterId}, ${versionId}, 1)
-                    `
+                    // 插入所有版本关系（第一个作为主版本）
+                    let relationSqls: string[] = []
+                    versionIds.forEach((versionId, index) => {
+                        relationSqls.push(`
+                            INSERT INTO character_versions(character_id, version_id, is_primary)
+                            VALUES(${characterId}, ${versionId}, ${index === 0 ? 1 : 0})
+                        `)
+                    })
                     
-                    getDataFromDB(DB_NAME, [relationSql])
+                    getDataFromDB(DB_NAME, relationSqls)
                         .then(() => {
                             updateUserLastLoginTime(userInfo.uid)
                             res.send(new ResponseSuccess({ id: characterId }, '添加成功'))
@@ -559,35 +852,25 @@ router.put('/character/modify', (req, res) => {
                 WHERE id = ${req.body.id}
             `)
             
-            // 如果提供了版本，更新版本关系
+            // 如果提供了版本，更新版本关系（支持数组形式）
             if (req.body.version) {
-                const versionId = await getVersionId(req.body.version)
-                if (versionId) {
-                    // 先删除旧的primary关系
+                const versionIds: number[] = Array.isArray(req.body.version) 
+                    ? req.body.version 
+                    : [req.body.version].filter(v => v != null)
+                
+                if (versionIds.length > 0) {
+                    // 先删除所有旧的关系
                     sqlArray.push(`
-                        UPDATE character_versions 
-                        SET is_primary = 0 
-                        WHERE character_id = ${req.body.id} AND is_primary = 1
+                        DELETE FROM character_versions WHERE character_id = ${req.body.id}
                     `)
-                    // 检查是否已存在该版本关系
-                    const existing = await getDataFromDB(DB_NAME, [
-                        `SELECT id FROM character_versions WHERE character_id = ${req.body.id} AND version_id = ${versionId}`
-                    ], true)
                     
-                    if (existing) {
-                        // 更新为primary
-                        sqlArray.push(`
-                            UPDATE character_versions 
-                            SET is_primary = 1 
-                            WHERE character_id = ${req.body.id} AND version_id = ${versionId}
-                        `)
-                    } else {
-                        // 插入新关系
+                    // 插入新的版本关系（第一个作为主版本）
+                    versionIds.forEach((versionId, index) => {
                         sqlArray.push(`
                             INSERT INTO character_versions(character_id, version_id, is_primary)
-                            VALUES(${req.body.id}, ${versionId}, 1)
+                            VALUES(${req.body.id}, ${versionId}, ${index === 0 ? 1 : 0})
                         `)
-                    }
+                    })
                 }
             }
             
@@ -793,15 +1076,15 @@ router.post('/craft/add', (req, res) => {
                 return
             }
             
-            // 获取版本ID（如果提供）
-            let versionId = null
-            if (req.body.version) {
-                versionId = await getVersionId(req.body.version)
-                if (!versionId) {
-                    res.send(new ResponseError('', '无效的版本代码'))
-                    return
-                }
-            }
+            // 处理版本数组：支持 number[] 或单个 number
+            const versionIds: number[] = req.body.version 
+                ? (Array.isArray(req.body.version) ? req.body.version : [req.body.version]).filter(v => v != null)
+                : []
+            
+            // 处理标签数组：支持 number[] 或单个 number
+            const tabIds: number[] = req.body.tab 
+                ? (Array.isArray(req.body.tab) ? req.body.tab : [req.body.tab]).filter(v => v != null)
+                : []
             
             let sqlArray = []
             // 插入制作数据
@@ -839,24 +1122,21 @@ router.post('/craft/add', (req, res) => {
                     
                     let relationSqls: string[] = []
                     
-                    // 插入版本关系
-                    if (versionId) {
+                    // 插入所有版本关系（第一个作为主版本）
+                    versionIds.forEach((versionId, index) => {
                         relationSqls.push(`
                             INSERT INTO craft_versions(craft_id, version_id, is_primary)
-                            VALUES(${craftId}, ${versionId}, 1)
+                            VALUES(${craftId}, ${versionId}, ${index === 0 ? 1 : 0})
                         `)
-                    }
+                    })
                     
-                    // 插入标签关系
-                    if (req.body.tab) {
-                        const tabId = await getTabId(req.body.tab)
-                        if (tabId) {
-                            relationSqls.push(`
-                                INSERT INTO craft_tab_relations(craft_id, tab_id, is_primary)
-                                VALUES(${craftId}, ${tabId}, 1)
-                            `)
-                        }
-                    }
+                    // 插入所有标签关系（第一个作为主标签）
+                    tabIds.forEach((tabId, index) => {
+                        relationSqls.push(`
+                            INSERT INTO craft_tab_relations(craft_id, tab_id, is_primary)
+                            VALUES(${craftId}, ${tabId}, ${index === 0 ? 1 : 0})
+                        `)
+                    })
                     
                     if (relationSqls.length > 0) {
                         getDataFromDB(DB_NAME, relationSqls)
@@ -910,60 +1190,44 @@ router.put('/craft/modify', (req, res) => {
                 WHERE id = ${req.body.id}
             `)
             
-            // 如果提供了版本，更新版本关系
-            if (req.body.version) {
-                const versionId = await getVersionId(req.body.version)
-                if (versionId) {
+            // 如果提供了版本，更新版本关系（支持数组形式）
+            if (req.body.version !== undefined) {
+                const versionIds: number[] = Array.isArray(req.body.version) 
+                    ? req.body.version 
+                    : req.body.version ? [req.body.version].filter(v => v != null) : []
+                
+                // 先删除所有旧的版本关系
+                sqlArray.push(`
+                    DELETE FROM craft_versions WHERE craft_id = ${req.body.id}
+                `)
+                
+                // 插入新的版本关系（第一个作为主版本）
+                versionIds.forEach((versionId, index) => {
                     sqlArray.push(`
-                        UPDATE craft_versions 
-                        SET is_primary = 0 
-                        WHERE craft_id = ${req.body.id} AND is_primary = 1
+                        INSERT INTO craft_versions(craft_id, version_id, is_primary)
+                        VALUES(${req.body.id}, ${versionId}, ${index === 0 ? 1 : 0})
                     `)
-                    const existing = await getDataFromDB(DB_NAME, [
-                        `SELECT id FROM craft_versions WHERE craft_id = ${req.body.id} AND version_id = ${versionId}`
-                    ], true)
-                    
-                    if (existing) {
-                        sqlArray.push(`
-                            UPDATE craft_versions 
-                            SET is_primary = 1 
-                            WHERE craft_id = ${req.body.id} AND version_id = ${versionId}
-                        `)
-                    } else {
-                        sqlArray.push(`
-                            INSERT INTO craft_versions(craft_id, version_id, is_primary)
-                            VALUES(${req.body.id}, ${versionId}, 1)
-                        `)
-                    }
-                }
+                })
             }
             
-            // 如果提供了标签，更新标签关系
-            if (req.body.tab) {
-                const tabId = await getTabId(req.body.tab)
-                if (tabId) {
+            // 如果提供了标签，更新标签关系（支持数组形式）
+            if (req.body.tab !== undefined) {
+                const tabIds: number[] = Array.isArray(req.body.tab) 
+                    ? req.body.tab 
+                    : req.body.tab ? [req.body.tab].filter(v => v != null) : []
+                
+                // 先删除所有旧的标签关系
+                sqlArray.push(`
+                    DELETE FROM craft_tab_relations WHERE craft_id = ${req.body.id}
+                `)
+                
+                // 插入新的标签关系（第一个作为主标签）
+                tabIds.forEach((tabId, index) => {
                     sqlArray.push(`
-                        UPDATE craft_tab_relations 
-                        SET is_primary = 0 
-                        WHERE craft_id = ${req.body.id} AND is_primary = 1
+                        INSERT INTO craft_tab_relations(craft_id, tab_id, is_primary)
+                        VALUES(${req.body.id}, ${tabId}, ${index === 0 ? 1 : 0})
                     `)
-                    const existing = await getDataFromDB(DB_NAME, [
-                        `SELECT id FROM craft_tab_relations WHERE craft_id = ${req.body.id} AND tab_id = ${tabId}`
-                    ], true)
-                    
-                    if (existing) {
-                        sqlArray.push(`
-                            UPDATE craft_tab_relations 
-                            SET is_primary = 1 
-                            WHERE craft_id = ${req.body.id} AND tab_id = ${tabId}
-                        `)
-                    } else {
-                        sqlArray.push(`
-                            INSERT INTO craft_tab_relations(craft_id, tab_id, is_primary)
-                            VALUES(${req.body.id}, ${tabId}, 1)
-                        `)
-                    }
-                }
+                })
             }
             
             operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CRAFT, sqlArray, '修改', res)
@@ -1078,15 +1342,10 @@ router.post('/mob/add', (req, res) => {
                 return
             }
             
-            // 获取版本ID（如果提供）
-            let versionId = null
-            if (req.body.version) {
-                versionId = await getVersionId(req.body.version)
-                if (!versionId) {
-                    res.send(new ResponseError('', '无效的版本代码'))
-                    return
-                }
-            }
+            // 处理版本数组：支持 number[] 或单个 number
+            const versionIds: number[] = req.body.version 
+                ? (Array.isArray(req.body.version) ? req.body.version : [req.body.version]).filter(v => v != null)
+                : []
             
             let sqlArray = []
             sqlArray.push(`
@@ -1127,12 +1386,17 @@ router.post('/mob/add', (req, res) => {
                         return
                     }
                     
-                    if (versionId) {
-                        let relationSql = `
-                            INSERT INTO mob_versions(mob_id, version_id, is_primary)
-                            VALUES(${mobId}, ${versionId}, 1)
-                        `
-                        getDataFromDB(DB_NAME, [relationSql])
+                    // 插入所有版本关系（第一个作为主版本）
+                    if (versionIds.length > 0) {
+                        let relationSqls: string[] = []
+                        versionIds.forEach((versionId, index) => {
+                            relationSqls.push(`
+                                INSERT INTO mob_versions(mob_id, version_id, is_primary)
+                                VALUES(${mobId}, ${versionId}, ${index === 0 ? 1 : 0})
+                            `)
+                        })
+                        
+                        getDataFromDB(DB_NAME, relationSqls)
                             .then(() => {
                                 updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess({ id: mobId }, '添加成功'))
@@ -1187,32 +1451,24 @@ router.put('/mob/modify', (req, res) => {
                 WHERE id = ${req.body.id}
             `)
             
-            // 如果提供了版本，更新版本关系
-            if (req.body.version) {
-                const versionId = await getVersionId(req.body.version)
-                if (versionId) {
+            // 如果提供了版本，更新版本关系（支持数组形式）
+            if (req.body.version !== undefined) {
+                const versionIds: number[] = Array.isArray(req.body.version) 
+                    ? req.body.version 
+                    : req.body.version ? [req.body.version].filter(v => v != null) : []
+                
+                // 先删除所有旧的版本关系
+                sqlArray.push(`
+                    DELETE FROM mob_versions WHERE mob_id = ${req.body.id}
+                `)
+                
+                // 插入新的版本关系（第一个作为主版本）
+                versionIds.forEach((versionId, index) => {
                     sqlArray.push(`
-                        UPDATE mob_versions 
-                        SET is_primary = 0 
-                        WHERE mob_id = ${req.body.id} AND is_primary = 1
+                        INSERT INTO mob_versions(mob_id, version_id, is_primary)
+                        VALUES(${req.body.id}, ${versionId}, ${index === 0 ? 1 : 0})
                     `)
-                    const existing = await getDataFromDB(DB_NAME, [
-                        `SELECT id FROM mob_versions WHERE mob_id = ${req.body.id} AND version_id = ${versionId}`
-                    ], true)
-                    
-                    if (existing) {
-                        sqlArray.push(`
-                            UPDATE mob_versions 
-                            SET is_primary = 1 
-                            WHERE mob_id = ${req.body.id} AND version_id = ${versionId}
-                        `)
-                    } else {
-                        sqlArray.push(`
-                            INSERT INTO mob_versions(mob_id, version_id, is_primary)
-                            VALUES(${req.body.id}, ${versionId}, 1)
-                        `)
-                    }
-                }
+                })
             }
             
             operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_MOB, sqlArray, '修改', res)
@@ -1250,15 +1506,10 @@ router.post('/plant/add', (req, res) => {
                 return
             }
             
-            // 获取版本ID（如果提供）
-            let versionId = null
-            if (req.body.version) {
-                versionId = await getVersionId(req.body.version)
-                if (!versionId) {
-                    res.send(new ResponseError('', '无效的版本代码'))
-                    return
-                }
-            }
+            // 处理版本数组：支持 number[] 或单个 number
+            const versionIds: number[] = req.body.version 
+                ? (Array.isArray(req.body.version) ? req.body.version : [req.body.version]).filter(v => v != null)
+                : []
             
             let sqlArray = []
             sqlArray.push(`
@@ -1287,12 +1538,17 @@ router.post('/plant/add', (req, res) => {
                         return
                     }
                     
-                    if (versionId) {
-                        let relationSql = `
-                            INSERT INTO plant_versions(plant_id, version_id, is_primary)
-                            VALUES(${plantId}, ${versionId}, 1)
-                        `
-                        getDataFromDB(DB_NAME, [relationSql])
+                    // 插入所有版本关系（第一个作为主版本）
+                    if (versionIds.length > 0) {
+                        let relationSqls: string[] = []
+                        versionIds.forEach((versionId, index) => {
+                            relationSqls.push(`
+                                INSERT INTO plant_versions(plant_id, version_id, is_primary)
+                                VALUES(${plantId}, ${versionId}, ${index === 0 ? 1 : 0})
+                            `)
+                        })
+                        
+                        getDataFromDB(DB_NAME, relationSqls)
                             .then(() => {
                                 updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess({ id: plantId }, '添加成功'))
@@ -1337,32 +1593,24 @@ router.put('/plant/modify', (req, res) => {
                 WHERE id = ${req.body.id}
             `)
             
-            // 如果提供了版本，更新版本关系
-            if (req.body.version) {
-                const versionId = await getVersionId(req.body.version)
-                if (versionId) {
+            // 如果提供了版本，更新版本关系（支持数组形式）
+            if (req.body.version !== undefined) {
+                const versionIds: number[] = Array.isArray(req.body.version) 
+                    ? req.body.version 
+                    : req.body.version ? [req.body.version].filter(v => v != null) : []
+                
+                // 先删除所有旧的版本关系
+                sqlArray.push(`
+                    DELETE FROM plant_versions WHERE plant_id = ${req.body.id}
+                `)
+                
+                // 插入新的版本关系（第一个作为主版本）
+                versionIds.forEach((versionId, index) => {
                     sqlArray.push(`
-                        UPDATE plant_versions 
-                        SET is_primary = 0 
-                        WHERE plant_id = ${req.body.id} AND is_primary = 1
+                        INSERT INTO plant_versions(plant_id, version_id, is_primary)
+                        VALUES(${req.body.id}, ${versionId}, ${index === 0 ? 1 : 0})
                     `)
-                    const existing = await getDataFromDB(DB_NAME, [
-                        `SELECT id FROM plant_versions WHERE plant_id = ${req.body.id} AND version_id = ${versionId}`
-                    ], true)
-                    
-                    if (existing) {
-                        sqlArray.push(`
-                            UPDATE plant_versions 
-                            SET is_primary = 1 
-                            WHERE plant_id = ${req.body.id} AND version_id = ${versionId}
-                        `)
-                    } else {
-                        sqlArray.push(`
-                            INSERT INTO plant_versions(plant_id, version_id, is_primary)
-                            VALUES(${req.body.id}, ${versionId}, 1)
-                        `)
-                    }
-                }
+                })
             }
             
             operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_PLANT, sqlArray, '修改', res)
@@ -1400,15 +1648,10 @@ router.post('/thing/add', (req, res) => {
                 return
             }
             
-            // 获取版本ID（如果提供）
-            let versionId = null
-            if (req.body.version) {
-                versionId = await getVersionId(req.body.version)
-                if (!versionId) {
-                    res.send(new ResponseError('', '无效的版本代码'))
-                    return
-                }
-            }
+            // 处理版本数组：支持 number[] 或单个 number
+            const versionIds: number[] = req.body.version 
+                ? (Array.isArray(req.body.version) ? req.body.version : [req.body.version]).filter(v => v != null)
+                : []
             
             let sqlArray = []
             sqlArray.push(`
@@ -1434,12 +1677,17 @@ router.post('/thing/add', (req, res) => {
                         return
                     }
                     
-                    if (versionId) {
-                        let relationSql = `
-                            INSERT INTO thing_versions(thing_id, version_id, is_primary)
-                            VALUES(${thingId}, ${versionId}, 1)
-                        `
-                        getDataFromDB(DB_NAME, [relationSql])
+                    // 插入所有版本关系（第一个作为主版本）
+                    if (versionIds.length > 0) {
+                        let relationSqls: string[] = []
+                        versionIds.forEach((versionId, index) => {
+                            relationSqls.push(`
+                                INSERT INTO thing_versions(thing_id, version_id, is_primary)
+                                VALUES(${thingId}, ${versionId}, ${index === 0 ? 1 : 0})
+                            `)
+                        })
+                        
+                        getDataFromDB(DB_NAME, relationSqls)
                             .then(() => {
                                 updateUserLastLoginTime(userInfo.uid)
                                 res.send(new ResponseSuccess({ id: thingId }, '添加成功'))
@@ -1482,32 +1730,24 @@ router.put('/thing/modify', (req, res) => {
                 WHERE id = ${req.body.id}
             `)
             
-            // 如果提供了版本，更新版本关系
-            if (req.body.version) {
-                const versionId = await getVersionId(req.body.version)
-                if (versionId) {
+            // 如果提供了版本，更新版本关系（支持数组形式）
+            if (req.body.version !== undefined) {
+                const versionIds: number[] = Array.isArray(req.body.version) 
+                    ? req.body.version 
+                    : req.body.version ? [req.body.version].filter(v => v != null) : []
+                
+                // 先删除所有旧的版本关系
+                sqlArray.push(`
+                    DELETE FROM thing_versions WHERE thing_id = ${req.body.id}
+                `)
+                
+                // 插入新的版本关系（第一个作为主版本）
+                versionIds.forEach((versionId, index) => {
                     sqlArray.push(`
-                        UPDATE thing_versions 
-                        SET is_primary = 0 
-                        WHERE thing_id = ${req.body.id} AND is_primary = 1
+                        INSERT INTO thing_versions(thing_id, version_id, is_primary)
+                        VALUES(${req.body.id}, ${versionId}, ${index === 0 ? 1 : 0})
                     `)
-                    const existing = await getDataFromDB(DB_NAME, [
-                        `SELECT id FROM thing_versions WHERE thing_id = ${req.body.id} AND version_id = ${versionId}`
-                    ], true)
-                    
-                    if (existing) {
-                        sqlArray.push(`
-                            UPDATE thing_versions 
-                            SET is_primary = 1 
-                            WHERE thing_id = ${req.body.id} AND version_id = ${versionId}
-                        `)
-                    } else {
-                        sqlArray.push(`
-                            INSERT INTO thing_versions(thing_id, version_id, is_primary)
-                            VALUES(${req.body.id}, ${versionId}, 1)
-                        `)
-                    }
-                }
+                })
             }
             
             operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_THING, sqlArray, '修改', res)
@@ -1528,6 +1768,352 @@ router.delete('/thing/delete', (req, res) => {
             // CASCADE 会自动删除关联的版本关系
             let sqlArray = [`DELETE FROM things WHERE id = ${id}`]
             operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_THING, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== versions 表接口 ====================
+const DATA_NAME_VERSION = 'versions'
+
+// 列表
+router.get('/version/list', (req, res) => {
+    let whereConditions: string[] = []
+    let whereClause = ''
+    
+    // 处理 keyword 搜索
+    if (req.query.keyword) {
+        let keyword = escapeMySQLString(unicodeEncode(String(req.query.keyword)))
+        whereConditions.push(`(code LIKE '%${keyword}%' OR name LIKE '%${keyword}%' OR name_en LIKE '%${keyword}%' ESCAPE '/')`)
+    }
+    
+    // 处理 is_active 筛选
+    let all = req.query.all
+    if (all !== '1') {
+        whereConditions.push(`is_active = 1`)
+    }
+    
+    if (whereConditions.length > 0) {
+        whereClause = `WHERE ${whereConditions.join(' AND ')}`
+    }
+    
+    // 处理分页
+    let pageNo = req.query.pageNo ? Number(req.query.pageNo) : null
+    let pageSize = req.query.pageSize ? Number(req.query.pageSize) : null
+    let usePagination = pageNo !== null && pageSize !== null
+    
+    if (usePagination) {
+        let startPoint = (pageNo - 1) * pageSize
+        let promisesAll = [
+            getDataFromDB(DB_NAME, [
+                `SELECT * FROM versions ${whereClause} ORDER BY sort_order ASC, id ASC LIMIT ${startPoint}, ${pageSize}`
+            ]),
+            getDataFromDB(DB_NAME, [
+                `SELECT COUNT(*) as sum FROM versions ${whereClause}`
+            ], true)
+        ]
+        
+        Promise.all(promisesAll)
+            .then(async ([dataList, dataSum]) => {
+                const enrichedList = (dataList || []).map((item: any) => {
+                    const enriched = { ...item }
+                    convertIsActive(enriched)
+                    return enriched
+                })
+                res.send(new ResponseSuccess({
+                    list: enrichedList,
+                    pager: {
+                        pageSize: pageSize,
+                        pageNo: pageNo,
+                        total: dataSum?.sum || 0
+                    }
+                }, '请求成功'))
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, err.message))
+            })
+    } else {
+        getDataFromDB(DB_NAME, [
+            `SELECT * FROM versions ${whereClause} ORDER BY sort_order ASC, id ASC`
+        ])
+            .then(async (data) => {
+                if (data) {
+                    const enrichedList = data.map((item: any) => {
+                        const enriched = { ...item }
+                        convertIsActive(enriched)
+                        return enriched
+                    })
+                    res.send(new ResponseSuccess(enrichedList))
+                } else {
+                    res.send(new ResponseError('', '无数据'))
+                }
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, err.message))
+            })
+    }
+})
+
+// 详情
+router.get('/version/info', (req, res) => {
+    getDataFromDB(DB_NAME, [
+        `SELECT * FROM versions WHERE id = ${req.query.id}`
+    ], true)
+        .then((data) => {
+            if (data) {
+                const enriched = { ...data }
+                convertIsActive(enriched)
+                res.send(new ResponseSuccess(enriched))
+            } else {
+                res.send(new ResponseError('', '无数据'))
+            }
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, err.message))
+        })
+})
+
+// 添加
+router.post('/version/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.code || !req.body.name) {
+                res.send(new ResponseError('', '版本代码和名称不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO versions(code, name, name_en, description, sort_order, is_active)
+                VALUES(
+                    ${processStringValue(req.body.code)},
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processStringValue(req.body.description)},
+                    ${processNumberValue(req.body.sort_order)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 1}
+                )
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME_VERSION, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 修改
+router.put('/version/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE versions SET
+                    code = ${processStringValue(req.body.code)},
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    description = ${processStringValue(req.body.description)},
+                    sort_order = ${processNumberValue(req.body.sort_order)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 1}
+                WHERE id = ${req.body.id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_VERSION, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 删除
+router.delete('/version/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            let sqlArray = [`DELETE FROM versions WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_VERSION, sqlArray, '删除', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// ==================== craft_tabs 表接口 ====================
+const DATA_NAME_CRAFT_TAB = 'craft_tabs'
+
+// 列表
+router.get('/craft-tab/list', (req, res) => {
+    let whereConditions: string[] = []
+    let whereClause = ''
+    
+    // 处理 keyword 搜索
+    if (req.query.keyword) {
+        let keyword = escapeMySQLString(unicodeEncode(String(req.query.keyword)))
+        whereConditions.push(`(code LIKE '%${keyword}%' OR name LIKE '%${keyword}%' OR name_en LIKE '%${keyword}%' ESCAPE '/')`)
+    }
+    
+    // 处理 is_active 筛选
+    let all = req.query.all
+    if (all !== '1') {
+        whereConditions.push(`is_active = 1`)
+    }
+    
+    if (whereConditions.length > 0) {
+        whereClause = `WHERE ${whereConditions.join(' AND ')}`
+    }
+    
+    // 处理分页
+    let pageNo = req.query.pageNo ? Number(req.query.pageNo) : null
+    let pageSize = req.query.pageSize ? Number(req.query.pageSize) : null
+    let usePagination = pageNo !== null && pageSize !== null
+    
+    if (usePagination) {
+        let startPoint = (pageNo - 1) * pageSize
+        let promisesAll = [
+            getDataFromDB(DB_NAME, [
+                `SELECT * FROM craft_tabs ${whereClause} ORDER BY sort_order ASC, id ASC LIMIT ${startPoint}, ${pageSize}`
+            ]),
+            getDataFromDB(DB_NAME, [
+                `SELECT COUNT(*) as sum FROM craft_tabs ${whereClause}`
+            ], true)
+        ]
+        
+        Promise.all(promisesAll)
+            .then(async ([dataList, dataSum]) => {
+                const enrichedList = (dataList || []).map((item: any) => {
+                    const enriched = { ...item }
+                    convertIsActive(enriched)
+                    return enriched
+                })
+                res.send(new ResponseSuccess({
+                    list: enrichedList,
+                    pager: {
+                        pageSize: pageSize,
+                        pageNo: pageNo,
+                        total: dataSum?.sum || 0
+                    }
+                }, '请求成功'))
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, err.message))
+            })
+    } else {
+        getDataFromDB(DB_NAME, [
+            `SELECT * FROM craft_tabs ${whereClause} ORDER BY sort_order ASC, id ASC`
+        ])
+            .then(async (data) => {
+                if (data) {
+                    const enrichedList = data.map((item: any) => {
+                        const enriched = { ...item }
+                        convertIsActive(enriched)
+                        return enriched
+                    })
+                    res.send(new ResponseSuccess(enrichedList))
+                } else {
+                    res.send(new ResponseError('', '无数据'))
+                }
+            })
+            .catch(err => {
+                res.send(new ResponseError(err, err.message))
+            })
+    }
+})
+
+// 详情
+router.get('/craft-tab/info', (req, res) => {
+    getDataFromDB(DB_NAME, [
+        `SELECT * FROM craft_tabs WHERE id = ${req.query.id}`
+    ], true)
+        .then((data) => {
+            if (data) {
+                const enriched = { ...data }
+                convertIsActive(enriched)
+                res.send(new ResponseSuccess(enriched))
+            } else {
+                res.send(new ResponseError('', '无数据'))
+            }
+        })
+        .catch(err => {
+            res.send(new ResponseError(err, err.message))
+        })
+})
+
+// 添加
+router.post('/craft-tab/add', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.code || !req.body.name) {
+                res.send(new ResponseError('', '标签代码和名称不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                INSERT INTO craft_tabs(code, name, name_en, sort_order, is_active)
+                VALUES(
+                    ${processStringValue(req.body.code)},
+                    ${processStringValue(req.body.name)},
+                    ${processStringValue(req.body.name_en)},
+                    ${processNumberValue(req.body.sort_order)},
+                    ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 1}
+                )
+            `)
+            
+            operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME_CRAFT_TAB, sqlArray, '添加', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 修改
+router.put('/craft-tab/modify', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            if (!req.body.id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            
+            let sqlArray = []
+            sqlArray.push(`
+                UPDATE craft_tabs SET
+                    code = ${processStringValue(req.body.code)},
+                    name = ${processStringValue(req.body.name)},
+                    name_en = ${processStringValue(req.body.name_en)},
+                    sort_order = ${processNumberValue(req.body.sort_order)},
+                    is_active = ${req.body.is_active !== undefined ? (req.body.is_active ? 1 : 0) : 1}
+                WHERE id = ${req.body.id}
+            `)
+            
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CRAFT_TAB, sqlArray, '修改', res)
+        })
+        .catch(errInfo => {
+            res.send(new ResponseError('', errInfo))
+        })
+})
+
+// 删除
+router.delete('/craft-tab/delete', (req, res) => {
+    verifyAuthorization(req)
+        .then(userInfo => {
+            let id = req.body.id || req.query.id
+            if (!id) {
+                res.send(new ResponseError('', 'ID不能为空'))
+                return
+            }
+            let sqlArray = [`DELETE FROM craft_tabs WHERE id = ${id}`]
+            operate_db_without_return(userInfo.uid, DB_NAME, DATA_NAME_CRAFT_TAB, sqlArray, '删除', res)
         })
         .catch(errInfo => {
             res.send(new ResponseError('', errInfo))
