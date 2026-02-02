@@ -201,8 +201,20 @@ function operate_db_without_return(uid, dbId, dbTitle, sqlArray, operationName, 
     getDataFromDB(dbId, sqlArray)
         .then(data => {
         updateUserLastLoginTime(uid);
-        // 编辑成功之后，返回添加后的日记类别 id
-        res.send(new Response_1.ResponseSuccess(null, `${operationName}成功`));
+        // 检查是否有多个结果（UPDATE + SELECT）
+        let responseData = null;
+        if (Array.isArray(data) && data.length > 1) {
+            // 如果有多个结果，取最后一个（SELECT的结果）
+            const selectResult = data[data.length - 1];
+            if (selectResult && selectResult.length > 0) {
+                responseData = { id: selectResult[0].id };
+            }
+        }
+        else if (data && data.id) {
+            // 如果直接返回了ID
+            responseData = { id: data.id };
+        }
+        res.send(new Response_1.ResponseSuccess(responseData, `${operationName}成功`));
     })
         .catch(err => {
         res.send(new Response_1.ResponseError(err, `${dbTitle}${operationName}失败`));
