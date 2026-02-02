@@ -75,6 +75,9 @@ app.use('/wubi/category', wubiCategory_1.default); // 词条类别
 // 饥荒
 const dontStarve_1 = __importDefault(require("./src/dontstarve/dontStarve"));
 app.use('/starve', dontStarve_1.default);
+// 饥荒 - 新
+const dontStarveNew_1 = __importDefault(require("./src/dontstarve/dontStarveNew"));
+app.use('/starve-new', dontStarveNew_1.default);
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
     next((0, http_errors_1.default)(404));

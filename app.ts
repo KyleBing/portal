@@ -98,8 +98,11 @@ app.use('/wubi/category', routerWubiCategory)  // 词条类别
 
 // 饥荒
 import routerStarve from './src/dontstarve/dontStarve'
-import router from "./src/index";
 app.use('/starve', routerStarve)
+
+// 饥荒 - 新
+import routerStarveNew from './src/dontstarve/dontStarveNew'
+app.use('/starve-new', routerStarveNew)
 
 
 // catch 404 and forward to error handler
