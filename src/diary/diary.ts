@@ -79,11 +79,15 @@ router.get('/list', (req, res) => {
                 sqlArray.push(' and is_public = 1')
             }
 
-            // date range
-            if (req.query.dateFilterString){
-                let year = (req.query.dateFilterString as string).substring(0,4)
-                let month = (req.query.dateFilterString as string).substring(4,6)
-                sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`)
+            // time range
+            const timeStart = req.query.timeStart as string | undefined
+            const timeEnd = req.query.timeEnd as string | undefined
+            if (timeStart && timeEnd) {
+                sqlArray.push(` and date >= '${timeStart}' and date <= '${timeEnd}'`)
+            } else if (timeStart) {
+                sqlArray.push(` and date >= '${timeStart}'`)
+            } else if (timeEnd) {
+                sqlArray.push(` and date <= '${timeEnd}'`)
             }
 
             sqlArray.push(` order by date desc
