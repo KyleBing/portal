@@ -69,11 +69,17 @@ router.get('/list', (req, res) => {
         if (req.query.filterShared === '1') {
             sqlArray.push(' and is_public = 1');
         }
-        // date range
-        if (req.query.dateFilterString) {
-            let year = req.query.dateFilterString.substring(0, 4);
-            let month = req.query.dateFilterString.substring(4, 6);
-            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
+        // time range
+        const timeStart = req.query.timeStart;
+        const timeEnd = req.query.timeEnd;
+        if (timeStart && timeEnd) {
+            sqlArray.push(` and date >= '${timeStart}' and date <= '${timeEnd}'`);
+        }
+        else if (timeStart) {
+            sqlArray.push(` and date >= '${timeStart}'`);
+        }
+        else if (timeEnd) {
+            sqlArray.push(` and date <= '${timeEnd}'`);
         }
         sqlArray.push(` order by date desc
                   limit ${startPoint}, ${req.query.pageSize}`);
