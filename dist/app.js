@@ -25,6 +25,9 @@ app.use('/user', user_1.default);
 // 初始化
 const init_1 = __importDefault(require("./src/init/init"));
 app.use('/init', init_1.default);
+// 安装引导
+const setup_1 = __importDefault(require("./src/setup/setup"));
+app.use('/setup', setup_1.default);
 // 邀请码
 const invitation_1 = __importDefault(require("./src/user/invitation"));
 app.use('/invitation', invitation_1.default);

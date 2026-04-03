@@ -27,6 +27,10 @@ app.use('/user', routerUser)
 import routerInit from "./src/init/init"
 app.use('/init', routerInit)
 
+// 安装引导
+import routerSetup from "./src/setup/setup"
+app.use('/setup', routerSetup)
+
 // 邀请码
 import routerInvitation from "./src/user/invitation"
 app.use('/invitation', routerInvitation)
