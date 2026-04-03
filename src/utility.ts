@@ -34,7 +34,7 @@ export function getDataFromDB(
             timezone           : configDatabase.timezone,
             database           : dbName
         })
-        
+
         connection.connect((connectErr) => {
             if (connectErr) {
                 console.log('数据库连接错误', connectErr.message)
@@ -42,16 +42,17 @@ export function getDataFromDB(
                 reject(connectErr)
                 return
             }
-            
-            // console.log('---- SQL', sqlArray.join(' '))
-            connection.query(sqlArray.join(' '), [], function (err, result) {
+
+            let sql = sqlArray.join(' ')
+            // console.log('---- SQL', sql)
+            connection.query(sql, [], function (err, result) {
                 // 确保连接被关闭（无论成功还是失败）
                 connection.end((endErr) => {
                     if (endErr) {
                         console.log('关闭连接错误', endErr.message)
                     }
                 })
-                
+
                 // console.log('result: ', result)
                 if (err) {
                     console.log('数据库请求错误', err.message)

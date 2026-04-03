@@ -44,8 +44,9 @@ function getDataFromDB(dbName, sqlArray, isSingleValue) {
                 reject(connectErr);
                 return;
             }
-            // console.log('---- SQL', sqlArray.join(' '))
-            connection.query(sqlArray.join(' '), [], function (err, result) {
+            let sql = sqlArray.join(' ');
+            // console.log('---- SQL', sql)
+            connection.query(sql, [], function (err, result) {
                 // 确保连接被关闭（无论成功还是失败）
                 connection.end((endErr) => {
                     if (endErr) {

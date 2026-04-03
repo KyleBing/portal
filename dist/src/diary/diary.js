@@ -35,6 +35,31 @@ function unescapeMySQLString(str) {
         .replace(/\\'/g, "'") // Single quote
         .replace(/\\\\/g, '\\'); // Backslash
 }
+function queryParamString(v) {
+    if (v === undefined || v === null)
+        return undefined;
+    if (Array.isArray(v)) {
+        const first = v[0];
+        return typeof first === 'string' ? first : undefined;
+    }
+    return typeof v === 'string' ? v : undefined;
+}
+/** Query: timeStart / timeEnd as YYYY-MM-DD HH:mm:ss */
+function appendDiaryTimeRangeSql(sqlArray, req) {
+    const timeStart = queryParamString(req.query.timeStart);
+    const timeEnd = queryParamString(req.query.timeEnd);
+    if (!timeStart && !timeEnd)
+        return;
+    if (timeStart && timeEnd) {
+        sqlArray.push(` and date >= '${escapeMySQLString(timeStart)}' and date <= '${escapeMySQLString(timeEnd)}'`);
+    }
+    else if (timeStart) {
+        sqlArray.push(` and date >= '${escapeMySQLString(timeStart)}'`);
+    }
+    else if (timeEnd) {
+        sqlArray.push(` and date <= '${escapeMySQLString(timeEnd)}'`);
+    }
+}
 const DB_NAME = 'diary';
 const DATA_NAME = '日记';
 const CURRENT_TABLE = 'diaries';
@@ -69,18 +94,7 @@ router.get('/list', (req, res) => {
         if (req.query.filterShared === '1') {
             sqlArray.push(' and is_public = 1');
         }
-        // time range
-        const timeStart = req.query.timeStart;
-        const timeEnd = req.query.timeEnd;
-        if (timeStart && timeEnd) {
-            sqlArray.push(` and date >= '${timeStart}' and date <= '${timeEnd}'`);
-        }
-        else if (timeStart) {
-            sqlArray.push(` and date >= '${timeStart}'`);
-        }
-        else if (timeEnd) {
-            sqlArray.push(` and date <= '${timeEnd}'`);
-        }
+        appendDiaryTimeRangeSql(sqlArray, req);
         sqlArray.push(` order by date desc
                   limit ${startPoint}, ${req.query.pageSize}`);
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
@@ -134,33 +148,7 @@ router.get('/list-all', (req, res) => {
         if (req.query.filterShared === '1') {
             sqlArray.push(' and is_public = 1');
         }
-        // date range
-        if (req.query.dateFilterString) {
-            let year = req.query.dateFilterString.substring(0, 4);
-            let month = req.query.dateFilterString.substring(4, 6);
-            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
-        }
-        // filter date range - unified approach for both single day and date range
-        if (req.query.dateStart && req.query.dateEnd) {
-            // Date range query
-            if (req.query.dateStart === req.query.dateEnd) {
-                // Single day query - use DATE() function for better performance
-                sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`);
-            }
-            else {
-                // Date range query
-                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
-                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
-            }
-        }
-        else if (req.query.dateStart) {
-            // Only start date provided
-            sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
-        }
-        else if (req.query.dateEnd) {
-            // Only end date provided
-            sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
-        }
+        appendDiaryTimeRangeSql(sqlArray, req);
         sqlArray.push(` order by date desc`);
         console.log(sqlArray.join(''));
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
@@ -214,33 +202,7 @@ router.get('/list-title-only', (req, res) => {
         if (req.query.filterShared === '1') {
             sqlArray.push(' and is_public = 1');
         }
-        // date range
-        if (req.query.dateFilterString) {
-            let year = req.query.dateFilterString.substring(0, 4);
-            let month = req.query.dateFilterString.substring(4, 6);
-            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
-        }
-        // filter date range - unified approach for both single day and date range
-        if (req.query.dateStart && req.query.dateEnd) {
-            // Date range query
-            if (req.query.dateStart === req.query.dateEnd) {
-                // Single day query - use DATE() function for better performance
-                sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`);
-            }
-            else {
-                // Date range query
-                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
-                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
-            }
-        }
-        else if (req.query.dateStart) {
-            // Only start date provided
-            sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
-        }
-        else if (req.query.dateEnd) {
-            // Only end date provided
-            sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
-        }
+        appendDiaryTimeRangeSql(sqlArray, req);
         sqlArray.push(` order by date desc`);
         console.log(sqlArray.join(''));
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
@@ -262,13 +224,7 @@ router.get('/list-title-only', (req, res) => {
 });
 // 只获取日记的类别、日期、ID
 router.get('/list-category-only', (req, res) => {
-    // res as {
-    //     dateStart: string, // date string, format: YYYYMMDD
-    //     dateEnd: string, // date string, format: YYYYMMDD
-    //     categories: string[],
-    //     keywords: string[],
-    //     filterShared: string,
-    // }
+    // res query: timeStart, timeEnd (YYYY-MM-DD HH:mm:ss), categories, keywords, filterShared
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
         let sqlArray = [];
@@ -296,33 +252,7 @@ router.get('/list-category-only', (req, res) => {
         if (req.query.filterShared === '1') {
             sqlArray.push(' and is_public = 1');
         }
-        // filter date range
-        if (req.query.dateFilterString) {
-            let year = req.query.dateFilterString.substring(0, 4);
-            let month = req.query.dateFilterString.substring(4, 6);
-            sqlArray.push(` and YEAR(date)='${year}' AND MONTH(date)='${month}'`);
-        }
-        // filter date range - unified approach for both single day and date range
-        if (req.query.dateStart && req.query.dateEnd) {
-            // Date range query
-            if (req.query.dateStart === req.query.dateEnd) {
-                // Single day query - use DATE() function for better performance
-                sqlArray.push(` and DATE(date) = '${req.query.dateStart}'`);
-            }
-            else {
-                // Date range query
-                sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
-                sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
-            }
-        }
-        else if (req.query.dateStart) {
-            // Only start date provided
-            sqlArray.push(` and date >= '${req.query.dateStart} 00:00:00'`);
-        }
-        else if (req.query.dateEnd) {
-            // Only end date provided
-            sqlArray.push(` and date <= '${req.query.dateEnd} 23:59:59'`);
-        }
+        appendDiaryTimeRangeSql(sqlArray, req);
         sqlArray.push(` order by date desc`);
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
             .then(data => {
@@ -367,12 +297,7 @@ router.get('/export', (req, res) => {
         if (req.query.filterShared === '1') {
             sqlArray.push(' and is_public = 1');
         }
-        // date range
-        if (req.query.dateFilterString) {
-            let year = req.query.dateFilterString.substring(0, 4);
-            let month = req.query.dateFilterString.substring(4, 6);
-            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
-        }
+        appendDiaryTimeRangeSql(sqlArray, req);
         sqlArray.push(` order by date desc`);
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
             .then(data => {
@@ -400,25 +325,9 @@ router.get('/temperature', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
         let sqlArray = [];
-        sqlArray.push(`SELECT
-                               date,
-                               temperature,
-                               temperature_outside
-                           FROM
-                               diaries
-                           WHERE
-                               uid='${userInfo.uid}'
-                             AND category = 'life'
-
-                           ORDER BY
-                               date desc
-                               LIMIT 100 `);
-        // date range
-        if (req.query.dateFilterString) {
-            let year = req.query.dateFilterString.substring(0, 4);
-            let month = req.query.dateFilterString.substring(4, 6);
-            sqlArray.push(` and  YEAR(date)='${year}' AND MONTH(date)='${month}'`);
-        }
+        sqlArray.push(`SELECT date, temperature, temperature_outside FROM diaries WHERE uid='${userInfo.uid}' AND category = 'life'`);
+        appendDiaryTimeRangeSql(sqlArray, req);
+        sqlArray.push(` order by date desc limit 100`);
         (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
             .then(data => {
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
