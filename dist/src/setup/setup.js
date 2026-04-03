@@ -17,9 +17,11 @@ const Response_1 = require("../response/Response");
 const initService_1 = require("../init/initService");
 const setupService_1 = require("./setupService");
 const router = express_1.default.Router();
+// 安装向导首页先读取当前状态，决定是继续配置、执行初始化还是直接提示已完成。
 router.get('/status', (_req, res) => {
     res.send(new Response_1.ResponseSuccess((0, setupService_1.getSetupStatus)(), '请求成功'));
 });
+// 写入数据库配置和项目配置，但只允许在初始化前执行。
 router.post('/config', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const data = yield (0, setupService_1.saveSetupConfig)(req.body || {});
@@ -30,6 +32,7 @@ router.post('/config', (req, res) => __awaiter(void 0, void 0, void 0, function*
         res.send(new Response_1.ResponseError(err, message));
     }
 }));
+// 初始化接口复用旧逻辑服务，便于页面调用和后续扩展。
 router.post('/init', (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const initResult = yield (0, initService_1.initializeDatabase)();

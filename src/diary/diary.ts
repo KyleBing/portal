@@ -9,6 +9,7 @@ import {
     verifyAuthorization, processBillOfDay, operate_db_and_return_added_id, operate_db_without_return
 } from "../utility";
 import {Diary} from "entity/Diary";
+import { EnumUserGroup } from "entity/User";
 const router = express.Router()
 
 // Function to escape MySQL special characters
@@ -533,11 +534,17 @@ router.get('/latest-recommend', (req, res) => {
 router.get('/get-diary-content-with-keyword', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
+            const encodedKeyword = unicodeEncode(String(req.query.keyword ?? ''))
+            const safeKeyword = escapeMySQLString(encodedKeyword)
             let sqlArray = []
-            sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and uid = ${userInfo.uid} order by id desc`)
+            sqlArray.push(`select * from diaries where title like '%${safeKeyword}%' and uid = ${userInfo.uid} order by id desc`)
 
             getDataFromDB('diary', sqlArray, true)
                 .then(dataDiary => {
+                    if (!dataDiary) {
+                        res.send(new ResponseSuccess(''))
+                        return
+                    }
                     updateUserLastLoginTime(userInfo.uid)
                     dataDiary.title = unescapeMySQLString(unicodeDecode(dataDiary.title))
                     dataDiary.content = unescapeMySQLString(unicodeDecode(dataDiary.content))
@@ -553,11 +560,24 @@ router.get('/get-diary-content-with-keyword', (req, res) => {
 })
 
 router.get('/get-latest-public-diary-with-keyword', (req, res) => {
+    const encodedKeyword = unicodeEncode(String(req.query.keyword ?? ''))
+    const safeKeyword = escapeMySQLString(encodedKeyword)
     let sqlArray = []
-    sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`)
-    // 1. 先查询出日记结果
+    sqlArray.push(`
+        select diaries.*
+        from diaries
+        inner join users on diaries.uid = users.uid
+        where diaries.title like '%${safeKeyword}%'
+          and diaries.is_public = 1
+          and users.group_id = ${EnumUserGroup.ADMIN}
+        order by diaries.id desc
+    `)
     getDataFromDB('diary', sqlArray, true)
         .then(dataDiary => {
+            if (!dataDiary) {
+                res.send(new ResponseSuccess(''))
+                return
+            }
             dataDiary.title = unescapeMySQLString(unicodeDecode(dataDiary.title))
             dataDiary.content = unescapeMySQLString(unicodeDecode(dataDiary.content))
             res.send(new ResponseSuccess(dataDiary))

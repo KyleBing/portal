@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
 const utility_1 = require("../utility");
+const User_1 = require("entity/User");
 const router = express_1.default.Router();
 // Function to escape MySQL special characters
 function escapeMySQLString(str) {
@@ -481,10 +482,17 @@ router.get('/latest-recommend', (req, res) => {
 router.get('/get-diary-content-with-keyword', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
+        var _a;
+        const encodedKeyword = (0, utility_1.unicodeEncode)(String((_a = req.query.keyword) !== null && _a !== void 0 ? _a : ''));
+        const safeKeyword = escapeMySQLString(encodedKeyword);
         let sqlArray = [];
-        sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and uid = ${userInfo.uid} order by id desc`);
+        sqlArray.push(`select * from diaries where title like '%${safeKeyword}%' and uid = ${userInfo.uid} order by id desc`);
         (0, utility_1.getDataFromDB)('diary', sqlArray, true)
             .then(dataDiary => {
+            if (!dataDiary) {
+                res.send(new Response_1.ResponseSuccess(''));
+                return;
+            }
             (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
             dataDiary.title = unescapeMySQLString((0, utility_1.unicodeDecode)(dataDiary.title));
             dataDiary.content = unescapeMySQLString((0, utility_1.unicodeDecode)(dataDiary.content));
@@ -499,11 +507,25 @@ router.get('/get-diary-content-with-keyword', (req, res) => {
     });
 });
 router.get('/get-latest-public-diary-with-keyword', (req, res) => {
+    var _a;
+    const encodedKeyword = (0, utility_1.unicodeEncode)(String((_a = req.query.keyword) !== null && _a !== void 0 ? _a : ''));
+    const safeKeyword = escapeMySQLString(encodedKeyword);
     let sqlArray = [];
-    sqlArray.push(`select * from diaries where title like '%${req.query.keyword}%' and is_public = 1 and uid = 3 order by id desc`);
-    // 1. 先查询出日记结果
+    sqlArray.push(`
+        select diaries.*
+        from diaries
+        inner join users on diaries.uid = users.uid
+        where diaries.title like '%${safeKeyword}%'
+          and diaries.is_public = 1
+          and users.group_id = ${User_1.EnumUserGroup.ADMIN}
+        order by diaries.id desc
+    `);
     (0, utility_1.getDataFromDB)('diary', sqlArray, true)
         .then(dataDiary => {
+        if (!dataDiary) {
+            res.send(new Response_1.ResponseSuccess(''));
+            return;
+        }
         dataDiary.title = unescapeMySQLString((0, utility_1.unicodeDecode)(dataDiary.title));
         dataDiary.content = unescapeMySQLString((0, utility_1.unicodeDecode)(dataDiary.content));
         res.send(new Response_1.ResponseSuccess(dataDiary));

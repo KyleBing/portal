@@ -28,6 +28,7 @@ const LOCK_FILE_NAME = 'DATABASE_LOCK';
 const runtimeRoot = path_1.default.resolve(__dirname, '..', '..');
 const isDistRuntime = path_1.default.basename(runtimeRoot).toLowerCase() === 'dist';
 const projectRoot = isDistRuntime ? path_1.default.dirname(runtimeRoot) : runtimeRoot;
+// 运行在源码目录和 dist 目录时，配置文件落点不同，这里统一收口出需要同步写入的目标列表。
 function getConfigTargets(fileName) {
     const targetSet = new Set();
     targetSet.add(path_1.default.join(runtimeRoot, 'config', fileName));
@@ -106,6 +107,7 @@ function writeJsonFile(filePath, data) {
         yield (0, promises_1.writeFile)(filePath, JSON.stringify(data, null, 2) + '\n', 'utf8');
     });
 }
+// 保存向导配置时，同时更新当前运行环境配置和另一侧副本，避免 source / dist 配置漂移。
 function syncConfigFile(fileName, data) {
     return __awaiter(this, void 0, void 0, function* () {
         const targets = getConfigTargets(fileName);
@@ -129,6 +131,7 @@ function getDatabaseConfig() {
 function getProjectConfig() {
     return cloneProjectConfig();
 }
+// 已初始化后不再回传明文配置，前端只需要看到锁定状态和后续操作提示即可。
 function getSetupStatus() {
     const isInitialized = isDatabaseInitialized();
     return {
@@ -153,6 +156,7 @@ function getSetupStatus() {
 }
 function saveSetupConfig(payload) {
     return __awaiter(this, void 0, void 0, function* () {
+        // 安装向导只允许在首次初始化前修改，避免已经上线的数据环境被页面误改。
         if (isDatabaseInitialized()) {
             throw new Error(`系统已初始化，如需重新引导，请先删除 ${LOCK_FILE_NAME} 文件`);
         }
@@ -162,6 +166,7 @@ function saveSetupConfig(payload) {
         validateProjectConfig(projectConfig);
         yield syncConfigFile('configDatabase.json', databaseConfig);
         yield syncConfigFile('configProject.json', projectConfig);
+        // JSON 模块在 Node 进程内会被缓存，这里同步更新内存对象，让当前进程立即使用新配置。
         Object.assign(configDatabase_json_1.default, databaseConfig);
         Object.assign(configProject_json_1.default, projectConfig);
         return {
