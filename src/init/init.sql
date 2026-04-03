@@ -4,6 +4,57 @@ SET FOREIGN_KEY_CHECKS = 0;
 USE diary;
 
 -- ----------------------------
+-- Table structure for system_config
+-- ----------------------------
+DROP TABLE IF EXISTS `system_config`;
+CREATE TABLE `system_config` (
+  `id` tinyint(1) NOT NULL DEFAULT 1 COMMENT '固定主键，仅保留一行',
+  `admin_email` varchar(255) NOT NULL DEFAULT '' COMMENT '管理员联系邮箱',
+  `is_show_demo_account` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否显示演示账号',
+  `demo_account` varchar(255) NOT NULL DEFAULT '' COMMENT '演示账号',
+  `demo_account_password` varchar(255) NOT NULL DEFAULT '' COMMENT '演示账号密码',
+  `qiniu_img_base_url` varchar(255) NOT NULL DEFAULT '' COMMENT '七牛图片访问域名',
+  `qiniu_bucket_name` varchar(255) NOT NULL DEFAULT '' COMMENT '七牛 Bucket 名称',
+  `qiniu_style_suffix` varchar(255) NOT NULL DEFAULT '' COMMENT '七牛样式后缀',
+  `hefeng_weather_api_key` varchar(255) NOT NULL DEFAULT '' COMMENT '和风天气 key',
+  `hefeng_weather_api_host` varchar(255) NOT NULL DEFAULT '' COMMENT '和风天气 host',
+  `register_tip` text DEFAULT NULL COMMENT '注册提示 HTML',
+  `date_modify` datetime DEFAULT NULL COMMENT '最后修改时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+-- ----------------------------
+-- Records of system_config
+-- ----------------------------
+INSERT INTO `system_config` (
+  `id`,
+  `admin_email`,
+  `is_show_demo_account`,
+  `demo_account`,
+  `demo_account_password`,
+  `qiniu_img_base_url`,
+  `qiniu_bucket_name`,
+  `qiniu_style_suffix`,
+  `hefeng_weather_api_key`,
+  `hefeng_weather_api_host`,
+  `register_tip`,
+  `date_modify`
+) VALUES (
+  1,
+  'kylebing@163.com',
+  1,
+  'test@163.com',
+  'test',
+  'http://diary-container.kylebing.cn/',
+  'diary-container',
+  'thumbnail_600px',
+  'c5894aea6ce2495ca0f78a2963c04d57',
+  'pd3fbqjryn.re.qweatherapi.com',
+  '<p>长期未使用的用户将定期进行清理，大概一年清一次。</p><p>项目已开源</p>',
+  NULL
+);
+
+-- ----------------------------
 -- Table structure for diary_category
 -- ----------------------------
 DROP TABLE IF EXISTS `diary_category`;
@@ -64,9 +115,9 @@ CREATE TABLE `users` (
   `avatar` varchar(255) DEFAULT NULL COMMENT 'avatar图片地址',
   `city` varchar(255) DEFAULT NULL COMMENT '城市',
   `geolocation` varchar(255) DEFAULT NULL COMMENT '经纬度',
-  PRIMARY KEY (`uid`,`email`) USING BTREE,
+  PRIMARY KEY (`uid`) USING BTREE,
+  UNIQUE KEY `email` (`email`) USING BTREE,
   KEY `group_id` (`group_id`) USING BTREE,
-  KEY `uid` (`uid`) USING BTREE,
   CONSTRAINT `group_id` FOREIGN KEY (`group_id`) REFERENCES `user_group` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2526 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=COMPACT;
 

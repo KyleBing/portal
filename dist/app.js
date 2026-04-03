@@ -28,6 +28,9 @@ app.use('/init', init_1.default);
 // 安装引导
 const setup_1 = __importDefault(require("./src/setup/setup"));
 app.use('/setup', setup_1.default);
+// 系统配置
+const systemConfig_1 = __importDefault(require("./src/systemConfig/systemConfig"));
+app.use('/system-config', systemConfig_1.default);
 // 邀请码
 const invitation_1 = __importDefault(require("./src/user/invitation"));
 app.use('/invitation', invitation_1.default);

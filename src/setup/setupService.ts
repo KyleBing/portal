@@ -76,7 +76,10 @@ function normalizeDatabaseConfig(rawConfig: Partial<DatabaseConfig>): DatabaseCo
         user: String(rawConfig.user || '').trim(),
         password: String(rawConfig.password || ''),
         port: Number(rawConfig.port || 3306),
-        multipleStatements: Boolean(rawConfig.multipleStatements),
+        multipleStatements:
+            rawConfig.multipleStatements !== undefined
+                ? Boolean(rawConfig.multipleStatements)
+                : configDatabase.multipleStatements,
         timezone: String(rawConfig.timezone || '').trim()
     }
 }
