@@ -14,10 +14,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
-const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const utility_1 = require("../utility");
 const qiniu_1 = __importDefault(require("qiniu"));
 const User_1 = require("entity/User");
+const systemConfigService_1 = require("../systemConfig/systemConfigService");
 const router = express_1.default.Router();
 /**
  * 七牛云图片 处理
@@ -27,8 +27,8 @@ const DATA_NAME = '七牛云图片';
 const CURRENT_TABLE = 'image_qiniu';
 // Initialize Qiniu Service
 class QiniuService {
-    constructor() {
-        this.mac = new qiniu_1.default.auth.digest.Mac(configProject_json_1.default.qiniu_access_key, configProject_json_1.default.qiniu_secret_key);
+    constructor(accessKey, secretKey) {
+        this.mac = new qiniu_1.default.auth.digest.Mac(accessKey, secretKey);
         this.config = new qiniu_1.default.conf.Config();
         this.bucketManager = new qiniu_1.default.rs.BucketManager(this.mac, this.config);
     }
@@ -74,27 +74,33 @@ class QiniuService {
         });
     }
 }
-const qiniuService = new QiniuService();
+function getQiniuService() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const systemConfig = yield (0, systemConfigService_1.getAdminSystemConfig)();
+        if (!systemConfig.qiniu_access_key || !systemConfig.qiniu_secret_key) {
+            throw new Error('请先在系统配置中填写七牛 Access Key 和 Secret Key');
+        }
+        return new QiniuService(systemConfig.qiniu_access_key, systemConfig.qiniu_secret_key);
+    });
+}
 // 生成 token 根据 bucket
-router.get('/', (req, res) => {
-    if (req.query.bucket) {
-        if (req.query.hahaha) {
-            res.send(new Response_1.ResponseSuccess(qiniuService.getUploadToken(String(req.query.bucket)), '凭证获取成功'));
-        }
-        else {
-            (0, utility_1.verifyAuthorization)(req)
-                .then(() => {
-                res.send(new Response_1.ResponseSuccess(qiniuService.getUploadToken(String(req.query.bucket)), '凭证获取成功'));
-            })
-                .catch(() => {
-                res.send(new Response_1.ResponseError('', '参数错误'));
-            });
-        }
-    }
-    else {
+router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.query.bucket) {
         res.send(new Response_1.ResponseError('', '缺少 bucket 参数'));
+        return;
     }
-});
+    try {
+        if (!req.query.hahaha) {
+            yield (0, utility_1.verifyAuthorization)(req);
+        }
+        const qiniuService = yield getQiniuService();
+        res.send(new Response_1.ResponseSuccess(qiniuService.getUploadToken(String(req.query.bucket)), '凭证获取成功'));
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : '参数错误';
+        res.send(new Response_1.ResponseError('', message));
+    }
+}));
 router.get('/list', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
@@ -173,7 +179,8 @@ router.delete('/delete', (req, res) => {
             if (!fileInfo) {
                 return res.send(new Response_1.ResponseError('', '文件不存在'));
             }
-            qiniuService.deleteFile(fileInfo.bucket, fileInfo.id)
+            getQiniuService()
+                .then(qiniuService => qiniuService.deleteFile(fileInfo.bucket, fileInfo.id))
                 .then(() => {
                 let sqlArray = [];
                 sqlArray.push(`
@@ -208,8 +215,8 @@ router.delete('/batch-delete', (req, res) => {
             if (!fileInfos || fileInfos.length === 0) {
                 return res.send(new Response_1.ResponseError('', '文件不存在'));
             }
-            const deletePromises = fileInfos.map(file => qiniuService.deleteFile(file.bucket, file.id));
-            Promise.all(deletePromises)
+            getQiniuService()
+                .then(qiniuService => Promise.all(fileInfos.map(file => qiniuService.deleteFile(file.bucket, file.id))))
                 .then(() => {
                 let sqlArray = [];
                 sqlArray.push(`

@@ -1,10 +1,18 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const configProject_json_1 = __importDefault(require("../../config/configProject.json"));
 const Response_1 = require("../response/Response");
 const utility_1 = require("../utility");
 const router = express_1.default.Router();
@@ -12,32 +20,38 @@ const DB_NAME = 'diary';
 const DATA_NAME = '用户';
 const CURRENT_TABLE = 'users';
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const systemConfigService_1 = require("../systemConfig/systemConfigService");
 /* GET users listing. */
-router.post('/register', (req, res) => {
-    // TODO: 验证传过来的数据库必填项
-    if (req.body.invitationCode === configProject_json_1.default.invitation_code) { // 万能全局邀请码
-        registerUser(req, res);
-    }
-    else {
-        (0, utility_1.getDataFromDB)(DB_NAME, [`select * from invitations where id = '${req.body.invitationCode}'`], true)
-            .then(result => {
-            if (result) {
-                if (result.binding_uid) {
-                    res.send(new Response_1.ResponseError('', '邀请码已被使用'));
-                }
-                else {
-                    registerUser(req, res);
-                }
+router.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userCountResult = yield (0, utility_1.getDataFromDB)(DB_NAME, [`select count(*) as userCount from ${CURRENT_TABLE}`], true);
+        if (Number((userCountResult === null || userCountResult === void 0 ? void 0 : userCountResult.userCount) || 0) === 0) {
+            registerUser(req, res);
+            return;
+        }
+        const systemConfig = yield (0, systemConfigService_1.getAdminSystemConfig)();
+        const invitationCode = String(req.body.invitationCode || '').trim();
+        if (systemConfig.invitation_code && invitationCode === systemConfig.invitation_code) {
+            registerUser(req, res);
+            return;
+        }
+        const result = yield (0, utility_1.getDataFromDB)(DB_NAME, [`select * from invitations where id = '${invitationCode}'`], true);
+        if (result) {
+            if (result.binding_uid) {
+                res.send(new Response_1.ResponseError('', '邀请码已被使用'));
             }
             else {
-                res.send(new Response_1.ResponseError('', '邀请码无效'));
+                registerUser(req, res);
             }
-        })
-            .catch(err => {
-            res.send(new Response_1.ResponseError(err, '数据库请求出错'));
-        });
+        }
+        else {
+            res.send(new Response_1.ResponseError('', '邀请码无效'));
+        }
     }
-});
+    catch (err) {
+        res.send(new Response_1.ResponseError(err, '数据库请求出错'));
+    }
+}));
 function registerUser(req, res) {
     checkEmailOrUserNameExist(req.body.email, req.body.username)
         .then(dataEmailExistArray => {
@@ -269,13 +283,14 @@ router.put('/set-profile', (req, res) => {
     // 1. 验证用户信息是否正确
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === 'test@163.com') {
-            res.send(new Response_1.ResponseError('', '演示帐户不允许修改资料哦'));
-            return;
-        }
-        let avatar = req.body.avatar || '';
-        let sqlArray = [];
-        sqlArray.push(`
+        return (0, systemConfigService_1.isConfiguredDemoAccountEmail)(userInfo.email).then(isDemo => {
+            if (isDemo) {
+                res.send(new Response_1.ResponseError('', '演示帐户不允许修改资料哦'));
+                return;
+            }
+            let avatar = req.body.avatar || '';
+            let sqlArray = [];
+            sqlArray.push(`
                 update ${CURRENT_TABLE}
                 set ${CURRENT_TABLE}.nickname       = '${req.body.nickname}',
                     ${CURRENT_TABLE}.phone          = '${req.body.phone}',
@@ -284,16 +299,17 @@ router.put('/set-profile', (req, res) => {
                     ${CURRENT_TABLE}.geolocation    = '${req.body.geolocation}'
                     WHERE uid = '${userInfo.uid}'
             `);
-        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray, true)
-            .then(data => {
-            (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
-            (0, utility_1.verifyAuthorization)(req)
-                .then(newUserInfo => {
-                res.send(new Response_1.ResponseSuccess(newUserInfo, '修改成功'));
+            (0, utility_1.getDataFromDB)(DB_NAME, sqlArray, true)
+                .then(data => {
+                (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
+                (0, utility_1.verifyAuthorization)(req)
+                    .then(newUserInfo => {
+                    res.send(new Response_1.ResponseSuccess(newUserInfo, '修改成功'));
+                });
+            })
+                .catch(err => {
+                res.send(new Response_1.ResponseError(err, '修改失败'));
             });
-        })
-            .catch(err => {
-            res.send(new Response_1.ResponseError(err, '修改失败'));
         });
     })
         .catch(err => {
@@ -397,13 +413,15 @@ router.put('/change-password', (req, res) => {
     }
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === 'test@163.com') {
-            res.send(new Response_1.ResponseError('', '演示帐户密码不允许修改'));
-            return;
-        }
-        bcrypt_1.default.hash(req.body.password, 10, (err, encryptPasswordNew) => {
-            let sqlArray = [`update ${CURRENT_TABLE} set password = '${encryptPasswordNew}' where email='${userInfo.email}'`];
-            (0, utility_1.operate_db_and_return_added_id)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改密码', res);
+        return (0, systemConfigService_1.isConfiguredDemoAccountEmail)(userInfo.email).then(isDemo => {
+            if (isDemo) {
+                res.send(new Response_1.ResponseError('', '演示帐户密码不允许修改'));
+                return;
+            }
+            bcrypt_1.default.hash(req.body.password, 10, (err, encryptPasswordNew) => {
+                let sqlArray = [`update ${CURRENT_TABLE} set password = '${encryptPasswordNew}' where email='${userInfo.email}'`];
+                (0, utility_1.operate_db_and_return_added_id)(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改密码', res);
+            });
         });
     })
         .catch(err => {
@@ -414,21 +432,21 @@ router.put('/change-password', (req, res) => {
 router.delete('/destroy-account', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        // 演示帐户时不允许执行注销操作
-        if (userInfo.email === 'test@163.com') {
-            res.send(new Response_1.ResponseError('', '演示帐户不允许执行此操作'));
-            return;
-        }
-        let connection = (0, utility_1.getMysqlConnection)(DB_NAME);
-        connection.beginTransaction(transactionError => {
-            if (transactionError) {
-                connection.rollback(err => {
-                    res.send(new Response_1.ResponseError('', 'beginTransaction: 事务执行失败，已回滚'));
-                });
-                connection.end();
+        return (0, systemConfigService_1.isConfiguredDemoAccountEmail)(userInfo.email).then(isDemo => {
+            if (isDemo) {
+                res.send(new Response_1.ResponseError('', '演示帐户不允许执行此操作'));
+                return;
             }
-            else {
-                let sql = `
+            let connection = (0, utility_1.getMysqlConnection)(DB_NAME);
+            connection.beginTransaction(transactionError => {
+                if (transactionError) {
+                    connection.rollback(err => {
+                        res.send(new Response_1.ResponseError('', 'beginTransaction: 事务执行失败，已回滚'));
+                    });
+                    connection.end();
+                }
+                else {
+                    let sql = `
                                 delete from diaries where uid = ${userInfo.uid}; 
                                 delete from invitations where binding_uid = ${userInfo.uid}; 
                                 delete from map_pointer where uid = ${userInfo.uid}; 
@@ -437,28 +455,29 @@ router.delete('/destroy-account', (req, res) => {
                                 delete from qrs where uid = ${userInfo.uid}; 
                                 delete from ${CURRENT_TABLE} where uid = ${userInfo.uid}; 
                                 `;
-                connection.query(sql, [], (queryErr, result) => {
-                    if (queryErr) {
-                        connection.rollback(err => {
-                            res.send(new Response_1.ResponseError(queryErr, 'query: 事务执行失败，已回滚'));
-                        });
-                        // res.send(new ResponseError(err, '数据库请求错误'))
-                    }
-                    else {
-                        connection.commit(commitError => {
-                            if (commitError) {
-                                connection.rollback(err => {
-                                    res.send(new Response_1.ResponseError(err, 'transaction.commit: 事务执行失败，已回滚'));
-                                });
-                            }
-                            else {
-                                res.send(new Response_1.ResponseSuccess(result, '事务执行成功'));
-                            }
-                        });
-                    }
-                    connection.end();
-                });
-            }
+                    connection.query(sql, [], (queryErr, result) => {
+                        if (queryErr) {
+                            connection.rollback(err => {
+                                res.send(new Response_1.ResponseError(queryErr, 'query: 事务执行失败，已回滚'));
+                            });
+                            // res.send(new ResponseError(err, '数据库请求错误'))
+                        }
+                        else {
+                            connection.commit(commitError => {
+                                if (commitError) {
+                                    connection.rollback(err => {
+                                        res.send(new Response_1.ResponseError(err, 'transaction.commit: 事务执行失败，已回滚'));
+                                    });
+                                }
+                                else {
+                                    res.send(new Response_1.ResponseSuccess(result, '事务执行成功'));
+                                }
+                            });
+                        }
+                        connection.end();
+                    });
+                }
+            });
         });
     })
         .catch(errInfo => {

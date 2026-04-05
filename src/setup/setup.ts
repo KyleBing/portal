@@ -7,8 +7,14 @@ import {getSetupStatus, saveSetupConfig} from "./setupService"
 const router = express.Router()
 
 // 安装向导首页先读取当前状态，决定是继续配置、执行初始化还是直接提示已完成。
-router.get('/status', (_req, res) => {
-    res.send(new ResponseSuccess(getSetupStatus(), '请求成功'))
+router.get('/status', async (_req, res) => {
+    try {
+        const data = await getSetupStatus()
+        res.send(new ResponseSuccess(data, '请求成功'))
+    } catch (err) {
+        const message = err instanceof Error ? err.message : '读取安装状态失败'
+        res.send(new ResponseError(err, message))
+    }
 })
 
 // 写入数据库配置和项目配置，但只允许在初始化前执行。

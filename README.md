@@ -126,19 +126,7 @@
 }
 ```
 
-和项目配置文件 `/dist/config/configProject.json`
-
-```json
-{
-  "invitation_code": "----",  // 万能注册邀请码
-
-  "year_data_start": 1991,    // 数据库数据开始时间
-
-  "qiniu_access_key": "",     // 七牛云 access_key
-  "qiniu_secret_key": ""      // 七牛云 secret_key
-}
-
-```
+初始化完成并使用首个账号登录后，可在“系统配置”页面维护项目配置、通用邀请码、七牛云信息等服务端配置。
 
 ### 3. 启动程序
 这里推荐使用 pm2 管理程序，创建名为 `diary` 的 pm2 项目，并启动

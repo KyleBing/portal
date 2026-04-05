@@ -19,10 +19,6 @@ RUN yarn install --frozen-lockfile --production=false
 COPY . .
 
 # Build arguments for backend configuration
-ARG INVITATION_CODE=----
-ARG YEAR_DATA_START=1991
-ARG QINIU_ACCESS_KEY=
-ARG QINIU_SECRET_KEY=
 ARG DB_HOST=mysql
 ARG DB_USER=root
 ARG DB_PASSWORD=rootpassword
@@ -30,13 +26,6 @@ ARG DB_PORT=3306
 ARG DB_TIMEZONE=
 
 # Create dynamic config files
-RUN echo '{ \
-    "invitation_code": "'$INVITATION_CODE'", \
-    "year_data_start": '$YEAR_DATA_START', \
-    "qiniu_access_key": "'$QINIU_ACCESS_KEY'", \
-    "qiniu_secret_key": "'$QINIU_SECRET_KEY'" \
-}' > config/configProject.json
-
 RUN echo '{ \
     "host": "'$DB_HOST'", \
     "user": "'$DB_USER'", \

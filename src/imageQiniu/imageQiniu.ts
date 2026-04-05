@@ -1,6 +1,5 @@
 import express, { Request, Response, NextFunction } from "express"
 import {ResponseError, ResponseSuccess} from "../response/Response";
-import configProject from "../../config/configProject.json"
 import {
     dateFormatter,
     getDataFromDB, operate_db_and_return_added_id, operate_db_without_return,
@@ -9,6 +8,7 @@ import {
 } from "../utility";
 import qiniu from 'qiniu'
 import { EnumUserGroup } from "entity/User";
+import {getAdminSystemConfig} from "../systemConfig/systemConfigService"
 const router = express.Router()
 
 /**
@@ -25,10 +25,10 @@ class QiniuService {
     private config: qiniu.conf.Config;
     private bucketManager: qiniu.rs.BucketManager;
 
-    constructor() {
+    constructor(accessKey: string, secretKey: string) {
         this.mac = new qiniu.auth.digest.Mac(
-            configProject.qiniu_access_key,
-            configProject.qiniu_secret_key
+            accessKey,
+            secretKey
         );
         this.config = new qiniu.conf.Config();
         this.bucketManager = new qiniu.rs.BucketManager(this.mac, this.config);
@@ -73,24 +73,35 @@ class QiniuService {
     }
 }
 
-const qiniuService = new QiniuService();
+async function getQiniuService() {
+    const systemConfig = await getAdminSystemConfig()
+    if (!systemConfig.qiniu_access_key || !systemConfig.qiniu_secret_key) {
+        throw new Error('请先在系统配置中填写七牛 Access Key 和 Secret Key')
+    }
+
+    return new QiniuService(
+        systemConfig.qiniu_access_key,
+        systemConfig.qiniu_secret_key
+    )
+}
 
 // 生成 token 根据 bucket
-router.get('/', (req, res) => {
-    if (req.query.bucket){
-        if (req.query.hahaha){
-            res.send(new ResponseSuccess(qiniuService.getUploadToken(String(req.query.bucket)), '凭证获取成功'))
-        } else {
-            verifyAuthorization(req)
-                .then(() => {
-                    res.send(new ResponseSuccess(qiniuService.getUploadToken(String(req.query.bucket)), '凭证获取成功'))
-                })
-                .catch(() => {
-                    res.send(new ResponseError('', '参数错误'))
-                })
-        }
-    } else {
+router.get('/', async (req, res) => {
+    if (!req.query.bucket) {
         res.send(new ResponseError('', '缺少 bucket 参数'))
+        return
+    }
+
+    try {
+        if (!req.query.hahaha) {
+            await verifyAuthorization(req)
+        }
+
+        const qiniuService = await getQiniuService()
+        res.send(new ResponseSuccess(qiniuService.getUploadToken(String(req.query.bucket)), '凭证获取成功'))
+    } catch (err) {
+        const message = err instanceof Error ? err.message : '参数错误'
+        res.send(new ResponseError('', message))
     }
 })
 
@@ -192,7 +203,8 @@ router.delete('/delete', (req, res) => {
                 if (!fileInfo) {
                     return res.send(new ResponseError('', '文件不存在'));
                 }
-                qiniuService.deleteFile(fileInfo.bucket, fileInfo.id)
+                getQiniuService()
+                    .then(qiniuService => qiniuService.deleteFile(fileInfo.bucket, fileInfo.id))
                     .then(() => {
                         let sqlArray = [];
                         sqlArray.push(`
@@ -233,10 +245,10 @@ router.delete('/batch-delete', (req, res) => {
                 if (!fileInfos || fileInfos.length === 0) {
                     return res.send(new ResponseError('', '文件不存在'));
                 }
-                const deletePromises = fileInfos.map(file =>
-                    qiniuService.deleteFile(file.bucket, file.id)
-                );
-                Promise.all(deletePromises)
+                getQiniuService()
+                    .then(qiniuService => Promise.all(fileInfos.map(file =>
+                        qiniuService.deleteFile(file.bucket, file.id)
+                    )))
                     .then(() => {
                         let sqlArray = [];
                         sqlArray.push(`

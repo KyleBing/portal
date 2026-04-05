@@ -18,9 +18,16 @@ const initService_1 = require("../init/initService");
 const setupService_1 = require("./setupService");
 const router = express_1.default.Router();
 // 安装向导首页先读取当前状态，决定是继续配置、执行初始化还是直接提示已完成。
-router.get('/status', (_req, res) => {
-    res.send(new Response_1.ResponseSuccess((0, setupService_1.getSetupStatus)(), '请求成功'));
-});
+router.get('/status', (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield (0, setupService_1.getSetupStatus)();
+        res.send(new Response_1.ResponseSuccess(data, '请求成功'));
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : '读取安装状态失败';
+        res.send(new Response_1.ResponseError(err, message));
+    }
+}));
 // 写入数据库配置和项目配置，但只允许在初始化前执行。
 router.post('/config', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

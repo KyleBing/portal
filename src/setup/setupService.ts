@@ -3,25 +3,18 @@ import {mkdir, writeFile} from "fs/promises"
 import path from "path"
 
 import configDatabase from "../../config/configDatabase.json"
-import configProject from "../../config/configProject.json"
 import {DatabaseConfig} from "entity/DatabaseConfig"
-
-export interface ProjectConfig {
-    invitation_code: string
-    year_data_start: number
-    qiniu_access_key: string
-    qiniu_secret_key: string
-}
+import {getDataFromDB} from "../utility"
 
 export interface SetupStatus {
-    isInitialized: boolean
-    lockFileName: string
-    configFiles: string[]
+    isInitialized: boolean  // 是否已初始化
+    hasRegisteredUsers: boolean  // 是否已注册用户
+    lockFileName: string  // 锁文件名
+    configFiles: string[]  // 配置文件列表
     config: null | {
         databaseConfig: DatabaseConfig
-        projectConfig: ProjectConfig
-    }
-    restartTips: string[]
+    }  // 数据库配置
+    restartTips: string[]  // 重启提示
 }
 
 const LOCK_FILE_NAME = 'DATABASE_LOCK'
@@ -61,15 +54,6 @@ function cloneDatabaseConfig(): DatabaseConfig {
     }
 }
 
-function cloneProjectConfig(): ProjectConfig {
-    return {
-        invitation_code: configProject.invitation_code,
-        year_data_start: configProject.year_data_start,
-        qiniu_access_key: configProject.qiniu_access_key,
-        qiniu_secret_key: configProject.qiniu_secret_key
-    }
-}
-
 function normalizeDatabaseConfig(rawConfig: Partial<DatabaseConfig>): DatabaseConfig {
     return {
         host: String(rawConfig.host || '').trim(),
@@ -84,15 +68,6 @@ function normalizeDatabaseConfig(rawConfig: Partial<DatabaseConfig>): DatabaseCo
     }
 }
 
-function normalizeProjectConfig(rawConfig: Partial<ProjectConfig>): ProjectConfig {
-    return {
-        invitation_code: String(rawConfig.invitation_code || '').trim(),
-        year_data_start: Number(rawConfig.year_data_start || 0),
-        qiniu_access_key: String(rawConfig.qiniu_access_key || '').trim(),
-        qiniu_secret_key: String(rawConfig.qiniu_secret_key || '').trim()
-    }
-}
-
 function validateDatabaseConfig(databaseConfig: DatabaseConfig) {
     if (!databaseConfig.host) {
         throw new Error('数据库主机不能为空')
@@ -102,15 +77,6 @@ function validateDatabaseConfig(databaseConfig: DatabaseConfig) {
     }
     if (!Number.isInteger(databaseConfig.port) || databaseConfig.port <= 0 || databaseConfig.port > 65535) {
         throw new Error('数据库端口不正确')
-    }
-}
-
-function validateProjectConfig(projectConfig: ProjectConfig) {
-    if (!projectConfig.invitation_code) {
-        throw new Error('通用邀请码不能为空')
-    }
-    if (!Number.isInteger(projectConfig.year_data_start) || projectConfig.year_data_start <= 0) {
-        throw new Error('数据起始年份不正确')
     }
 }
 
@@ -143,29 +109,37 @@ export function getDatabaseConfig(): DatabaseConfig {
     return cloneDatabaseConfig()
 }
 
-export function getProjectConfig(): ProjectConfig {
-    return cloneProjectConfig()
+async function hasRegisteredUsers() {
+    if (!isDatabaseInitialized()) {
+        return false
+    }
+
+    try {
+        const result = await getDataFromDB('diary', ['select count(*) as userCount from users'], true)
+        return Number(result?.userCount || 0) > 0
+    } catch (_err) {
+        return false
+    }
 }
 
 // 已初始化后不再回传明文配置，前端只需要看到锁定状态和后续操作提示即可。
-export function getSetupStatus(): SetupStatus {
+export async function getSetupStatus(): Promise<SetupStatus> {
     const isInitialized = isDatabaseInitialized()
 
     return {
         isInitialized,
+        hasRegisteredUsers: await hasRegisteredUsers(),
         lockFileName: LOCK_FILE_NAME,
         configFiles: [
             'config/configDatabase.json',
-            'config/configProject.json',
-            'dist/config/configDatabase.json',
-            'dist/config/configProject.json'
+            'dist/config/configDatabase.json'
         ],
         config: isInitialized ? null : {
-            databaseConfig: getDatabaseConfig(),
-            projectConfig: getProjectConfig()
+            databaseConfig: getDatabaseConfig()
         },
         restartTips: [
             '保存后会同步写入配置文件，并立即更新当前服务进程内存中的配置。',
+            '项目配置、通用邀请码和七牛后台密钥请在初始化完成后，到系统配置页中维护。',
             '为了确保后续重启后的运行结果与当前一致，建议完成向导后重启 portal 服务。',
             '如果你使用 pm2，可以执行 pm2 restart portal。'
         ]
@@ -174,7 +148,6 @@ export function getSetupStatus(): SetupStatus {
 
 export async function saveSetupConfig(payload: {
     databaseConfig?: Partial<DatabaseConfig>
-    projectConfig?: Partial<ProjectConfig>
 }) {
     // 安装向导只允许在首次初始化前修改，避免已经上线的数据环境被页面误改。
     if (isDatabaseInitialized()) {
@@ -182,20 +155,15 @@ export async function saveSetupConfig(payload: {
     }
 
     const databaseConfig = normalizeDatabaseConfig(payload.databaseConfig || {})
-    const projectConfig = normalizeProjectConfig(payload.projectConfig || {})
 
     validateDatabaseConfig(databaseConfig)
-    validateProjectConfig(projectConfig)
 
     await syncConfigFile('configDatabase.json', databaseConfig)
-    await syncConfigFile('configProject.json', projectConfig)
 
     // JSON 模块在 Node 进程内会被缓存，这里同步更新内存对象，让当前进程立即使用新配置。
     Object.assign(configDatabase, databaseConfig)
-    Object.assign(configProject, projectConfig)
 
     return {
-        databaseConfig: getDatabaseConfig(),
-        projectConfig: getProjectConfig()
+        databaseConfig: getDatabaseConfig()
     }
 }

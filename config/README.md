@@ -1,15 +1,5 @@
 # 配置文件说明
 
-### `configProject.json`
-```bash
-"invitation_code": "----",  // 万能注册邀请码
-
-"year_data_start": 1991,    // 数据库数据开始时间
-
-"qiniu_access_key": "",     // 七牛云 access_key
-"qiniu_secret_key": ""      // 七牛云 secret_key
-```
-
 ### `configDatabase.json`
 
 ```bash

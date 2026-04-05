@@ -4,7 +4,6 @@ import {
     getDataFromDB,
     verifyAuthorization
 } from "../utility";
-import configProject from "../../config/configProject.json"
 const router = express.Router()
 
 // 统计数据，后台用的
@@ -135,43 +134,40 @@ router.get('/category', (req, res) => {
 router.get('/year', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            let yearNow = new Date().getFullYear()
-            let sqlRequests = []
-            for (let year = configProject.year_data_start; year <= yearNow; year++) {
-                let sqlArray = []
-                sqlArray.push(`
-                select 
-                    date_format(date,'%m') as month,
-                    count(*) as 'count',
-                    ${year} as year
-                    from diaries 
-                where year(date) = ${year}
-                    and uid = ${userInfo.uid}
-                group by month
-                order by month desc
-        `)
-                sqlRequests.push(getDataFromDB('diary', sqlArray))
-            }
-            // 这里有个异步运算的弊端，所有结果返回之后，我需要重新给他们排序，因为他们的返回顺序是不定的。难搞哦
-            Promise
-                .all(sqlRequests)
-                .then(results => {
-                    let response = []
-                    results.forEach(monthDataArray => {
-                        if (monthDataArray.length > 0) { // 只统计有数据的年份
-                            response.push({
-                                year: monthDataArray[0].year,
-                                count: monthDataArray.map(item => item.count).reduce((a, b) => a + b),
-                                months: monthDataArray.map(item => {
-                                    item.id = `${item.year}${item.month}`
-                                    delete item.year; 
-                                    return item
-                                })
+            getDataFromDB('diary', [`
+                select
+                    year(date) as year,
+                    date_format(date, '%m') as month,
+                    count(*) as count
+                from diaries
+                where uid = ${userInfo.uid}
+                group by year(date), date_format(date, '%m')
+                order by year(date) asc, month desc
+            `])
+                .then(rows => {
+                    const yearMap = new Map<number, {year: number, count: number, months: Array<{month: string, count: number, id: string}>}>()
+                    rows.forEach(item => {
+                        const year = Number(item.year)
+                        if (!yearMap.has(year)) {
+                            yearMap.set(year, {
+                                year,
+                                count: 0,
+                                months: []
                             })
                         }
+
+                        const yearItem = yearMap.get(year)!
+                        const count = Number(item.count || 0)
+                        const month = String(item.month || '')
+                        yearItem.count += count
+                        yearItem.months.push({
+                            month,
+                            count,
+                            id: `${year}${month}`
+                        })
                     })
-                    response.sort((a, b) => a.year > b.year ? 1 : -1)
-                    res.send(new ResponseSuccess(response))
+
+                    res.send(new ResponseSuccess(Array.from(yearMap.values())))
                 })
                 .catch(err => {
                     res.send(new ResponseError(err, err.message))

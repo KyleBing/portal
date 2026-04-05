@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const Response_1 = require("../response/Response");
 const utility_1 = require("../utility");
 const User_1 = require("entity/User");
+const systemConfigService_1 = require("../systemConfig/systemConfigService");
 const router = express_1.default.Router();
 // Function to escape MySQL special characters
 function escapeMySQLString(str) {
@@ -537,19 +538,21 @@ router.get('/get-latest-public-diary-with-keyword', (req, res) => {
 router.post('/clear', (req, res) => {
     (0, utility_1.verifyAuthorization)(req)
         .then(userInfo => {
-        if (userInfo.email === 'test@163.com') {
-            res.send(new Response_1.ResponseError('', '演示帐户不允许执行此操作'));
-            return;
-        }
-        let sqlArray = [];
-        sqlArray.push(`delete from diaries where uid=${userInfo.uid}`);
-        (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
-            .then(data => {
-            (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
-            res.send(new Response_1.ResponseSuccess(data, `清空成功：${data.affectedRows} 条日记`));
-        })
-            .catch(err => {
-            res.send(new Response_1.ResponseError(err, err.message));
+        return (0, systemConfigService_1.isConfiguredDemoAccountEmail)(userInfo.email).then(isDemo => {
+            if (isDemo) {
+                res.send(new Response_1.ResponseError('', '演示帐户不允许执行此操作'));
+                return;
+            }
+            let sqlArray = [];
+            sqlArray.push(`delete from diaries where uid=${userInfo.uid}`);
+            (0, utility_1.getDataFromDB)(DB_NAME, sqlArray)
+                .then(data => {
+                (0, utility_1.updateUserLastLoginTime)(userInfo.uid);
+                res.send(new Response_1.ResponseSuccess(data, `清空成功：${data.affectedRows} 条日记`));
+            })
+                .catch(err => {
+                res.send(new Response_1.ResponseError(err, err.message));
+            });
         });
     })
         .catch(verified => {

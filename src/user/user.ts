@@ -1,5 +1,4 @@
 import express from "express"
-import configProject from "../../config/configProject.json"
 import {ResponseError, ResponseSuccess} from "../response/Response";
 import {
     unicodeDecode,
@@ -17,29 +16,36 @@ const CURRENT_TABLE = 'users'
 
 import bcrypt from "bcrypt"
 
-import {isConfiguredDemoAccountEmail} from "../systemConfig/systemConfigService"
+import {getAdminSystemConfig, isConfiguredDemoAccountEmail} from "../systemConfig/systemConfigService"
 
 /* GET users listing. */
-router.post('/register', (req, res) => {
-    // TODO: 验证传过来的数据库必填项
-    if (req.body.invitationCode === configProject.invitation_code){ // 万能全局邀请码
-        registerUser(req, res)
-    } else {
-        getDataFromDB(DB_NAME, [`select * from invitations where id = '${req.body.invitationCode}'`], true)
-            .then(result => {
-                if (result){
-                    if (result.binding_uid){
-                        res.send(new ResponseError('', '邀请码已被使用'))
-                    } else {
-                        registerUser(req, res)
-                    }
-                } else {
-                    res.send(new ResponseError('', '邀请码无效'))
-                }
-            })
-            .catch(err => {
-                res.send(new ResponseError(err, '数据库请求出错'))
-            })
+router.post('/register', async (req, res) => {
+    try {
+        const userCountResult = await getDataFromDB(DB_NAME, [`select count(*) as userCount from ${CURRENT_TABLE}`], true)
+        if (Number(userCountResult?.userCount || 0) === 0) {
+            registerUser(req, res)
+            return
+        }
+
+        const systemConfig = await getAdminSystemConfig()
+        const invitationCode = String(req.body.invitationCode || '').trim()
+        if (systemConfig.invitation_code && invitationCode === systemConfig.invitation_code) {
+            registerUser(req, res)
+            return
+        }
+
+        const result = await getDataFromDB(DB_NAME, [`select * from invitations where id = '${invitationCode}'`], true)
+        if (result) {
+            if (result.binding_uid) {
+                res.send(new ResponseError('', '邀请码已被使用'))
+            } else {
+                registerUser(req, res)
+            }
+        } else {
+            res.send(new ResponseError('', '邀请码无效'))
+        }
+    } catch (err) {
+        res.send(new ResponseError(err, '数据库请求出错'))
     }
 })
 
