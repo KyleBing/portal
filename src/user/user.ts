@@ -17,6 +17,8 @@ const CURRENT_TABLE = 'users'
 
 import bcrypt from "bcrypt"
 
+import {isConfiguredDemoAccountEmail} from "../systemConfig/systemConfigService"
+
 /* GET users listing. */
 router.post('/register', (req, res) => {
     // TODO: 验证传过来的数据库必填项
@@ -299,13 +301,14 @@ router.put('/set-profile', (req, res) => {
     // 1. 验证用户信息是否正确
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === 'test@163.com'){
-                res.send(new ResponseError('', '演示帐户不允许修改资料哦'))
-                return
-            }
-            let avatar = req.body.avatar || ''
-            let sqlArray = []
-            sqlArray.push(`
+            return isConfiguredDemoAccountEmail(userInfo.email).then(isDemo => {
+                if (isDemo) {
+                    res.send(new ResponseError('', '演示帐户不允许修改资料哦'))
+                    return
+                }
+                let avatar = req.body.avatar || ''
+                let sqlArray = []
+                sqlArray.push(`
                 update ${CURRENT_TABLE}
                 set ${CURRENT_TABLE}.nickname       = '${req.body.nickname}',
                     ${CURRENT_TABLE}.phone          = '${req.body.phone}',
@@ -314,17 +317,18 @@ router.put('/set-profile', (req, res) => {
                     ${CURRENT_TABLE}.geolocation    = '${req.body.geolocation}'
                     WHERE uid = '${userInfo.uid}'
             `)
-            getDataFromDB(DB_NAME, sqlArray, true)
-                .then(data => {
-                    updateUserLastLoginTime(userInfo.uid)
-                    verifyAuthorization(req)
-                        .then(newUserInfo => {
-                            res.send(new ResponseSuccess(newUserInfo, '修改成功'))
-                        })
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, '修改失败'))
-                })
+                getDataFromDB(DB_NAME, sqlArray, true)
+                    .then(data => {
+                        updateUserLastLoginTime(userInfo.uid)
+                        verifyAuthorization(req)
+                            .then(newUserInfo => {
+                                res.send(new ResponseSuccess(newUserInfo, '修改成功'))
+                            })
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err, '修改失败'))
+                    })
+            })
         })
         .catch(err => {
             res.send(new ResponseError(err, '无权操作'))
@@ -433,13 +437,15 @@ router.put('/change-password', (req, res) => {
 
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === 'test@163.com'){
-                res.send(new ResponseError('', '演示帐户密码不允许修改'))
-                return
-            }
-            bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
-                let sqlArray = [`update ${CURRENT_TABLE} set password = '${encryptPasswordNew}' where email='${userInfo.email}'`]
-                operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改密码', res)
+            return isConfiguredDemoAccountEmail(userInfo.email).then(isDemo => {
+                if (isDemo) {
+                    res.send(new ResponseError('', '演示帐户密码不允许修改'))
+                    return
+                }
+                bcrypt.hash(req.body.password, 10, (err, encryptPasswordNew) => {
+                    let sqlArray = [`update ${CURRENT_TABLE} set password = '${encryptPasswordNew}' where email='${userInfo.email}'`]
+                    operate_db_and_return_added_id(userInfo.uid, DB_NAME, DATA_NAME, sqlArray, '修改密码', res)
+                })
             })
         })
         .catch(err => {
@@ -452,12 +458,12 @@ router.put('/change-password', (req, res) => {
 router.delete('/destroy-account', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            // 演示帐户时不允许执行注销操作
-            if (userInfo.email === 'test@163.com'){
-                res.send(new ResponseError('', '演示帐户不允许执行此操作'))
-                return
-            }
-            let connection = getMysqlConnection(DB_NAME)
+            return isConfiguredDemoAccountEmail(userInfo.email).then(isDemo => {
+                if (isDemo) {
+                    res.send(new ResponseError('', '演示帐户不允许执行此操作'))
+                    return
+                }
+                let connection = getMysqlConnection(DB_NAME)
             connection.beginTransaction(transactionError => {
                 if (transactionError){
                     connection.rollback(err => {
@@ -495,6 +501,7 @@ router.delete('/destroy-account', (req, res) => {
                     })
                 }
 
+            })
             })
         })
         .catch(errInfo => {

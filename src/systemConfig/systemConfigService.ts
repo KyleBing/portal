@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt"
 import mysql from "mysql2"
 
 import {EnumUserGroup, EntityUser} from "entity/User"
@@ -20,6 +21,7 @@ export interface SystemConfig {
 
 const DB_NAME = 'diary'
 const TABLE_NAME = 'system_config'
+const USERS_TABLE = 'users'
 
 export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
     admin_email: 'kylebing@163.com',
@@ -55,6 +57,121 @@ function normalizeSystemConfig(rawConfig: Partial<SystemConfig> = {}): SystemCon
 
 function escapeString(value: string) {
     return mysql.escape(value)
+}
+
+function hashPasswordPlain(plain: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        bcrypt.hash(plain, 10, (err, hash) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(hash)
+            }
+        })
+    })
+}
+
+function bcryptCompare(plain: string, hash: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        bcrypt.compare(plain, hash, (err, ok) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(!!ok)
+            }
+        })
+    })
+}
+
+function deriveDemoNickname(email: string): string {
+    const local = email.split('@')[0] || '演示'
+    return local.slice(0, 20)
+}
+
+function deriveDemoUsernameBase(email: string): string {
+    const local = email.split('@')[0] || 'demo'
+    const sanitized = local.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    const base = (sanitized || 'demo').slice(0, 20)
+    return base
+}
+
+async function pickUniqueDemoUsername(base: string): Promise<string> {
+    const trimmed = base.slice(0, 20)
+    for (let i = 0; i < 10000; i++) {
+        const suffix = i === 0 ? '' : String(i)
+        const maxBaseLen = Math.max(1, 20 - suffix.length)
+        const candidate = (trimmed.slice(0, maxBaseLen) + suffix).slice(0, 20)
+        const row = await getDataFromDB(
+            DB_NAME,
+            [`SELECT uid FROM ${USERS_TABLE} WHERE username = ${escapeString(candidate)} LIMIT 1`],
+            true
+        )
+        if (!row) {
+            return candidate
+        }
+    }
+    throw new Error('无法为演示账号生成唯一用户名，请更换演示邮箱后重试')
+}
+
+/** 保存「显示演示账号」时：无则创建用户；有则若明文密码与库中哈希不一致则更新密码。 */
+async function syncDemoAccountUser(systemConfig: SystemConfig) {
+    if (!systemConfig.is_show_demo_account) {
+        return
+    }
+
+    const email = systemConfig.demo_account.trim()
+    const plainPassword = systemConfig.demo_account_password
+
+    const row = await getDataFromDB(
+        DB_NAME,
+        [`SELECT uid, password, group_id FROM ${USERS_TABLE} WHERE email = ${escapeString(email)} LIMIT 1`],
+        true
+    )
+
+    if (!row) {
+        const encryptPassword = await hashPasswordPlain(plainPassword)
+        const timeNow = dateFormatter(new Date())
+        const nickname = deriveDemoNickname(email)
+        const baseUser = deriveDemoUsernameBase(email)
+        const username = await pickUniqueDemoUsername(baseUser)
+
+        await getDataFromDB(DB_NAME, [
+            `
+            INSERT INTO ${USERS_TABLE}(
+                email, nickname, username, password, register_time, last_visit_time, comment,
+                wx, phone, homepage, gaode, group_id
+            ) VALUES (
+                ${escapeString(email)},
+                ${escapeString(nickname)},
+                ${escapeString(username)},
+                ${escapeString(encryptPassword)},
+                ${escapeString(timeNow)},
+                ${escapeString(timeNow)},
+                '',
+                '',
+                '',
+                '',
+                '',
+                ${EnumUserGroup.USER}
+            )
+            `
+        ])
+        return
+    }
+
+    const passwordOk = await bcryptCompare(plainPassword, String(row.password || ''))
+    if (passwordOk) {
+        return
+    }
+
+    const encryptPassword = await hashPasswordPlain(plainPassword)
+    await getDataFromDB(
+        DB_NAME,
+        [
+            `UPDATE ${USERS_TABLE} SET password = ${escapeString(encryptPassword)} WHERE uid = ${Number(row.uid)} LIMIT 1`
+        ],
+        true
+    )
 }
 
 async function ensureSystemConfigTable() {
@@ -114,6 +231,18 @@ async function ensureSystemConfigTable() {
 function validateSystemConfig(systemConfig: SystemConfig) {
     if (!systemConfig.admin_email) {
         throw new Error('管理员邮箱不能为空')
+    }
+    if (systemConfig.is_show_demo_account) {
+        const demoEmail = systemConfig.demo_account.trim()
+        if (!demoEmail) {
+            throw new Error('启用演示账号时，演示账号邮箱不能为空')
+        }
+        if (demoEmail.length > 50) {
+            throw new Error('演示账号邮箱长度不能超过 50 个字符')
+        }
+        if (!systemConfig.demo_account_password) {
+            throw new Error('启用演示账号时，演示账号密码不能为空')
+        }
     }
 }
 
@@ -181,6 +310,8 @@ export async function saveSystemConfig(payload: Partial<SystemConfig>) {
         `
     ])
 
+    await syncDemoAccountUser(systemConfig)
+
     return getSystemConfig()
 }
 
@@ -188,4 +319,11 @@ export function verifyAdmin(userInfo: EntityUser) {
     if (userInfo.group_id !== EnumUserGroup.ADMIN) {
         throw new ResponseError('', '仅管理员可操作系统配置')
     }
+}
+
+/** 是否与当前系统配置中的演示账号邮箱一致（用于限制改资料、改密、注销等）。 */
+export async function isConfiguredDemoAccountEmail(email: string): Promise<boolean> {
+    const cfg = await getSystemConfig()
+    const demo = cfg.demo_account.trim()
+    return demo.length > 0 && email === demo
 }

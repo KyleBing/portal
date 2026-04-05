@@ -10,6 +10,7 @@ import {
 } from "../utility";
 import {Diary} from "entity/Diary";
 import { EnumUserGroup } from "entity/User";
+import {isConfiguredDemoAccountEmail} from "../systemConfig/systemConfigService"
 const router = express.Router()
 
 // Function to escape MySQL special characters
@@ -590,20 +591,22 @@ router.get('/get-latest-public-diary-with-keyword', (req, res) => {
 router.post('/clear', (req, res) => {
     verifyAuthorization(req)
         .then(userInfo => {
-            if (userInfo.email === 'test@163.com'){
-                res.send(new ResponseError('', '演示帐户不允许执行此操作'))
-                return
-            }
-            let sqlArray = []
-            sqlArray.push(`delete from diaries where uid=${userInfo.uid}`)
-            getDataFromDB( DB_NAME, sqlArray)
-                .then(data => {
-                    updateUserLastLoginTime(userInfo.uid)
-                    res.send(new ResponseSuccess(data, `清空成功：${data.affectedRows} 条日记`))
-                })
-                .catch(err => {
-                    res.send(new ResponseError(err, err.message))
-                })
+            return isConfiguredDemoAccountEmail(userInfo.email).then(isDemo => {
+                if (isDemo) {
+                    res.send(new ResponseError('', '演示帐户不允许执行此操作'))
+                    return
+                }
+                let sqlArray = []
+                sqlArray.push(`delete from diaries where uid=${userInfo.uid}`)
+                getDataFromDB( DB_NAME, sqlArray)
+                    .then(data => {
+                        updateUserLastLoginTime(userInfo.uid)
+                        res.send(new ResponseSuccess(data, `清空成功：${data.affectedRows} 条日记`))
+                    })
+                    .catch(err => {
+                        res.send(new ResponseError(err, err.message))
+                    })
+            })
         })
         .catch(verified => {
             res.send(new ResponseError(verified, '无权查看日记列表：用户信息错误'))
