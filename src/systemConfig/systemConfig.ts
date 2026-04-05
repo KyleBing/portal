@@ -6,6 +6,7 @@ import {getSystemConfig, saveSystemConfig, verifyAdmin} from "./systemConfigServ
 
 const router = express.Router()
 
+// GET 供全站读取展示信息；写入仅 PUT 且需管理员（verifyAdmin）
 router.get('/', async (_req, res) => {
     try {
         const data = await getSystemConfig()
