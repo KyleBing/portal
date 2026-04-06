@@ -1,7 +1,7 @@
 {
   "host":       "localhost",
   "user":       "root",
-  "password":   "rootpassword",
+  "password":   "nnqi",
   "port":       3306,
   "multipleStatements": true,
   "timezone": ""

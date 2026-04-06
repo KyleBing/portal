@@ -1,7 +1,7 @@
 import express from "express"
 
 import {ResponseError, ResponseSuccess} from "../response/Response"
-import {initializeDatabase} from "../init/initService"
+import {InitDatabaseError, initializeDatabase} from "../init/initService"
 import {getSetupStatus, saveSetupConfig} from "./setupService"
 
 const router = express.Router()
@@ -39,7 +39,8 @@ router.post('/init', async (_req, res) => {
         res.send(new ResponseSuccess(initResult.data, initResult.message))
     } catch (err) {
         const message = err instanceof Error ? err.message : '初始化失败'
-        res.send(new ResponseError(err, message))
+        const data = err instanceof InitDatabaseError ? err.data : err
+        res.send(new ResponseError(data, message))
     }
 })
 
