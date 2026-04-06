@@ -49,13 +49,13 @@ INSERT INTO `system_config` (
   'test@163.com',
   'test',
   '',
-  'http://diary-container.kylebing.cn/',
+  'http://xxx.cn/',
   'diary-container',
-  'thumbnail_600px',
   '',
   '',
-  'c5894aea6ce2495ca0f78a2963c04d57',
-  'pd3fbqjryn.re.qweatherapi.com',
+  '',
+  '',
+  '',
   '<p>长期未使用的用户将定期进行清理，大概一年清一次。</p><p>项目已开源</p>',
   NULL
 );

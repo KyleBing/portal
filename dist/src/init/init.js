@@ -23,7 +23,8 @@ router.get('/', (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (err) {
         const message = err instanceof Error ? err.message : '初始化失败';
-        res.send(new Response_1.ResponseError(err, message));
+        const data = err instanceof initService_1.InitDatabaseError ? err.data : err;
+        res.send(new Response_1.ResponseError(data, message));
     }
 }));
 exports.default = router;
