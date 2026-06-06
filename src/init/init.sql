@@ -77,20 +77,22 @@ CREATE TABLE `diary_category`  (
 -- ----------------------------
 -- Records of diary_category
 -- ----------------------------
-INSERT INTO `diary_category` VALUES (9, 'article', '文章', 0, '#CC73E1', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (3, 'bigevent', '大事', 0, '#FF3B30', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (10, 'bill', '账单', 0, '#8bc34a', '2022-05-23 21:23:02');
-INSERT INTO `diary_category` VALUES (8, 'film', '电影', 0, '#FF2D70', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (7, 'game', '游戏', 0, '#5AC8FA', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (1, 'life', '生活', 0, '#FF9500', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (11, 'memo', '备忘', 0, '#BABABA', '2022-10-31 17:16:15');
-INSERT INTO `diary_category` VALUES (12, 'play', '剧本', 0, '#00AAFF', '2022-12-29 08:44:21');
-INSERT INTO `diary_category` VALUES (13, 'sentiment', '情感', 0, '#00C975', '2023-01-16 15:21:12');
-INSERT INTO `diary_category` VALUES (4, 'sport', '运动', 0, '#FFCC00', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (2, 'study', '学习', 0, '#4CD964', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (4, 'todo', '待办', 0, '#24C5FF', '2023-12-12 10:17:35');
-INSERT INTO `diary_category` VALUES (5, 'week', '周报', 0, '#5856D6', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-03-23 21:23:02');
+INSERT INTO `diary_category` VALUES (0, 'life', '生活', 0, '#FF9500', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (1, 'memo', '备忘', 0, '#BABABA', '2022-10-31 09:16:15');
+INSERT INTO `diary_category` VALUES (2, 'bill', '账单', 0, '#8bc34a', '2022-05-23 13:23:02');
+INSERT INTO `diary_category` VALUES (3, 'bigevent', '大事', 0, '#FF3B30', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (4, 'todo', '待办', 0, '#24C5FF', '2023-12-12 02:17:35');
+INSERT INTO `diary_category` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (7, 'game', '游戏', 0, '#5AC8FA', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (8, 'film', '电影', 0, '#FF2D70', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (9, 'article', '文章', 0, '#CC73E1', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (10, 'study', '学习', 0, '#4CD964', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (11, 'enlightenment', '感悟', 0, '#555C8C', '2025-07-09 03:35:52');
+INSERT INTO `diary_category` VALUES (12, 'play', '剧本', 0, '#00AAFF', '2022-12-29 00:44:21');
+INSERT INTO `diary_category` VALUES (13, 'sentiment', '情感', 0, '#00C975', '2023-01-16 07:21:12');
+INSERT INTO `diary_category` VALUES (13, 'sport', '运动', 0, '#FFCC00', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (15, 'week', '周报', 0, '#5856D6', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (16, 'code', '代码', 0, '#04999B', '2026-06-06 06:36:23');
 
 
 -- ----------------------------
