@@ -77,20 +77,22 @@ CREATE TABLE `diary_category`  (
 -- ----------------------------
 -- Records of diary_category
 -- ----------------------------
-INSERT INTO `diary_category` VALUES (9, 'article', '文章', 0, '#CC73E1', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (3, 'bigevent', '大事', 0, '#FF3B30', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (10, 'bill', '账单', 0, '#8bc34a', '2022-05-23 21:23:02');
-INSERT INTO `diary_category` VALUES (8, 'film', '电影', 0, '#FF2D70', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (7, 'game', '游戏', 0, '#5AC8FA', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (1, 'life', '生活', 0, '#FF9500', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (11, 'memo', '备忘', 0, '#BABABA', '2022-10-31 17:16:15');
-INSERT INTO `diary_category` VALUES (12, 'play', '剧本', 0, '#00AAFF', '2022-12-29 08:44:21');
-INSERT INTO `diary_category` VALUES (13, 'sentiment', '情感', 0, '#00C975', '2023-01-16 15:21:12');
-INSERT INTO `diary_category` VALUES (4, 'sport', '运动', 0, '#FFCC00', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (2, 'study', '学习', 0, '#4CD964', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (4, 'todo', '待办', 0, '#24C5FF', '2023-12-12 10:17:35');
-INSERT INTO `diary_category` VALUES (5, 'week', '周报', 0, '#5856D6', '2022-03-23 21:23:02');
-INSERT INTO `diary_category` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-03-23 21:23:02');
+INSERT INTO `diary_category` VALUES (0, 'life', '生活', 0, '#FF9500', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (1, 'memo', '备忘', 0, '#BABABA', '2022-10-31 09:16:15');
+INSERT INTO `diary_category` VALUES (2, 'bill', '账单', 0, '#8bc34a', '2022-05-23 13:23:02');
+INSERT INTO `diary_category` VALUES (3, 'bigevent', '大事', 0, '#FF3B30', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (4, 'todo', '待办', 0, '#24C5FF', '2023-12-12 02:17:35');
+INSERT INTO `diary_category` VALUES (6, 'work', '工作', 0, '#007AFF', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (7, 'game', '游戏', 0, '#5AC8FA', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (8, 'film', '电影', 0, '#FF2D70', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (9, 'article', '文章', 0, '#CC73E1', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (10, 'study', '学习', 0, '#4CD964', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (11, 'enlightenment', '感悟', 0, '#555C8C', '2025-07-09 03:35:52');
+INSERT INTO `diary_category` VALUES (12, 'play', '剧本', 0, '#00AAFF', '2022-12-29 00:44:21');
+INSERT INTO `diary_category` VALUES (13, 'sentiment', '情感', 0, '#00C975', '2023-01-16 07:21:12');
+INSERT INTO `diary_category` VALUES (13, 'sport', '运动', 0, '#FFCC00', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (15, 'week', '周报', 0, '#5856D6', '2022-03-23 13:23:02');
+INSERT INTO `diary_category` VALUES (16, 'code', '代码', 0, '#04999B', '2026-06-06 06:36:23');
 
 
 -- ----------------------------
@@ -126,6 +128,22 @@ CREATE TABLE `users` (
   KEY `group_id` (`group_id`) USING BTREE,
   CONSTRAINT `group_id` FOREIGN KEY (`group_id`) REFERENCES `user_group` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2526 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci ROW_FORMAT=COMPACT;
+
+
+-- ----------------------------
+-- Table structure for user_config
+-- ----------------------------
+DROP TABLE IF EXISTS `user_config`;
+CREATE TABLE `user_config` (
+  `uid` int(11) NOT NULL COMMENT '用户 ID',
+  `theme` varchar(20) NOT NULL DEFAULT '' COMMENT '主题',
+  `default_diary_category` varchar(50) NOT NULL DEFAULT '' COMMENT '默认日记分类',
+  `editor_mode` varchar(20) NOT NULL DEFAULT '' COMMENT '编辑器模式',
+  `config_json` json DEFAULT NULL COMMENT '扩展配置',
+  `date_modify` datetime DEFAULT NULL COMMENT '最后修改时间',
+  PRIMARY KEY (`uid`) USING BTREE,
+  CONSTRAINT `user_config_uid` FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 
 -- ----------------------------
@@ -276,61 +294,6 @@ CREATE TABLE `qrs`  (
   CONSTRAINT `code_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `users` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
 
-
--- ----------------------------
--- Table structure for wubi_dict
--- ----------------------------
-DROP TABLE IF EXISTS `wubi_dict`;
-CREATE TABLE `wubi_dict`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '码表名',
-  `content` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL COMMENT '码表内容',
-  `content_size` int(6) NULL DEFAULT 0 COMMENT '码表内容字数',
-  `word_count` int(6) NULL DEFAULT 0 COMMENT '码表内容的词条数',
-  `date_init` datetime(0) NOT NULL COMMENT '首次上传时间',
-  `date_update` datetime(0) NULL DEFAULT NULL COMMENT '最后同步时间',
-  `comment` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '注释',
-  `uid` int(11) NULL DEFAULT NULL COMMENT '所属用户',
-  PRIMARY KEY (`id`, `title`) USING BTREE,
-  INDEX `uid`(`uid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 0 CHARACTER SET = utf8mb3 COLLATE = utf8mb3_general_ci ROW_FORMAT = Compact;
-
--- ----------------------------
--- Table structure for wubi_category
--- ----------------------------
-DROP TABLE IF EXISTS `wubi_category`;
-CREATE TABLE `wubi_category` (
-  `id` int(10) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-  `sort_id` int(11) NOT NULL,
-  `date_init` datetime NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
-
-
-
--- ----------------------------
--- Table structure for wubi_words
--- ----------------------------
-DROP TABLE IF EXISTS `wubi_words`;
-CREATE TABLE `wubi_words` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `word` varchar(255) COLLATE utf8mb4_bin NOT NULL COMMENT '词条',
-  `code` varchar(20) COLLATE utf8mb4_bin NOT NULL COMMENT '编码',
-  `priority` int(11) NOT NULL DEFAULT 0 COMMENT '权重',
-  `up` int(11) NOT NULL DEFAULT 0 COMMENT '赞同数量',
-  `down` int(11) NOT NULL DEFAULT 0 COMMENT '反对数量',
-  `date_create` datetime NOT NULL COMMENT '创建时间',
-  `date_modify` datetime DEFAULT NULL COMMENT '编辑时间',
-  `comment` varchar(100) COLLATE utf8mb4_bin DEFAULT NULL COMMENT '备注',
-  `uid` int(11) NOT NULL,
-  `category_id` int(10) NOT NULL COMMENT '类别 id',
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `user_create` (`uid`) USING BTREE,
-  KEY `category_id` (`category_id`) USING BTREE,
-  CONSTRAINT `category_id` FOREIGN KEY (`category_id`) REFERENCES `wubi_category` (`id`),
-  CONSTRAINT `uid` FOREIGN KEY (`uid`) REFERENCES `users` (`uid`)
-) ENGINE=InnoDB AUTO_INCREMENT=90211 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 -- ----------------------------
 -- Table structure for thumbs_up

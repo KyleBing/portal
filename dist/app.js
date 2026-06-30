@@ -31,6 +31,9 @@ app.use('/setup', setup_1.default);
 // 系统配置
 const systemConfig_1 = __importDefault(require("./src/systemConfig/systemConfig"));
 app.use('/system-config', systemConfig_1.default);
+// 用户配置
+const userConfig_1 = __importDefault(require("./src/userConfig/userConfig"));
+app.use('/user-config', userConfig_1.default);
 // 邀请码
 const invitation_1 = __importDefault(require("./src/user/invitation"));
 app.use('/invitation', invitation_1.default);

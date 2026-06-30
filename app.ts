@@ -35,6 +35,10 @@ app.use('/setup', routerSetup)
 import routerSystemConfig from "./src/systemConfig/systemConfig"
 app.use('/system-config', routerSystemConfig)
 
+// 用户配置
+import routerUserConfig from "./src/userConfig/userConfig"
+app.use('/user-config', routerUserConfig)
+
 // 邀请码
 import routerInvitation from "./src/user/invitation"
 app.use('/invitation', routerInvitation)
